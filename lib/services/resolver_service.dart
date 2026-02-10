@@ -4,44 +4,26 @@ import 'api_service.dart';
 class ResolverService {
   final ApiService _apiService = ApiService();
 
-  Future<List<Map<String, String>>> resolveLinks(
-    String movieName, {
-    String? targetUrl,
+  Future<List<Map<String, String>>> resolveLinks({
+    required int tmdbId,
+    required String title,
+    String? year,
   }) async {
     try {
-      if (targetUrl != null && targetUrl.isNotEmpty) {
-        final links = await _apiService.getLinks(targetUrl);
-        return links
-            .map(
-              (l) => {
-                'quality': (l['quality'] ?? 'Unknown').toString(),
-                'url': (l['url'] ?? '').toString(),
-                'name': (l['name'] ?? 'Download Link').toString(),
-              },
-            )
-            .toList();
-      } else {
-        // Fallback or automated search if no URL provided
-        final searchResults = await _apiService.searchMovies(movieName);
-        if (searchResults.isNotEmpty) {
-          // Typically we'd let the user pick, but if we're "resolving"
-          // we might take the first result or perform a secondary scan
-          final firstUrl = searchResults.first['url'];
-          if (firstUrl != null) {
-            final links = await _apiService.getLinks(firstUrl);
-            return links
-                .map(
-                  (l) => {
-                    'quality': (l['quality'] ?? 'Unknown').toString(),
-                    'url': (l['url'] ?? '').toString(),
-                    'name': (l['name'] ?? 'Download Link').toString(),
-                  },
-                )
-                .toList();
-          }
-        }
-      }
-      return [];
+      final links = await _apiService.getLinks(
+        tmdbId: tmdbId,
+        title: title,
+        year: year,
+      );
+      return links
+          .map(
+            (l) => {
+              'quality': (l['quality'] ?? 'Unknown').toString(),
+              'url': (l['url'] ?? '').toString(),
+              'name': (l['name'] ?? 'Download Link').toString(),
+            },
+          )
+          .toList();
     } catch (e) {
       debugPrint('Error in ResolverService: $e');
       return [];

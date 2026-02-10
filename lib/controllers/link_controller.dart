@@ -24,7 +24,11 @@ class LinkController extends GetxController {
   Timer? _messageTimer;
   int _messageIndex = 0;
 
-  Future<void> fetchLinks(String title) async {
+  Future<void> fetchLinks({
+    required int tmdbId,
+    required String title,
+    String? year,
+  }) async {
     isLoading.value = true;
     hasError.value = false;
     errorMessage.value = "";
@@ -45,11 +49,11 @@ class LinkController extends GetxController {
     });
 
     try {
-      // Added timeout for reliability (45s)
+      // Added timeout for reliability (60s for scraping)
       final results = await _resolverService
-          .resolveLinks(title)
+          .resolveLinks(tmdbId: tmdbId, title: title, year: year)
           .timeout(
-            const Duration(seconds: 45),
+            const Duration(seconds: 60),
             onTimeout: () => throw TimeoutException(
               "Server took too long to respond. Please try again.",
             ),
@@ -75,8 +79,8 @@ class LinkController extends GetxController {
     }
   }
 
-  void retryFetch(String title) {
-    fetchLinks(title);
+  void retryFetch({required int tmdbId, required String title, String? year}) {
+    fetchLinks(tmdbId: tmdbId, title: title, year: year);
   }
 
   @override

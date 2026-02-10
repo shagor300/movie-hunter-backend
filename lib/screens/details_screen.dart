@@ -248,7 +248,11 @@ class _DetailsScreenState extends State<DetailsScreen> {
         ],
       ),
       child: ElevatedButton.icon(
-        onPressed: () => _linkController.fetchLinks(widget.movie.title),
+        onPressed: () => _linkController.fetchLinks(
+          tmdbId: widget.movie.tmdbId ?? 0,
+          title: widget.movie.title,
+          year: widget.movie.year != 'N/A' ? widget.movie.year : null,
+        ),
         style: ElevatedButton.styleFrom(
           backgroundColor: Colors.transparent,
           shadowColor: Colors.transparent,
@@ -342,8 +346,13 @@ class _DetailsScreenState extends State<DetailsScreen> {
                   ),
                   const SizedBox(width: 20),
                   ElevatedButton(
-                    onPressed: () =>
-                        _linkController.retryFetch(widget.movie.title),
+                    onPressed: () => _linkController.retryFetch(
+                      tmdbId: widget.movie.tmdbId ?? 0,
+                      title: widget.movie.title,
+                      year: widget.movie.year != 'N/A'
+                          ? widget.movie.year
+                          : null,
+                    ),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.blueAccent,
                       shape: RoundedRectangleBorder(

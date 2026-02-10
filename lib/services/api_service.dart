@@ -32,14 +32,24 @@ class ApiService {
     }
   }
 
-  /// Fetch download links for a given movie URL via the backend `/links` endpoint.
-  Future<List<Map<String, dynamic>>> getLinks(String movieUrl) async {
+  /// Fetch download links via the backend `/links` endpoint.
+  Future<List<Map<String, dynamic>>> getLinks({
+    required int tmdbId,
+    required String title,
+    String? year,
+  }) async {
+    final queryParams = {
+      'tmdb_id': tmdbId.toString(),
+      'title': title,
+      if (year != null) 'year': year,
+    };
     final url = Uri.parse(
-      '$baseUrl/links?url=${Uri.encodeComponent(movieUrl)}',
-    );
+      '$baseUrl/links',
+    ).replace(queryParameters: queryParams);
 
     try {
-      final response = await http.get(url).timeout(_timeout);
+      // Link generation can take longer due to scraping
+      final response = await http.get(url).timeout(const Duration(seconds: 60));
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);

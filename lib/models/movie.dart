@@ -10,6 +10,7 @@ class MovieSource {
 }
 
 class Movie {
+  final int? tmdbId;
   final String title;
   final String plot;
   final String tmdbPoster;
@@ -18,6 +19,7 @@ class Movie {
   final List<MovieSource> sources;
 
   Movie({
+    this.tmdbId,
     required this.title,
     required this.plot,
     required this.tmdbPoster,
@@ -34,6 +36,7 @@ class Movie {
 
     // Map fields from either Enriched Backend or Raw TMDB
     return Movie(
+      tmdbId: json['tmdb_id'] ?? json['id'],
       title: json['title'] ?? 'Unknown',
       plot: json['plot'] ?? json['overview'] ?? '',
       tmdbPoster:

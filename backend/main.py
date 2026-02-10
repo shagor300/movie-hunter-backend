@@ -196,21 +196,20 @@ async def generate_download_links(
 ):
     """
     Generate download links for a movie via backend scraping.
-    Caching is handled internally by `generate_download_links` — no need to pre-check.
     """
     try:
-        logger.info(f"Generating links for: {title} (TMDB: {tmdb_id})")
+        logger.info(f"Link request - Title: '{title}', TMDB ID: {tmdb_id}, Year: {year}")
         links = await scraper_instance.generate_download_links(tmdb_id, title, year)
 
         return {
             "url": f"tmdb_{tmdb_id}",
             "total_links": len(links),
             "links": links,
-            "cached": False,  # The scraper itself knows — this is informational
+            "cached": False,
         }
     except Exception as e:
-        logger.error(f"Link generation error: {e}")
-        raise HTTPException(status_code=500, detail=f"Link generation failed: {e}")
+        logger.error(f"Link generation failed for '{title}': {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @app.get("/sources")

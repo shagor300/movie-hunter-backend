@@ -315,129 +315,136 @@ class MovieScraper:
                 return label
         return "Download"
 
-    async def extract_links_from_url(self, url: str) -> List[Dict]:
-        """Extract download links from a movie page using multiple strategies."""
+    async def _parse_links_from_html(self, content: str, url: str) -> List[Dict]:
+        """Shared logic to extract links from raw HTML content."""
         links = []
-        context, page = await self._new_stealth_page()
+        soup = BeautifulSoup(content, 'html.parser')
 
+        # Strategy 1: Extract from all <a> tags matching download patterns
+        for a in soup.find_all('a', href=True):
+            href = a['href']
+            text = a.get_text(strip=True)
+
+            if any(skip in href.lower() for skip in SKIP_URL_PATTERNS):
+                continue
+
+            if any(p in href.lower() for p in DOWNLOAD_PATTERNS):
+                parent_text = a.parent.get_text(strip=True) if a.parent else ""
+                combined = f"{text} {parent_text}"
+
+                links.append({
+                    "quality": self._extract_quality(combined),
+                    "url": href,
+                    "name": text[:80] if text else f"{self._extract_language(combined)} - {self._extract_quality(combined)}",
+                    "type": self._extract_language(combined),
+                    "source": url,
+                })
+
+        # Strategy 2: Check data-link attributes on interactive elements
+        for elem in soup.find_all(['button', 'div', 'span', 'p'], attrs={'data-link': True}):
+            data_link = elem.get('data-link')
+            if data_link and any(p in data_link.lower() for p in DOWNLOAD_PATTERNS):
+                links.append({
+                    "quality": "HD",
+                    "url": data_link,
+                    "name": elem.get_text(strip=True)[:80] or "Download Link",
+                    "type": "Download",
+                    "source": url,
+                })
+
+        # Strategy 3: Scan download sections/containers
+        for section in soup.find_all(['div', 'section'], class_=re.compile(r'download|links|content', re.IGNORECASE)):
+            for a in section.find_all('a', href=True):
+                href = a['href']
+                if any(p in href.lower() for p in DOWNLOAD_PATTERNS):
+                    text = a.get_text(strip=True)
+                    links.append({
+                        "quality": "HD",
+                        "url": href,
+                        "name": text[:80] if text else "Download",
+                        "type": "Download",
+                        "source": url,
+                    })
+
+        # Strategy 4: Find embedded links in regex (from HTML source)
+        js_links = re.findall(
+            r'https?://[^\s"\'<>]+(?:drive\.google|pixeldrain|gdtot|filepress|terabox|gofile\.io|hubcloud)[^\s"\'<>]*',
+            content, re.IGNORECASE
+        )
+        existing_urls = {link['url'] for link in links}
+        for js_link in js_links:
+            if js_link not in existing_urls:
+                links.append({
+                    "quality": "HD",
+                    "url": js_link,
+                    "name": "Download (Found in Source)",
+                    "type": "Download",
+                    "source": url,
+                })
+
+        # Strategy 5: Extract links from header tags (h1-h6)
+        for header in soup.find_all(['h1', 'h2', 'h3', 'h4', 'h5', 'h6']):
+            for a in header.find_all('a', href=True):
+                href = a['href']
+                text = a.get_text(strip=True)
+                if any(p in href.lower() for p in DOWNLOAD_PATTERNS):
+                    header_text = header.get_text(strip=True)
+                    links.append({
+                        "quality": self._extract_quality(header_text),
+                        "url": href,
+                        "name": text[:80] if text else f"Download - {self._extract_quality(header_text)}",
+                        "type": self._extract_language(header_text),
+                        "source": url,
+                    })
+
+        # Deduplicate
+        seen = set()
+        unique_links = []
+        for link in links:
+            clean_url = link['url'].split('?')[0]
+            if clean_url not in seen:
+                seen.add(clean_url)
+                unique_links.append(link)
+        
+        return unique_links
+
+    async def extract_links_from_url(self, url: str) -> List[Dict]:
+        """Extract links: Try fast HTTP first, then fallback to Playwright."""
+        # --- Tier 1: Fast HTTP Extraction ---
         try:
-            logger.info(f"Extracting links from: {url}")
+            async with httpx.AsyncClient(headers={"User-Agent": USER_AGENT}, timeout=15.0) as client:
+                logger.info(f"Fast Extracting: {url}")
+                resp = await client.get(url, follow_redirects=True)
+                if resp.status_code == 200:
+                    links = await self._parse_links_from_html(resp.text, url)
+                    if links:
+                        logger.info(f"Fast extraction success: {len(links)} links found")
+                        return links
+        except Exception as e:
+            logger.warning(f"Fast extraction failed for {url}: {e}")
+
+        # --- Tier 2: Heavy Playwright Fallback ---
+        logger.info(f"Falling back to Playwright for: {url}")
+        context, page = await self._new_stealth_page()
+        try:
             await page.goto(url, wait_until="domcontentloaded", timeout=25000)
             await asyncio.sleep(2)
-
-            # Scroll to trigger lazy-loaded content
             for _ in range(2):
                 await page.evaluate("window.scrollBy(0, window.innerHeight)")
                 await asyncio.sleep(0.5)
 
             content = await page.content()
-            soup = BeautifulSoup(content, 'html.parser')
-
-            # Strategy 1: Extract from all <a> tags matching download patterns
-            for a in soup.find_all('a', href=True):
-                href = a['href']
-                text = a.get_text(strip=True)
-
-                if any(skip in href.lower() for skip in SKIP_URL_PATTERNS):
-                    continue
-
-                if any(p in href.lower() for p in DOWNLOAD_PATTERNS):
-                    parent_text = a.parent.get_text(strip=True) if a.parent else ""
-                    combined = f"{text} {parent_text}"
-
-                    links.append({
-                        "quality": self._extract_quality(combined),
-                        "url": href,
-                        "name": text[:80] if text else f"{self._extract_language(combined)} - {self._extract_quality(combined)}",
-                        "type": self._extract_language(combined),
-                        "source": url,
-                    })
-
-            # Strategy 2: Check data-link attributes on interactive elements
-            for elem in soup.find_all(['button', 'div', 'span', 'p'], attrs={'data-link': True}):
-                data_link = elem.get('data-link')
-                if data_link and any(p in data_link.lower() for p in DOWNLOAD_PATTERNS):
-                    links.append({
-                        "quality": "HD",
-                        "url": data_link,
-                        "name": elem.get_text(strip=True)[:80] or "Download Link",
-                        "type": "Download",
-                        "source": url,
-                    })
-
-            # Strategy 3: Scan download sections/containers
-            for section in soup.find_all(['div', 'section'], class_=re.compile(r'download|links|content', re.IGNORECASE)):
-                for a in section.find_all('a', href=True):
-                    href = a['href']
-                    if any(p in href.lower() for p in DOWNLOAD_PATTERNS):
-                        text = a.get_text(strip=True)
-                        links.append({
-                            "quality": "HD",
-                            "url": href,
-                            "name": text[:80] if text else "Download",
-                            "type": "Download",
-                            "source": url,
-                        })
-
-            # Strategy 4: Find embedded links in JavaScript source
-            js_links = re.findall(
-                r'https?://[^\s"\'<>]+(?:drive\.google|pixeldrain|gdtot|filepress|terabox|gofile\.io|hubcloud)[^\s"\'<>]*',
-                content, re.IGNORECASE
-            )
-            existing_urls = {l['url'] for l in links}
-            for js_link in js_links:
-                if js_link not in existing_urls:
-                    links.append({
-                        "quality": "HD",
-                        "url": js_link,
-                        "name": "Download Link (JS)",
-                        "type": "Download",
-                        "source": url,
-                    })
-
-            # Strategy 5: Extract links from header tags (h1-h6)
-            # Sites like KatmovieHD wrap download links inside header elements
-            for header in soup.find_all(['h1', 'h2', 'h3', 'h4', 'h5', 'h6']):
-                for a in header.find_all('a', href=True):
-                    href = a['href']
-                    text = a.get_text(strip=True)
-                    if any(p in href.lower() for p in DOWNLOAD_PATTERNS):
-                        header_text = header.get_text(strip=True)
-                        links.append({
-                            "quality": self._extract_quality(header_text),
-                            "url": href,
-                            "name": text[:80] if text else f"Download - {self._extract_quality(header_text)}",
-                            "type": self._extract_language(header_text),
-                            "source": url,
-                        })
-
-            # Deduplicate by cleaned URL
-            seen = set()
-            unique_links = []
-            for link in links:
-                clean_url = link['url'].split('?')[0]
-                if clean_url not in seen:
-                    seen.add(clean_url)
-                    unique_links.append(link)
-
-            logger.info(f"Extracted {len(unique_links)} unique links from {url}")
-
-            if not unique_links:
-                logger.warning(f"No download links found on {url}")
-
+            return await self._parse_links_from_html(content, url)
         except Exception as e:
-            logger.error(f"Error extracting from {url}: {e}")
-            unique_links = []
+            logger.error(f"Playwright fallback error for {url}: {e}")
+            return []
         finally:
             await page.close()
             await context.close()
 
-        return unique_links
-
     async def generate_download_links(self, tmdb_id: int, title: str, year: str = None) -> List[Dict]:
         """
         Main entry point: search all sites, extract links, and cache results.
-        Handles its own caching — callers should NOT pre-check the cache.
         """
         await self.startup()
 
@@ -447,21 +454,21 @@ class MovieScraper:
             logger.info(f"Returning {len(cached)} cached links for '{title}'")
             return cached
 
-        # Search all sites in parallel
-        tasks = [self.search_site_for_movie(site, title, year) for site in DOMAINS]
-        results = await asyncio.gather(*tasks, return_exceptions=True)
-
+        # Search sites sequentially to avoid resource spikes on Render
         all_urls = []
-        for site_urls in results:
-            if isinstance(site_urls, list):
+        for site in DOMAINS:
+            try:
+                site_urls = await self.search_site_for_movie(site, title, year)
                 all_urls.extend(site_urls)
+            except Exception as e:
+                logger.error(f"Error searching {site}: {e}")
 
-        all_urls = list(set(all_urls))[:4]  # Limit to 4 to stay within Render's resource budget
+        all_urls = list(set(all_urls))[:4]
         logger.info(f"Found {len(all_urls)} URLs to scrape for '{title}'")
 
-        # Extract links from all URLs in parallel (bounded by semaphore)
-        extract_tasks = [self.extract_links_from_url(url) for url in all_urls]
-        extract_results = await asyncio.gather(*extract_tasks, return_exceptions=True)
+        # Extract links (bounded by semaphore)
+        tasks = [self.extract_links_from_url(url) for url in all_urls]
+        extract_results = await asyncio.gather(*tasks, return_exceptions=True)
 
         all_links = []
         for result in extract_results:

@@ -34,9 +34,18 @@ class Movie {
         .map((s) => MovieSource.fromJson(s))
         .toList();
 
+    // Parse tmdbId robustly
+    dynamic rawId = json['tmdb_id'] ?? json['id'];
+    int? tmdbId;
+    if (rawId is int) {
+      tmdbId = rawId;
+    } else if (rawId is String) {
+      tmdbId = int.tryParse(rawId);
+    }
+
     // Map fields from either Enriched Backend or Raw TMDB
     return Movie(
-      tmdbId: json['tmdb_id'] ?? json['id'],
+      tmdbId: tmdbId,
       title: json['title'] ?? 'Unknown',
       plot: json['plot'] ?? json['overview'] ?? '',
       tmdbPoster:

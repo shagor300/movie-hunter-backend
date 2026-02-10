@@ -186,7 +186,13 @@ DOWNLOAD_PATTERNS = [
     'uptobox', 'gofile', 'gdrive', 'drivebot',
     'instantdownload', 'uploadrar', 'rapidgator',
     'katfile', 'nitroflare', 'turbobit', 'clicknupload',
-    'send.cm', 'anonfiles', 'bayfiles', 'mixdrop'
+    'send.cm', 'anonfiles', 'bayfiles', 'mixdrop',
+    # Intermediary / shortener domains commonly used
+    'howblogs', 'htpmovies', 'shrinkme', 'adrinolinks',
+    'mdiskpro', 'kolop', 'gdflix', 'new1.gdflix',
+    'filecrypt', 'ouo.io', 'ouo.press', 'shorte.st',
+    'linkvertise', 'exe.io', '1fichier', 'krakenfiles',
+    'uploadhaven', 'hexupload', 'fastclick',
 ]
 
 SKIP_URL_PATTERNS = ['#', 'javascript:', 'mailto:', '/page/', '/category/']
@@ -194,7 +200,7 @@ SKIP_URL_PATTERNS = ['#', 'javascript:', 'mailto:', '/page/', '/category/']
 
 # --- Movie Scraper ---
 class MovieScraper:
-    def __init__(self, max_concurrent: int = 3):
+    def __init__(self, max_concurrent: int = 2):
         self.cache = CacheManager()
         self.browser: Optional[Browser] = None
         self.playwright = None
@@ -316,13 +322,13 @@ class MovieScraper:
 
         try:
             logger.info(f"Extracting links from: {url}")
-            await page.goto(url, wait_until="domcontentloaded", timeout=30000)
-            await asyncio.sleep(3)
+            await page.goto(url, wait_until="domcontentloaded", timeout=25000)
+            await asyncio.sleep(2)
 
             # Scroll to trigger lazy-loaded content
-            for _ in range(3):
+            for _ in range(2):
                 await page.evaluate("window.scrollBy(0, window.innerHeight)")
-                await asyncio.sleep(1)
+                await asyncio.sleep(0.5)
 
             content = await page.content()
             soup = BeautifulSoup(content, 'html.parser')
@@ -375,7 +381,7 @@ class MovieScraper:
 
             # Strategy 4: Find embedded links in JavaScript source
             js_links = re.findall(
-                r'https?://[^\s"\'<>]+(?:drive\.google|pixeldrain|gdtot|filepress|terabox)[^\s"\'<>]*',
+                r'https?://[^\s"\'<>]+(?:drive\.google|pixeldrain|gdtot|filepress|terabox|gofile\.io|hubcloud)[^\s"\'<>]*',
                 content, re.IGNORECASE
             )
             existing_urls = {l['url'] for l in links}
@@ -388,6 +394,22 @@ class MovieScraper:
                         "type": "Download",
                         "source": url,
                     })
+
+            # Strategy 5: Extract links from header tags (h1-h6)
+            # Sites like KatmovieHD wrap download links inside header elements
+            for header in soup.find_all(['h1', 'h2', 'h3', 'h4', 'h5', 'h6']):
+                for a in header.find_all('a', href=True):
+                    href = a['href']
+                    text = a.get_text(strip=True)
+                    if any(p in href.lower() for p in DOWNLOAD_PATTERNS):
+                        header_text = header.get_text(strip=True)
+                        links.append({
+                            "quality": self._extract_quality(header_text),
+                            "url": href,
+                            "name": text[:80] if text else f"Download - {self._extract_quality(header_text)}",
+                            "type": self._extract_language(header_text),
+                            "source": url,
+                        })
 
             # Deduplicate by cleaned URL
             seen = set()
@@ -434,7 +456,7 @@ class MovieScraper:
             if isinstance(site_urls, list):
                 all_urls.extend(site_urls)
 
-        all_urls = list(set(all_urls))[:10]
+        all_urls = list(set(all_urls))[:4]  # Limit to 4 to stay within Render's resource budget
         logger.info(f"Found {len(all_urls)} URLs to scrape for '{title}'")
 
         # Extract links from all URLs in parallel (bounded by semaphore)

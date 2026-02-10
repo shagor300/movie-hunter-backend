@@ -466,19 +466,29 @@ class MovieScraper:
         all_urls = list(set(all_urls))[:4]
         logger.info(f"Found {len(all_urls)} URLs to scrape for '{title}'")
 
-        # Extract links (bounded by semaphore)
-        tasks = [self.extract_links_from_url(url) for url in all_urls]
+        # Extract links (bounded by semaphore to avoid memory exhaustion)
+        async def bounded_extract(url):
+            async with self.semaphore:
+                return await self.extract_links_from_url(url)
+
+        tasks = [bounded_extract(url) for url in all_urls]
         extract_results = await asyncio.gather(*tasks, return_exceptions=True)
 
         all_links = []
         for result in extract_results:
             if isinstance(result, list):
                 all_links.extend(result)
+            elif isinstance(result, Exception):
+                logger.error(f"Extraction task failed: {result}")
 
         if all_links:
             await self.cache.set_links(cache_key, all_links)
 
         logger.info(f"Total {len(all_links)} download links found for '{title}'")
+        # Final log check of link formats
+        if all_links:
+            logger.debug(f"First link sample: {all_links[0]}")
+            
         return all_links
 
 

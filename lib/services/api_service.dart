@@ -49,11 +49,15 @@ class ApiService {
 
     try {
       // Link generation can take longer due to scraping
+      debugPrint('Fetching links from: $url');
       final response = await http.get(url).timeout(const Duration(seconds: 60));
 
+      debugPrint('Links response status: ${response.statusCode}');
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        return List<Map<String, dynamic>>.from(data['links'] ?? []);
+        final links = List<Map<String, dynamic>>.from(data['links'] ?? []);
+        debugPrint('Links received: ${links.length}');
+        return links;
       }
       debugPrint('Links API error: ${response.statusCode}');
       return [];

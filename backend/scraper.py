@@ -198,6 +198,7 @@ AD_HOSTS = {
     'linkvertise.com', 'exe.io', 'shortyonline.com',
 }
 
+DOWNLOAD_PATTERNS = list(DIRECT_DOWNLOAD_HOSTS | MEDIATOR_HOSTS)
 SKIP_URL_PATTERNS = ['#', 'javascript:', 'mailto:', '/page/', '/category/', 'facebook.com', 'twitter.com']
 
 

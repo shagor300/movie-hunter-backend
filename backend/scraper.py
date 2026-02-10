@@ -192,7 +192,8 @@ DOWNLOAD_PATTERNS = [
     'mdiskpro', 'kolop', 'gdflix', 'new1.gdflix',
     'filecrypt', 'ouo.io', 'ouo.press', 'shorte.st',
     'linkvertise', 'exe.io', '1fichier', 'krakenfiles',
-    'uploadhaven', 'hexupload', 'fastclick',
+    'uploadhaven', 'hexupload', 'fastclick', 'hubcdn',
+    'gadgetsweb', 'vcloud', 'newshub', 'gplinks',
 ]
 
 SKIP_URL_PATTERNS = ['#', 'javascript:', 'mailto:', '/page/', '/category/']

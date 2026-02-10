@@ -1,3 +1,5 @@
+import 'package:flutter/foundation.dart';
+
 class MovieSource {
   final String site;
   final String url;
@@ -29,23 +31,29 @@ class Movie {
   });
 
   factory Movie.fromJson(Map<String, dynamic> json) {
+    // Robust ID parsing
+    int parseId(dynamic value) {
+      if (value == null) return 0;
+      if (value is int) return value;
+      if (value is String) return int.tryParse(value) ?? 0;
+      return 0;
+    }
+
+    final id = parseId(json['tmdb_id']) != 0
+        ? parseId(json['tmdb_id'])
+        : parseId(json['id']);
+
+    if (id <= 0) {
+      debugPrint('WARNING: Invalid TMDB ID in JSON: $json');
+    }
+
     var sourceList = json['sources'] as List? ?? [];
     List<MovieSource> parsedSources = sourceList
         .map((s) => MovieSource.fromJson(s))
         .toList();
 
-    // Parse tmdbId robustly
-    dynamic rawId = json['tmdb_id'] ?? json['id'];
-    int? tmdbId;
-    if (rawId is int) {
-      tmdbId = rawId;
-    } else if (rawId is String) {
-      tmdbId = int.tryParse(rawId);
-    }
-
-    // Map fields from either Enriched Backend or Raw TMDB
     return Movie(
-      tmdbId: tmdbId,
+      tmdbId: id != 0 ? id : null,
       title: json['title'] ?? 'Unknown',
       plot: json['plot'] ?? json['overview'] ?? '',
       tmdbPoster:

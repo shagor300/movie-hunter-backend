@@ -178,25 +178,124 @@ class TMDBHelper:
             return None
 
 
-# --- Download link patterns ---
-DOWNLOAD_PATTERNS = [
-    'drive.google', 'pixeldrain', 'hubcloud', 'mediafire',
-    'mega.nz', 'dropbox', 'wetransfer', 'terabox',
-    'gdtot', 'filepress', 'streamtape', 'doodstream',
-    'uptobox', 'gofile', 'gdrive', 'drivebot',
-    'instantdownload', 'uploadrar', 'rapidgator',
-    'katfile', 'nitroflare', 'turbobit', 'clicknupload',
-    'send.cm', 'anonfiles', 'bayfiles', 'mixdrop',
-    # Intermediary / shortener domains commonly used
-    'howblogs', 'htpmovies', 'shrinkme', 'adrinolinks',
-    'mdiskpro', 'kolop', 'gdflix', 'new1.gdflix',
-    'filecrypt', 'ouo.io', 'ouo.press', 'shorte.st',
-    'linkvertise', 'exe.io', '1fichier', 'krakenfiles',
-    'uploadhaven', 'hexupload', 'fastclick', 'hubcdn',
-    'gadgetsweb', 'vcloud', 'newshub', 'gplinks',
-]
+# --- Link Classification ---
+DIRECT_DOWNLOAD_HOSTS = {
+    'hubdrive.space', 'hubcloud.foo', 'hubcloud.pw', 'gofile.io', 
+    'pixeldrain.com', 'drive.google.com', 'mega.nz', 'mediafire.com',
+    '1fichier.com', 'krakenfiles.com', 'terabox.com', 'filepress.org',
+    'gdtot.pro', 'gdflix.top', 'new1.gdflix.top', 'fast-down.pro',
+}
 
-SKIP_URL_PATTERNS = ['#', 'javascript:', 'mailto:', '/page/', '/category/']
+MEDIATOR_HOSTS = {
+    'hblinks.dad', 'gadgetsweb.xyz', 'cryptoinsights.site', 'adrinolinks.in',
+    'shrinkme.io', 'howblogs.xyz', 'htpmovies.top', 'gdtot.pro',
+    'hubcdn.fans', 'gadgetsweb.xyz', 'vcloud.info', 'newshub.live',
+    'gplinks.co', 'mdiskpro.com', 'kolop.net',
+}
+
+AD_HOSTS = {
+    'adfly.com', 'bit.ly', 'ouo.io', 'ouo.press', 'shorte.st',
+    'linkvertise.com', 'exe.io', 'shortyonline.com',
+}
+
+SKIP_URL_PATTERNS = ['#', 'javascript:', 'mailto:', '/page/', '/category/', 'facebook.com', 'twitter.com']
+
+
+# --- Advanced Link Extractor ---
+class AdvancedLinkExtractor:
+    def __init__(self, page, max_depth: int = 2):
+        self.page = page
+        self.max_depth = max_depth
+        self.found_links = []
+        self.visited = set()
+
+    async def extract(self, url: str, depth: int = 0) -> List[Dict]:
+        """Recursively resolve links, bypassing ads and mediators."""
+        if depth > self.max_depth or url in self.visited:
+            return []
+        
+        self.visited.add(url)
+        domain = re.sub(r'^https?://(www\.)?', '', url).split('/')[0]
+
+        # 1. Skip known ad hosts
+        if any(ad in domain for ad in AD_HOSTS):
+            logger.info(f"[Depth {depth}] Skipping AD host: {url}")
+            return []
+
+        # 2. If it's a direct host, we're done (but we still return it as a result)
+        if any(direct in domain for direct in DIRECT_DOWNLOAD_HOSTS):
+            logger.info(f"[Depth {depth}] Found Direct Download: {url}")
+            return [{
+                "url": url,
+                "quality": "HD",
+                "name": "Direct Download",
+                "type": "Direct",
+                "source": url
+            }]
+
+        # 3. Handle potential mediators or search result pages
+        logger.info(f"[Depth {depth}] Resolving: {url}")
+        try:
+            await self.page.goto(url, wait_until="domcontentloaded", timeout=15000)
+            
+            # Auto-click verification buttons if present
+            await self._handle_verifications()
+            
+            # Wait for content to stabilize
+            await asyncio.sleep(2)
+            content = await self.page.content()
+            soup = BeautifulSoup(content, 'html.parser')
+            
+            discovered_links = []
+            for a in soup.find_all('a', href=True):
+                href = a['href']
+                text = a.get_text(strip=True)
+                
+                # Classify discovered link
+                disc_domain = re.sub(r'^https?://(www\.)?', '', href).split('/')[0]
+                
+                # If direct, add to results
+                if any(d in disc_domain for d in DIRECT_DOWNLOAD_HOSTS):
+                    discovered_links.append({
+                        "url": href,
+                        "quality": "HD",
+                        "name": text[:50] or "Direct Link",
+                        "type": "Direct",
+                        "source": url
+                    })
+                # If mediator, follow recursively
+                elif any(m in disc_domain for m in MEDIATOR_HOSTS) and depth < self.max_depth:
+                    logger.debug(f"Following mediator: {href}")
+                    links = await self.extract(href, depth + 1)
+                    discovered_links.extend(links)
+
+            return discovered_links
+
+        except Exception as e:
+            logger.warning(f"Error at depth {depth} for {url}: {e}")
+            return []
+
+    async def _handle_verifications(self):
+        """Handle common 'Verify Yourself' / 'Click to Continue' buttons."""
+        selectors = [
+            'button:has-text("Continue")',
+            'a:has-text("Continue")',
+            'button:has-text("Verify")',
+            'a:has-text("Verify")',
+            'button:has-text("Click here")',
+            '#verify_button',
+            '.btn-success',
+            'button:has-text("Direct Download")',
+        ]
+        
+        for selector in selectors:
+            try:
+                if await self.page.is_visible(selector, timeout=1000):
+                    logger.info(f"Clicking verification button: {selector}")
+                    await self.page.click(selector)
+                    await asyncio.sleep(1)
+            except:
+                continue
 
 
 # --- Movie Scraper ---
@@ -410,34 +509,37 @@ class MovieScraper:
         return unique_links
 
     async def extract_links_from_url(self, url: str) -> List[Dict]:
-        """Extract links: Try fast HTTP first, then fallback to Playwright."""
+        """Extract links: Try fast HTTP first, then fallback to Advanced Extractor."""
         # --- Tier 1: Fast HTTP Extraction ---
         try:
-            async with httpx.AsyncClient(headers={"User-Agent": USER_AGENT}, timeout=15.0) as client:
+            async with httpx.AsyncClient(headers={"User-Agent": USER_AGENT}, timeout=10.0) as client:
                 logger.info(f"Fast Extracting: {url}")
                 resp = await client.get(url, follow_redirects=True)
                 if resp.status_code == 200:
                     links = await self._parse_links_from_html(resp.text, url)
-                    if links:
-                        logger.info(f"Fast extraction success: {len(links)} links found")
-                        return links
+                    # Filter for direct links only if found in fast mode
+                    direct_links = [l for l in links if any(d in l['url'] for d in DIRECT_DOWNLOAD_HOSTS)]
+                    if direct_links:
+                        logger.info(f"Fast extraction success: {len(direct_links)} direct links found")
+                        return direct_links
         except Exception as e:
-            logger.warning(f"Fast extraction failed for {url}: {e}")
+            logger.debug(f"Fast extraction failed for {url}: {e}")
 
-        # --- Tier 2: Heavy Playwright Fallback ---
-        logger.info(f"Falling back to Playwright for: {url}")
+        # --- Tier 2: Advanced Playwright Extractor (Ad-Bypass) ---
+        logger.info(f"Falling back to Advanced Extractor for: {url}")
         context, page = await self._new_stealth_page()
         try:
-            await page.goto(url, wait_until="domcontentloaded", timeout=25000)
-            await asyncio.sleep(2)
-            for _ in range(2):
-                await page.evaluate("window.scrollBy(0, window.innerHeight)")
-                await asyncio.sleep(0.5)
-
-            content = await page.content()
-            return await self._parse_links_from_html(content, url)
+            extractor = AdvancedLinkExtractor(page, max_depth=2)
+            links = await extractor.extract(url)
+            
+            # Fallback to general parsing if advanced extractor found nothing (e.g. static site)
+            if not links:
+                content = await page.content()
+                links = await self._parse_links_from_html(content, url)
+            
+            return links
         except Exception as e:
-            logger.error(f"Playwright fallback error for {url}: {e}")
+            logger.error(f"Advanced extraction error for {url}: {e}")
             return []
         finally:
             await page.close()

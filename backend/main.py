@@ -198,6 +198,10 @@ async def generate_download_links(
     Generate download links for a movie via backend scraping.
     """
     try:
+        if tmdb_id <= 0:
+            logger.warning(f"Invalid TMDB ID received: {tmdb_id}")
+            raise HTTPException(status_code=400, detail="Invalid TMDB ID")
+            
         logger.info(f"Link request - Title: '{title}', TMDB ID: {tmdb_id}, Year: {year}")
         links = await scraper_instance.generate_download_links(tmdb_id, title, year)
 

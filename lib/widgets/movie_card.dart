@@ -37,27 +37,38 @@ class MovieCard extends StatelessWidget {
                 children: [
                   Hero(
                     tag: 'poster-${movie.title}',
-                    child: CachedNetworkImage(
-                      imageUrl: movie.fullPosterPath,
-                      width: 120,
-                      height: 180,
-                      memCacheWidth: 240, // Optimization
-                      fit: BoxFit.cover,
-                      placeholder: (context, url) => Shimmer.fromColors(
-                        baseColor: const Color(0xFF1E1E3A),
-                        highlightColor: const Color(0xFF2A2A4A),
-                        child: Container(width: 120, color: Colors.black),
-                      ),
-                      errorWidget: (context, url, error) => Container(
-                        width: 120,
-                        color: Colors.grey[900],
-                        child: const Icon(
-                          Icons.broken_image_outlined,
-                          color: Colors.white24,
-                          size: 40,
-                        ),
-                      ),
-                    ),
+                    child: movie.fullPosterPath.isNotEmpty
+                        ? CachedNetworkImage(
+                            imageUrl: movie.fullPosterPath,
+                            width: 120,
+                            height: 180,
+                            memCacheWidth: 240, // Optimization
+                            fit: BoxFit.cover,
+                            placeholder: (context, url) => Shimmer.fromColors(
+                              baseColor: const Color(0xFF1E1E3A),
+                              highlightColor: const Color(0xFF2A2A4A),
+                              child: Container(width: 120, color: Colors.black),
+                            ),
+                            errorWidget: (context, url, error) => Container(
+                              width: 120,
+                              color: Colors.grey[900],
+                              child: const Icon(
+                                Icons.broken_image_outlined,
+                                color: Colors.white24,
+                                size: 40,
+                              ),
+                            ),
+                          )
+                        : Container(
+                            width: 120,
+                            height: 180,
+                            color: Colors.grey[900],
+                            child: const Icon(
+                              Icons.movie_outlined,
+                              color: Colors.white24,
+                              size: 40,
+                            ),
+                          ),
                   ),
                   Positioned(
                     top: 10,

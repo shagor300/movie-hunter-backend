@@ -25,6 +25,7 @@ class _RecommendationsScreenState extends State<RecommendationsScreen> {
 
   List<_RecommendationSection> _sections = [];
   bool _isLoading = true;
+  bool _hasError = false;
 
   @override
   void initState() {
@@ -33,7 +34,10 @@ class _RecommendationsScreenState extends State<RecommendationsScreen> {
   }
 
   Future<void> _loadRecommendations() async {
-    setState(() => _isLoading = true);
+    setState(() {
+      _isLoading = true;
+      _hasError = false;
+    });
 
     final sections = <_RecommendationSection>[];
 
@@ -101,6 +105,7 @@ class _RecommendationsScreenState extends State<RecommendationsScreen> {
     setState(() {
       _sections = sections;
       _isLoading = false;
+      _hasError = sections.isEmpty;
     });
   }
 
@@ -143,7 +148,17 @@ class _RecommendationsScreenState extends State<RecommendationsScreen> {
       body: _isLoading
           ? _buildLoading()
           : _sections.isEmpty
-          ? _buildEmpty()
+          ? RefreshIndicator(
+              onRefresh: _loadRecommendations,
+              color: Colors.blueAccent,
+              child: ListView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                children: [
+                  SizedBox(height: MediaQuery.of(context).size.height * 0.3),
+                  _buildEmpty(),
+                ],
+              ),
+            )
           : RefreshIndicator(
               onRefresh: _loadRecommendations,
               color: Colors.blueAccent,
@@ -222,21 +237,32 @@ class _RecommendationsScreenState extends State<RecommendationsScreen> {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(
-            Icons.movie_filter,
+            _hasError ? Icons.wifi_off_rounded : Icons.movie_filter,
             size: 80,
             color: Colors.white.withOpacity(0.1),
           ),
           const SizedBox(height: 16),
           Text(
-            'No recommendations yet',
+            _hasError ? 'Something went wrong' : 'No recommendations yet',
             style: GoogleFonts.inter(color: Colors.white38, fontSize: 16),
           ),
           const SizedBox(height: 8),
-          TextButton(
+          Text(
+            _hasError
+                ? 'Check your internet connection'
+                : 'Watch some movies first!',
+            style: GoogleFonts.inter(color: Colors.white24, fontSize: 13),
+          ),
+          const SizedBox(height: 16),
+          ElevatedButton.icon(
             onPressed: _loadRecommendations,
-            child: Text(
-              'Try Again',
-              style: GoogleFonts.inter(color: Colors.blueAccent),
+            icon: const Icon(Icons.refresh, size: 18),
+            label: const Text('Try Again'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.blueAccent,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
             ),
           ),
         ],

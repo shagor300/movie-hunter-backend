@@ -69,6 +69,11 @@ class Movie {
 
   String get year => releaseDate.isNotEmpty ? releaseDate.split('-')[0] : 'N/A';
 
-  // For backward compatibility if needed, or just use tmdbPoster directly
-  String get fullPosterPath => tmdbPoster;
+  /// Returns the full poster URL, handling relative TMDB paths and empty values.
+  String get fullPosterPath {
+    if (tmdbPoster.isEmpty) return '';
+    if (tmdbPoster.startsWith('http')) return tmdbPoster;
+    // Relative TMDB path like "/abc123.jpg"
+    return 'https://image.tmdb.org/t/p/w500$tmdbPoster';
+  }
 }

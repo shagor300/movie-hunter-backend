@@ -51,12 +51,22 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
   Future<void> _initPlayer() async {
     try {
       if (widget.localFilePath != null && widget.localFilePath!.isNotEmpty) {
-        _videoController = VideoPlayerController.file(
-          File(widget.localFilePath!),
-        );
+        final file = File(widget.localFilePath!);
+        if (!await file.exists()) {
+          setState(() {
+            _errorMessage = 'Video file not found at:\n${widget.localFilePath}';
+            _isInitializing = false;
+          });
+          return;
+        }
+        _videoController = VideoPlayerController.file(file);
       } else if (widget.videoUrl.isNotEmpty) {
         _videoController = VideoPlayerController.networkUrl(
           Uri.parse(widget.videoUrl),
+          httpHeaders: const {
+            'User-Agent':
+                'Mozilla/5.0 (Linux; Android 13) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36',
+          },
         );
       } else {
         setState(() {
@@ -66,7 +76,16 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
         return;
       }
 
-      await _videoController.initialize();
+      await _videoController.initialize().timeout(
+        const Duration(seconds: 30),
+        onTimeout: () => throw Exception(
+          'Video took too long to load. The source may be unreachable.',
+        ),
+      );
+
+      if (!_videoController.value.isInitialized) {
+        throw Exception('Video source could not be initialized.');
+      }
 
       // Resume from saved position
       if (widget.tmdbId != null) {
@@ -126,7 +145,7 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
       setState(() => _isInitializing = false);
     } catch (e) {
       setState(() {
-        _errorMessage = 'Failed to initialize player: $e';
+        _errorMessage = 'Failed to play video:\n$e';
         _isInitializing = false;
       });
     }

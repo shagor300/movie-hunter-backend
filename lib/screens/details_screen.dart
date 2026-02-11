@@ -27,6 +27,13 @@ class _DetailsScreenState extends State<DetailsScreen> {
   final DownloadController _downloadController = Get.find<DownloadController>();
 
   @override
+  void initState() {
+    super.initState();
+    // Clear old links so a new movie starts fresh
+    _linkController.clearData();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFF0F0F1E),
@@ -413,7 +420,22 @@ class _DetailsScreenState extends State<DetailsScreen> {
                 tooltip: 'Stream',
                 onPressed: () {
                   final url = link['url'] ?? '';
-                  if (url.isEmpty) return;
+                  if (url.isEmpty || !url.startsWith('http')) {
+                    Get.snackbar(
+                      'Invalid Link',
+                      'This link cannot be streamed directly.',
+                      snackPosition: SnackPosition.BOTTOM,
+                      backgroundColor: Colors.redAccent.withOpacity(0.8),
+                      colorText: Colors.white,
+                      margin: const EdgeInsets.all(20),
+                      duration: const Duration(seconds: 2),
+                      icon: const Icon(
+                        Icons.error_outline,
+                        color: Colors.white,
+                      ),
+                    );
+                    return;
+                  }
                   Navigator.push(
                     context,
                     MaterialPageRoute(

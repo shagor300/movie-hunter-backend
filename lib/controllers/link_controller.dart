@@ -12,6 +12,9 @@ class LinkController extends GetxController {
   var links = <Map<String, String>>[].obs;
   var currentProgress = 0.0.obs;
 
+  /// Tracks which movie's links are currently loaded.
+  int? _currentTmdbId;
+
   final List<String> _loadingMessages = [
     "Connecting to YoMovies server...",
     "Searching HDHub4u for 4K quality...",
@@ -29,6 +32,12 @@ class LinkController extends GetxController {
     required String title,
     String? year,
   }) async {
+    // Clear stale links if switching to a different movie
+    if (_currentTmdbId != tmdbId) {
+      links.clear();
+    }
+    _currentTmdbId = tmdbId;
+
     isLoading.value = true;
     hasError.value = false;
     errorMessage.value = "";
@@ -81,6 +90,15 @@ class LinkController extends GetxController {
 
   void retryFetch({required int tmdbId, required String title, String? year}) {
     fetchLinks(tmdbId: tmdbId, title: title, year: year);
+  }
+
+  /// Explicitly clear all links and tracking state (call when opening a new movie).
+  void clearData() {
+    links.clear();
+    _currentTmdbId = null;
+    hasError.value = false;
+    errorMessage.value = "";
+    currentProgress.value = 0.0;
   }
 
   @override

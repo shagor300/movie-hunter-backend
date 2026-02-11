@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'search_screen.dart';
+import 'home_screen.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -41,7 +41,7 @@ class _SplashScreenState extends State<SplashScreen>
         Navigator.of(context).pushReplacement(
           PageRouteBuilder(
             pageBuilder: (context, animation, secondaryAnimation) =>
-                const SearchScreen(),
+                const HomeScreen(),
             transitionsBuilder:
                 (context, animation, secondaryAnimation, child) {
                   return FadeTransition(opacity: animation, child: child);
@@ -81,12 +81,12 @@ class _SplashScreenState extends State<SplashScreen>
                         shape: BoxShape.circle,
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.blueAccent.withOpacity(0.3),
+                            color: Colors.blueAccent.withValues(alpha: 0.3),
                             blurRadius: 30,
                             spreadRadius: 5,
                           ),
                           BoxShadow(
-                            color: Colors.purpleAccent.withOpacity(0.2),
+                            color: Colors.purpleAccent.withValues(alpha: 0.2),
                             blurRadius: 50,
                             spreadRadius: 10,
                           ),

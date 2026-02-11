@@ -8,7 +8,9 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter/services.dart';
 import '../models/movie.dart';
 import '../controllers/link_controller.dart';
-import '../services/storage_service.dart';
+import '../controllers/watchlist_controller.dart';
+import '../controllers/download_controller.dart';
+import 'video_player_screen.dart';
 
 class DetailsScreen extends StatefulWidget {
   final Movie movie;
@@ -19,33 +21,10 @@ class DetailsScreen extends StatefulWidget {
 }
 
 class _DetailsScreenState extends State<DetailsScreen> {
-  final StorageService _storageService = StorageService();
   final LinkController _linkController = Get.put(LinkController());
-  bool _isInWatchlist = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _checkWatchlistStatus();
-  }
-
-  Future<void> _checkWatchlistStatus() async {
-    final watchlist = await _storageService.getWatchlist();
-    if (mounted) {
-      setState(() {
-        _isInWatchlist = watchlist.any((m) => m['title'] == widget.movie.title);
-      });
-    }
-  }
-
-  Future<void> _toggleWatchlist() async {
-    if (_isInWatchlist) {
-      await _storageService.removeFromWatchlist(widget.movie.title);
-    } else {
-      await _storageService.addToWatchlist(widget.movie);
-    }
-    _checkWatchlistStatus();
-  }
+  final WatchlistController _watchlistController =
+      Get.find<WatchlistController>();
+  final DownloadController _downloadController = Get.find<DownloadController>();
 
   @override
   Widget build(BuildContext context) {
@@ -69,13 +48,20 @@ class _DetailsScreenState extends State<DetailsScreen> {
                   onPressed: () => Navigator.pop(context),
                 ),
                 actions: [
-                  IconButton(
-                    icon: Icon(
-                      _isInWatchlist ? Icons.bookmark : Icons.bookmark_border,
-                      color: Colors.amber,
-                    ),
-                    onPressed: _toggleWatchlist,
-                  ),
+                  // Watchlist toggle
+                  Obx(() {
+                    final isIn = _watchlistController.isInWatchlist(
+                      widget.movie.tmdbId,
+                    );
+                    return IconButton(
+                      icon: Icon(
+                        isIn ? Icons.bookmark : Icons.bookmark_border,
+                        color: Colors.amber,
+                      ),
+                      onPressed: () =>
+                          _watchlistController.toggleWatchlist(widget.movie),
+                    );
+                  }),
                 ],
                 flexibleSpace: FlexibleSpaceBar(
                   background: Stack(
@@ -96,7 +82,7 @@ class _DetailsScreenState extends State<DetailsScreen> {
                             end: Alignment.bottomCenter,
                             colors: [
                               Colors.transparent,
-                              const Color(0xFF0F0F1E).withOpacity(0.5),
+                              const Color(0xFF0F0F1E).withValues(alpha: 0.5),
                               const Color(0xFF0F0F1E),
                             ],
                           ),
@@ -215,9 +201,9 @@ class _DetailsScreenState extends State<DetailsScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.15),
+        color: color.withValues(alpha: 0.15),
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: color.withOpacity(0.3)),
+        border: Border.all(color: color.withValues(alpha: 0.3)),
       ),
       child: Text(
         label,
@@ -241,7 +227,7 @@ class _DetailsScreenState extends State<DetailsScreen> {
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.blueAccent.withOpacity(0.3),
+            color: Colors.blueAccent.withValues(alpha: 0.3),
             blurRadius: 15,
             offset: const Offset(0, 5),
           ),
@@ -273,7 +259,7 @@ class _DetailsScreenState extends State<DetailsScreen> {
     return BackdropFilter(
       filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
       child: Container(
-        color: Colors.black.withOpacity(0.8),
+        color: Colors.black.withValues(alpha: 0.8),
         width: double.infinity,
         height: double.infinity,
         child: Column(
@@ -386,7 +372,7 @@ class _DetailsScreenState extends State<DetailsScreen> {
       child: Container(
         margin: const EdgeInsets.only(bottom: 12),
         decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.05),
+          color: Colors.white.withValues(alpha: 0.05),
           borderRadius: BorderRadius.circular(16),
           border: Border.all(color: Colors.white10),
         ),
@@ -398,7 +384,7 @@ class _DetailsScreenState extends State<DetailsScreen> {
           leading: Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: Colors.blueAccent.withOpacity(0.1),
+              color: Colors.blueAccent.withValues(alpha: 0.1),
               shape: BoxShape.circle,
             ),
             child: const Icon(Icons.cloud_download, color: Colors.blueAccent),
@@ -414,20 +400,83 @@ class _DetailsScreenState extends State<DetailsScreen> {
             "Quality: ${link['quality']}",
             style: GoogleFonts.inter(color: Colors.white54, fontSize: 12),
           ),
-          trailing: IconButton(
-            icon: const Icon(Icons.copy, color: Colors.white24, size: 18),
-            onPressed: () {
-              Clipboard.setData(ClipboardData(text: link['url'] ?? ""));
-              Get.snackbar(
-                "Link Copied",
-                "Ready to paste in your browser",
-                snackPosition: SnackPosition.BOTTOM,
-                backgroundColor: Colors.blueAccent.withOpacity(0.8),
-                colorText: Colors.white,
-                margin: const EdgeInsets.all(20),
-                duration: const Duration(seconds: 2),
-              );
-            },
+          trailing: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Stream/Play button
+              IconButton(
+                icon: const Icon(
+                  Icons.play_circle_outline,
+                  color: Colors.greenAccent,
+                  size: 22,
+                ),
+                tooltip: 'Stream',
+                onPressed: () {
+                  final url = link['url'] ?? '';
+                  if (url.isEmpty) return;
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => VideoPlayerScreen(
+                        videoUrl: url,
+                        tmdbId: widget.movie.tmdbId,
+                        movieTitle: widget.movie.title,
+                        posterUrl: widget.movie.fullPosterPath,
+                      ),
+                    ),
+                  );
+                },
+              ),
+              // Download button
+              IconButton(
+                icon: const Icon(
+                  Icons.download_rounded,
+                  color: Colors.blueAccent,
+                  size: 22,
+                ),
+                tooltip: 'Download',
+                onPressed: () {
+                  final url = link['url'] ?? '';
+                  if (url.isEmpty) return;
+
+                  _downloadController.startDownload(
+                    url: url,
+                    filename:
+                        '${widget.movie.title}_${link['quality'] ?? 'HD'}.mp4',
+                    tmdbId: widget.movie.tmdbId,
+                    quality: link['quality'],
+                    movieTitle: widget.movie.title,
+                  );
+
+                  Get.snackbar(
+                    "Download Started",
+                    "Check the Downloads tab for progress",
+                    snackPosition: SnackPosition.BOTTOM,
+                    backgroundColor: Colors.green.withValues(alpha: 0.8),
+                    colorText: Colors.white,
+                    margin: const EdgeInsets.all(20),
+                    duration: const Duration(seconds: 2),
+                    icon: const Icon(Icons.download_done, color: Colors.white),
+                  );
+                },
+              ),
+              // Copy button
+              IconButton(
+                icon: const Icon(Icons.copy, color: Colors.white24, size: 18),
+                onPressed: () {
+                  Clipboard.setData(ClipboardData(text: link['url'] ?? ""));
+                  Get.snackbar(
+                    "Link Copied",
+                    "Ready to paste in your browser",
+                    snackPosition: SnackPosition.BOTTOM,
+                    backgroundColor: Colors.blueAccent.withValues(alpha: 0.8),
+                    colorText: Colors.white,
+                    margin: const EdgeInsets.all(20),
+                    duration: const Duration(seconds: 2),
+                  );
+                },
+              ),
+            ],
           ),
           onTap: () async {
             final url = Uri.parse(link['url'] ?? "");

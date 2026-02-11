@@ -196,7 +196,7 @@ class _SearchScreenState extends State<SearchScreen> {
               height: 300,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: Colors.blueAccent.withValues(alpha: 0.15),
+                color: Colors.blueAccent.withOpacity(0.15),
               ),
               child: BackdropFilter(
                 filter: ImageFilter.blur(sigmaX: 100, sigmaY: 100),
@@ -219,10 +219,10 @@ class _SearchScreenState extends State<SearchScreen> {
                     filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
                     child: Container(
                       decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.05),
+                        color: Colors.white.withOpacity(0.05),
                         borderRadius: BorderRadius.circular(20),
                         border: Border.all(
-                          color: Colors.white.withValues(alpha: 0.1),
+                          color: Colors.white.withOpacity(0.1),
                           width: 1.5,
                         ),
                       ),
@@ -327,9 +327,9 @@ class _SearchScreenState extends State<SearchScreen> {
                   genre,
                   style: GoogleFonts.inter(color: Colors.white, fontSize: 12),
                 ),
-                backgroundColor: Colors.blueAccent.withValues(alpha: 0.2),
+                backgroundColor: Colors.blueAccent.withOpacity(0.2),
                 deleteIconColor: Colors.white54,
-                side: BorderSide(color: Colors.blueAccent.withValues(alpha: 0.3)),
+                side: BorderSide(color: Colors.blueAccent.withOpacity(0.3)),
                 onDeleted: () {
                   setState(() => _selectedGenres.remove(genre));
                   if (_searchController.text.isNotEmpty) {
@@ -347,9 +347,9 @@ class _SearchScreenState extends State<SearchScreen> {
                   _selectedYear!,
                   style: GoogleFonts.inter(color: Colors.white, fontSize: 12),
                 ),
-                backgroundColor: Colors.purpleAccent.withValues(alpha: 0.2),
+                backgroundColor: Colors.purpleAccent.withOpacity(0.2),
                 deleteIconColor: Colors.white54,
-                side: BorderSide(color: Colors.purpleAccent.withValues(alpha: 0.3)),
+                side: BorderSide(color: Colors.purpleAccent.withOpacity(0.3)),
                 onDeleted: () {
                   setState(() => _selectedYear = null);
                   if (_searchController.text.isNotEmpty) {
@@ -366,9 +366,9 @@ class _SearchScreenState extends State<SearchScreen> {
                   '${_minRating.toInt()}+ ⭐',
                   style: GoogleFonts.inter(color: Colors.white, fontSize: 12),
                 ),
-                backgroundColor: Colors.amber.withValues(alpha: 0.2),
+                backgroundColor: Colors.amber.withOpacity(0.2),
                 deleteIconColor: Colors.white54,
-                side: BorderSide(color: Colors.amber.withValues(alpha: 0.3)),
+                side: BorderSide(color: Colors.amber.withOpacity(0.3)),
                 onDeleted: () {
                   setState(() => _minRating = 0);
                   if (_searchController.text.isNotEmpty) {
@@ -383,9 +383,9 @@ class _SearchScreenState extends State<SearchScreen> {
                 _selectedLanguage!,
                 style: GoogleFonts.inter(color: Colors.white, fontSize: 12),
               ),
-              backgroundColor: Colors.greenAccent.withValues(alpha: 0.2),
+              backgroundColor: Colors.greenAccent.withOpacity(0.2),
               deleteIconColor: Colors.white54,
-              side: BorderSide(color: Colors.greenAccent.withValues(alpha: 0.3)),
+              side: BorderSide(color: Colors.greenAccent.withOpacity(0.3)),
               onDeleted: () {
                 setState(() => _selectedLanguage = null);
                 if (_searchController.text.isNotEmpty) {

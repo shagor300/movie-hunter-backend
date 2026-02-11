@@ -224,7 +224,7 @@ class _RecommendationsScreenState extends State<RecommendationsScreen> {
           Icon(
             Icons.movie_filter,
             size: 80,
-            color: Colors.white.withValues(alpha: 0.1),
+            color: Colors.white.withOpacity(0.1),
           ),
           const SizedBox(height: 16),
           Text(
@@ -333,7 +333,7 @@ class _RecommendationsScreenState extends State<RecommendationsScreen> {
                             vertical: 2,
                           ),
                           decoration: BoxDecoration(
-                            color: Colors.black.withValues(alpha: 0.7),
+                            color: Colors.black.withOpacity(0.7),
                             borderRadius: BorderRadius.circular(6),
                           ),
                           child: Row(

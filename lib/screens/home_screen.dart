@@ -30,11 +30,11 @@ class _HomeScreenState extends State<HomeScreen> {
         decoration: BoxDecoration(
           color: Theme.of(context).colorScheme.surface,
           border: Border(
-            top: BorderSide(color: Colors.white.withValues(alpha: 0.05), width: 1),
+            top: BorderSide(color: Colors.white.withOpacity(0.05), width: 1),
           ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.3),
+              color: Colors.black.withOpacity(0.3),
               blurRadius: 20,
               offset: const Offset(0, -5),
             ),

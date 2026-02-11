@@ -70,7 +70,7 @@ class DownloadsScreen extends StatelessWidget {
           Icon(
             Icons.download_rounded,
             size: 100,
-            color: Colors.white.withValues(alpha: 0.1),
+            color: Colors.white.withOpacity(0.1),
           ),
           const SizedBox(height: 20),
           Text(
@@ -106,7 +106,7 @@ class DownloadsScreen extends StatelessWidget {
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
           decoration: BoxDecoration(
-            color: Colors.blueAccent.withValues(alpha: 0.2),
+            color: Colors.blueAccent.withOpacity(0.2),
             borderRadius: BorderRadius.circular(10),
           ),
           child: Text(
@@ -156,9 +156,9 @@ class DownloadsScreen extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.05),
+        color: Colors.white.withOpacity(0.05),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+        border: Border.all(color: Colors.white.withOpacity(0.08)),
       ),
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -170,7 +170,7 @@ class DownloadsScreen extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: statusColor.withValues(alpha: 0.1),
+                    color: statusColor.withOpacity(0.1),
                     shape: BoxShape.circle,
                   ),
                   child: Icon(statusIcon, color: statusColor, size: 22),

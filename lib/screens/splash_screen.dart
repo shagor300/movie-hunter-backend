@@ -81,12 +81,12 @@ class _SplashScreenState extends State<SplashScreen>
                         shape: BoxShape.circle,
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.blueAccent.withValues(alpha: 0.3),
+                            color: Colors.blueAccent.withOpacity(0.3),
                             blurRadius: 30,
                             spreadRadius: 5,
                           ),
                           BoxShadow(
-                            color: Colors.purpleAccent.withValues(alpha: 0.2),
+                            color: Colors.purpleAccent.withOpacity(0.2),
                             blurRadius: 50,
                             spreadRadius: 10,
                           ),
@@ -95,18 +95,29 @@ class _SplashScreenState extends State<SplashScreen>
                       child: Stack(
                         alignment: Alignment.center,
                         children: [
-                          // Stylized M with Play Button Triangle concept
-                          ShaderMask(
-                            shaderCallback: (bounds) => const LinearGradient(
-                              colors: [Colors.blueAccent, Colors.purpleAccent],
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                            ).createShader(bounds),
-                            child: const Icon(
-                              Icons.play_circle_filled,
-                              size: 100,
-                              color: Colors.white,
-                            ),
+                          // App Logo with Fallback
+                          Image.asset(
+                            'assets/images/moviehub_logo.png',
+                            width: 100,
+                            height: 100,
+                            errorBuilder: (context, error, stackTrace) {
+                              return ShaderMask(
+                                shaderCallback: (bounds) =>
+                                    const LinearGradient(
+                                      colors: [
+                                        Colors.blueAccent,
+                                        Colors.purpleAccent,
+                                      ],
+                                      begin: Alignment.topLeft,
+                                      end: Alignment.bottomRight,
+                                    ).createShader(bounds),
+                                child: const Icon(
+                                  Icons.play_circle_filled,
+                                  size: 100,
+                                  color: Colors.white,
+                                ),
+                              );
+                            },
                           ),
                         ],
                       ),

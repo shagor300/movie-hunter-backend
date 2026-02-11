@@ -87,9 +87,9 @@ class ContinueWatchingSection extends StatelessWidget {
         width: 220,
         margin: const EdgeInsets.only(right: 14),
         decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.05),
+          color: Colors.white.withOpacity(0.05),
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+          border: Border.all(color: Colors.white.withOpacity(0.08)),
         ),
         child: ClipRRect(
           borderRadius: BorderRadius.circular(14),
@@ -131,7 +131,7 @@ class ContinueWatchingSection extends StatelessWidget {
                       child: Container(
                         padding: const EdgeInsets.all(10),
                         decoration: BoxDecoration(
-                          color: Colors.black.withValues(alpha: 0.6),
+                          color: Colors.black.withOpacity(0.6),
                           shape: BoxShape.circle,
                         ),
                         child: const Icon(
@@ -151,7 +151,7 @@ class ContinueWatchingSection extends StatelessWidget {
                           vertical: 3,
                         ),
                         decoration: BoxDecoration(
-                          color: Colors.black.withValues(alpha: 0.7),
+                          color: Colors.black.withOpacity(0.7),
                           borderRadius: BorderRadius.circular(4),
                         ),
                         child: Text(

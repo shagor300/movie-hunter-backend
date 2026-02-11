@@ -134,7 +134,7 @@ class CustomizationScreen extends StatelessWidget {
             boxShadow: isSelected
                 ? [
                     BoxShadow(
-                      color: accent.withValues(alpha: 0.2),
+                      color: accent.withOpacity(0.2),
                       blurRadius: 8,
                     ),
                   ]
@@ -185,7 +185,7 @@ class CustomizationScreen extends StatelessWidget {
               boxShadow: isSelected
                   ? [
                       BoxShadow(
-                        color: color.withValues(alpha: 0.5),
+                        color: color.withOpacity(0.5),
                         blurRadius: 10,
                       ),
                     ]
@@ -211,7 +211,7 @@ class CustomizationScreen extends StatelessWidget {
             activeTrackColor: controller.accentColor,
             inactiveTrackColor: Colors.white10,
             thumbColor: controller.accentColor,
-            overlayColor: controller.accentColor.withValues(alpha: 0.2),
+            overlayColor: controller.accentColor.withOpacity(0.2),
           ),
           child: Slider(
             value: prefs.fontSize,
@@ -283,7 +283,7 @@ class CustomizationScreen extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.05),
+        color: Colors.white.withOpacity(0.05),
         borderRadius: BorderRadius.circular(14),
       ),
       child: SwitchListTile(
@@ -311,7 +311,7 @@ class CustomizationScreen extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.05),
+        color: Colors.white.withOpacity(0.05),
         borderRadius: BorderRadius.circular(14),
       ),
       child: Row(
@@ -336,8 +336,8 @@ class CustomizationScreen extends StatelessWidget {
                   height: 36,
                   decoration: BoxDecoration(
                     color: isSelected
-                        ? Colors.blueAccent.withValues(alpha: 0.2)
-                        : Colors.white.withValues(alpha: 0.05),
+                        ? Colors.blueAccent.withOpacity(0.2)
+                        : Colors.white.withOpacity(0.05),
                     borderRadius: BorderRadius.circular(10),
                     border: Border.all(
                       color: isSelected ? Colors.blueAccent : Colors.white10,
@@ -367,7 +367,7 @@ class CustomizationScreen extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.05),
+        color: Colors.white.withOpacity(0.05),
         borderRadius: BorderRadius.circular(16),
       ),
       child: Column(
@@ -383,16 +383,16 @@ class CustomizationScreen extends StatelessWidget {
                   ),
                   height: prefs.useGridLayout ? 120 : 60,
                   decoration: BoxDecoration(
-                    color: controller.accentColor.withValues(alpha: 0.15),
+                    color: controller.accentColor.withOpacity(0.15),
                     borderRadius: BorderRadius.circular(radius),
                     border: Border.all(
-                      color: controller.accentColor.withValues(alpha: 0.3),
+                      color: controller.accentColor.withOpacity(0.3),
                     ),
                   ),
                   child: Center(
                     child: Icon(
                       Icons.movie,
-                      color: controller.accentColor.withValues(alpha: 0.5),
+                      color: controller.accentColor.withOpacity(0.5),
                     ),
                   ),
                 ),

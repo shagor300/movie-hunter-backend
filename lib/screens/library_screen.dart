@@ -136,11 +136,11 @@ class _LibraryScreenState extends State<LibraryScreen>
       onLongPress: () => _showOptionsSheet(movie, controller),
       child: Container(
         decoration: BoxDecoration(
-          color: const Color(0xFF1E1E3A).withValues(alpha: 0.8),
+          color: const Color(0xFF1E1E3A).withOpacity(0.8),
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.3),
+              color: Colors.black.withOpacity(0.3),
               blurRadius: 8,
               offset: const Offset(0, 4),
             ),
@@ -194,7 +194,7 @@ class _LibraryScreenState extends State<LibraryScreen>
                           vertical: 3,
                         ),
                         decoration: BoxDecoration(
-                          color: Colors.black.withValues(alpha: 0.7),
+                          color: Colors.black.withOpacity(0.7),
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Row(
@@ -226,7 +226,7 @@ class _LibraryScreenState extends State<LibraryScreen>
                         child: Container(
                           padding: const EdgeInsets.all(4),
                           decoration: BoxDecoration(
-                            color: Colors.black.withValues(alpha: 0.7),
+                            color: Colors.black.withOpacity(0.7),
                             shape: BoxShape.circle,
                           ),
                           child: const Icon(
@@ -429,7 +429,7 @@ class _LibraryScreenState extends State<LibraryScreen>
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(icon, size: 80, color: Colors.white.withValues(alpha: 0.1)),
+          Icon(icon, size: 80, color: Colors.white.withOpacity(0.1)),
           const SizedBox(height: 16),
           Text(
             message,

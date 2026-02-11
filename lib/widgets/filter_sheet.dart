@@ -129,12 +129,12 @@ class _FilterSheetState extends State<FilterSheet> {
                         ),
                       ),
                       selected: selected,
-                      selectedColor: Colors.blueAccent.withValues(alpha: 0.3),
+                      selectedColor: Colors.blueAccent.withOpacity(0.3),
                       checkmarkColor: Colors.blueAccent,
-                      backgroundColor: Colors.white.withValues(alpha: 0.05),
+                      backgroundColor: Colors.white.withOpacity(0.05),
                       side: BorderSide(
                         color: selected
-                            ? Colors.blueAccent.withValues(alpha: 0.5)
+                            ? Colors.blueAccent.withOpacity(0.5)
                             : Colors.white10,
                       ),
                       onSelected: (value) {
@@ -157,7 +157,7 @@ class _FilterSheetState extends State<FilterSheet> {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.05),
+                    color: Colors.white.withOpacity(0.05),
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(color: Colors.white10),
                   ),
@@ -191,7 +191,7 @@ class _FilterSheetState extends State<FilterSheet> {
                     activeTrackColor: Colors.blueAccent,
                     inactiveTrackColor: Colors.white10,
                     thumbColor: Colors.blueAccent,
-                    overlayColor: Colors.blueAccent.withValues(alpha: 0.2),
+                    overlayColor: Colors.blueAccent.withOpacity(0.2),
                     valueIndicatorColor: Colors.blueAccent,
                     valueIndicatorTextStyle: GoogleFonts.inter(
                       color: Colors.white,
@@ -225,11 +225,11 @@ class _FilterSheetState extends State<FilterSheet> {
                         ),
                       ),
                       selected: _selectedLanguage == lang,
-                      selectedColor: Colors.blueAccent.withValues(alpha: 0.3),
-                      backgroundColor: Colors.white.withValues(alpha: 0.05),
+                      selectedColor: Colors.blueAccent.withOpacity(0.3),
+                      backgroundColor: Colors.white.withOpacity(0.05),
                       side: BorderSide(
                         color: _selectedLanguage == lang
-                            ? Colors.blueAccent.withValues(alpha: 0.5)
+                            ? Colors.blueAccent.withOpacity(0.5)
                             : Colors.white10,
                       ),
                       onSelected: (selected) {

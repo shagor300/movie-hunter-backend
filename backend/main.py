@@ -4,11 +4,12 @@ import re
 import logging
 from fastapi import FastAPI, HTTPException, Query, Path
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, HttpUrl
 from typing import Optional, List
 from contextlib import asynccontextmanager
 from scraper import scraper_instance, tmdb_helper, DOMAINS
 from hdhub4u_homepage_scraper import HDHub4uScraper
+from hubdrive_resolver import DownloadLinkResolver
 from bs4 import BeautifulSoup
 
 # Configure logging
@@ -24,6 +25,9 @@ logger = logging.getLogger(__name__)
 # HDHub4u homepage scraper (shares browser with scraper_instance)
 hdhub4u_scraper = HDHub4uScraper(scraper_instance)
 
+# Download link resolver (shares browser with scraper_instance)
+download_resolver = DownloadLinkResolver(max_concurrent=2)
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -31,7 +35,10 @@ async def lifespan(app: FastAPI):
     logger.info("Starting up application...")
     try:
         await scraper_instance.startup()
+        # Share the browser with the download resolver
+        download_resolver.set_browser(scraper_instance.browser)
         logger.info("HDHub4u scraper initialized (shared browser)")
+        logger.info("Download link resolver initialized (shared browser)")
         logger.info("Application startup complete")
         yield
     finally:
@@ -91,6 +98,12 @@ class HealthResponse(BaseModel):
     message: str
     tmdb_enabled: bool
     scraper_sources: int
+
+
+class ResolveDownloadRequest(BaseModel):
+    """Request model for download link resolution."""
+    url: str = Field(..., description="Intermediate download URL (HubDrive, GoFile, etc.)")
+    quality: str = Field("1080p", description="Requested quality (for logging)")
 
 
 # --- Helper ---
@@ -333,6 +346,60 @@ async def browse_latest_movies(
     except Exception as e:
         logger.error(f"Browse error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+
+# --- Download Link Resolution ---
+
+@app.post("/api/resolve-download-link")
+async def resolve_download_link(request: ResolveDownloadRequest):
+    """
+    Resolve an intermediate download link to a final direct file URL.
+
+    Automates the manual browser steps:
+    1. Navigate to file host page
+    2. Click "Direct/Instant Download" button
+    3. Wait for countdown timer
+    4. Extract final download URL
+    """
+    try:
+        logger.info(f"Resolving download link: {request.url}")
+        result = await download_resolver.resolve_download_link(str(request.url))
+
+        if result["success"]:
+            logger.info(f"Successfully resolved: {result.get('filename')}")
+            return {
+                "status": "success",
+                "direct_url": result["direct_url"],
+                "filename": result.get("filename"),
+                "filesize": result.get("filesize"),
+                "original_url": str(request.url),
+            }
+        else:
+            logger.error(f"Resolution failed: {result.get('error')}")
+            raise HTTPException(
+                status_code=400,
+                detail={
+                    "status": "failed",
+                    "error": result.get("error", "Unknown error"),
+                    "original_url": str(request.url),
+                },
+            )
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Unexpected resolution error: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail={"status": "error", "error": str(e), "original_url": str(request.url)},
+        )
+
+
+@app.get("/api/test-resolver")
+async def test_resolver():
+    """Debug: test the download resolver with a sample HubDrive link."""
+    test_url = "https://hubdrive.space/file/5220296218"
+    result = await download_resolver.resolve_download_link(test_url)
+    return {"test_url": test_url, "result": result}
 
 
 if __name__ == "__main__":

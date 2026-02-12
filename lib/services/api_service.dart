@@ -90,6 +90,56 @@ class ApiService {
     }
   }
 
+  /// Resolve an intermediate download link (HubDrive, GoFile, etc.)
+  /// to a final direct file URL via the backend resolver.
+  ///
+  /// The backend automates: navigate → click download → wait for countdown
+  /// → extract final URL. This can take 15–60 seconds.
+  Future<Map<String, dynamic>> resolveDownloadLink({
+    required String url,
+    String quality = '1080p',
+  }) async {
+    final uri = Uri.parse('$baseUrl/api/resolve-download-link');
+
+    try {
+      debugPrint('🔗 Resolving download link: $url');
+      final response = await http
+          .post(
+            uri,
+            headers: {'Content-Type': 'application/json'},
+            body: jsonEncode({'url': url, 'quality': quality}),
+          )
+          .timeout(const Duration(seconds: 90));
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (data['status'] == 'success') {
+          debugPrint('✅ Resolved to: ${data['direct_url']}');
+          return {
+            'success': true,
+            'directUrl': data['direct_url'],
+            'filename': data['filename'],
+            'filesize': data['filesize'],
+          };
+        }
+      }
+
+      // Non-200 or non-success
+      final errorBody = response.statusCode != 200
+          ? jsonDecode(response.body)
+          : {};
+      final errorMsg = errorBody is Map
+          ? (errorBody['detail'] is Map
+                ? errorBody['detail']['error']
+                : errorBody['detail'] ?? 'Resolution failed')
+          : 'Resolution failed';
+      return {'success': false, 'error': errorMsg.toString()};
+    } catch (e) {
+      debugPrint('❌ Resolution error: $e');
+      return {'success': false, 'error': e.toString()};
+    }
+  }
+
   /// Fetch trending movies from the backend `/trending` endpoint.
   Future<List<Map<String, dynamic>>> getTrending() async {
     final url = Uri.parse('$baseUrl/trending');

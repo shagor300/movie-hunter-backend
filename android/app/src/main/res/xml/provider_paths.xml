@@ -3,6 +3,9 @@
     <external-path
         name="external_files"
         path="." />
+    <external-path
+        name="external_download"
+        path="Download/MovieHub/" />
     <external-files-path
         name="external_files_path"
         path="." />

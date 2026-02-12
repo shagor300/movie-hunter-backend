@@ -513,28 +513,17 @@ class _DetailsScreenState extends State<DetailsScreen> {
                   size: 22,
                 ),
                 tooltip: 'Download',
-                onPressed: () {
+                onPressed: () async {
                   final url = link['url'] ?? '';
                   if (url.isEmpty) return;
 
-                  _downloadController.startDownload(
+                  await _downloadController.startDownload(
                     url: url,
                     filename:
                         '${widget.movie.title}_${link['quality'] ?? 'HD'}.mp4',
                     tmdbId: widget.movie.tmdbId,
                     quality: link['quality'],
                     movieTitle: widget.movie.title,
-                  );
-
-                  Get.snackbar(
-                    "Download Started",
-                    "Check the Downloads tab for progress",
-                    snackPosition: SnackPosition.BOTTOM,
-                    backgroundColor: Colors.green.withOpacity(0.8),
-                    colorText: Colors.white,
-                    margin: const EdgeInsets.all(20),
-                    duration: const Duration(seconds: 2),
-                    icon: const Icon(Icons.download_done, color: Colors.white),
                   );
                 },
               ),

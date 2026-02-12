@@ -91,9 +91,15 @@ class DownloadService {
 
   Future<bool> _requestPermissions() async {
     if (Platform.isAndroid) {
-      final storage = await Permission.storage.request();
+      // Request notification permission (Android 13+)
       final notification = await Permission.notification.request();
-      return storage.isGranted || notification.isGranted;
+
+      // Request storage permission (pre-Android 13)
+      final storage = await Permission.storage.request();
+
+      // On Android 13+ storage.request() returns permanently denied
+      // but downloads still work – so we only need notification or storage.
+      return notification.isGranted || storage.isGranted;
     }
     return true;
   }

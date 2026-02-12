@@ -19,6 +19,8 @@ class Movie {
   final String releaseDate;
   final double rating;
   final List<MovieSource> sources;
+  final String? hdhub4uUrl;
+  final String? hdhub4uTitle;
 
   Movie({
     this.tmdbId,
@@ -28,6 +30,8 @@ class Movie {
     required this.releaseDate,
     required this.rating,
     required this.sources,
+    this.hdhub4uUrl,
+    this.hdhub4uTitle,
   });
 
   factory Movie.fromJson(Map<String, dynamic> json) {
@@ -58,12 +62,15 @@ class Movie {
       plot: json['plot'] ?? json['overview'] ?? '',
       tmdbPoster:
           json['tmdb_poster'] ??
+          json['poster_url'] ??
           (json['poster_path'] != null
               ? 'https://image.tmdb.org/t/p/w500${json['poster_path']}'
               : ''),
       releaseDate: json['release_date'] ?? 'N/A',
       rating: (json['rating'] ?? json['vote_average'] ?? 0.0).toDouble(),
       sources: parsedSources,
+      hdhub4uUrl: json['hdhub4u_url'],
+      hdhub4uTitle: json['hdhub4u_title'],
     );
   }
 

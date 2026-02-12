@@ -37,11 +37,13 @@ class ApiService {
     required int tmdbId,
     required String title,
     String? year,
+    String? hdhub4uUrl,
   }) async {
     final queryParams = {
       'tmdb_id': tmdbId.toString(),
       'title': title,
       if (year != null) 'year': year,
+      if (hdhub4uUrl != null) 'hdhub4u_url': hdhub4uUrl,
     };
     final url = Uri.parse(
       '$baseUrl/links',
@@ -63,6 +65,27 @@ class ApiService {
       return [];
     } catch (e) {
       debugPrint('Error getting links: $e');
+      return [];
+    }
+  }
+
+  /// Fetch latest movies from HDHub4u via the `/browse/latest` endpoint.
+  Future<List<Map<String, dynamic>>> getLatestFromHDHub4u({
+    int maxResults = 50,
+  }) async {
+    final url = Uri.parse('$baseUrl/browse/latest?max_results=$maxResults');
+
+    try {
+      final response = await http.get(url).timeout(const Duration(seconds: 60));
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        return List<Map<String, dynamic>>.from(data['movies'] ?? []);
+      }
+      debugPrint('Browse latest API error: ${response.statusCode}');
+      return [];
+    } catch (e) {
+      debugPrint('Error fetching latest movies: $e');
       return [];
     }
   }

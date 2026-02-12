@@ -8,6 +8,7 @@ from pydantic import BaseModel, Field
 from typing import Optional, List
 from contextlib import asynccontextmanager
 from scraper import scraper_instance, tmdb_helper, DOMAINS
+from hdhub4u_homepage_scraper import HDHub4uScraper
 from bs4 import BeautifulSoup
 
 # Configure logging
@@ -20,12 +21,17 @@ logger = logging.getLogger(__name__)
 
 # --- Lifespan ---
 
+# HDHub4u homepage scraper (shares browser with scraper_instance)
+hdhub4u_scraper = HDHub4uScraper(scraper_instance)
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Application lifespan: start browser on startup, close on shutdown."""
     logger.info("Starting up application...")
     try:
         await scraper_instance.startup()
+        logger.info("HDHub4u scraper initialized (shared browser)")
         logger.info("Application startup complete")
         yield
     finally:
@@ -192,18 +198,24 @@ async def get_movie_details(
 async def generate_download_links(
     tmdb_id: int = Query(..., description="TMDB movie ID"),
     title: str = Query(..., description="Movie title for searching"),
-    year: Optional[str] = Query(None, description="Release year (optional)")
+    year: Optional[str] = Query(None, description="Release year (optional)"),
+    hdhub4u_url: Optional[str] = Query(None, description="Direct HDHub4u page URL (skips search)")
 ):
     """
     Generate download links for a movie via backend scraping.
+    If hdhub4u_url is provided, scrapes that page directly (faster).
     """
     try:
         if tmdb_id <= 0:
             logger.warning(f"Invalid TMDB ID received: {tmdb_id}")
             raise HTTPException(status_code=400, detail="Invalid TMDB ID")
-            
-        logger.info(f"Link request - Title: '{title}', TMDB ID: {tmdb_id}, Year: {year}")
-        links = await scraper_instance.generate_download_links(tmdb_id, title, year)
+
+        if hdhub4u_url:
+            logger.info(f"Link request (direct URL) - Title: '{title}', URL: {hdhub4u_url}")
+            links = await scraper_instance.extract_links_from_url(hdhub4u_url)
+        else:
+            logger.info(f"Link request - Title: '{title}', TMDB ID: {tmdb_id}, Year: {year}")
+            links = await scraper_instance.generate_download_links(tmdb_id, title, year)
 
         return {
             "url": f"tmdb_{tmdb_id}",
@@ -236,6 +248,26 @@ async def clear_cache(
         return {"message": f"Cache cleared for movie {tmdb_id}"}
     except Exception as e:
         logger.error(f"Cache clear error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/browse/latest")
+async def get_latest_from_hdhub4u(
+    max_results: int = Query(50, ge=10, le=100)
+):
+    """Get latest movies from HDHub4u homepage with TMDB data."""
+    try:
+        logger.info(f"Scraping HDHub4u homepage (max_results={max_results})...")
+        movies = await hdhub4u_scraper.scrape_homepage(max_movies=max_results)
+
+        logger.info(f"Scraped {len(movies)} movies from HDHub4u")
+        return {
+            "source": "HDHub4u",
+            "total": len(movies),
+            "movies": movies,
+        }
+    except Exception as e:
+        logger.error(f"Browse latest error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 

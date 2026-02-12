@@ -8,12 +8,14 @@ class ResolverService {
     required int tmdbId,
     required String title,
     String? year,
+    String? hdhub4uUrl,
   }) async {
     try {
       final links = await _apiService.getLinks(
         tmdbId: tmdbId,
         title: title,
         year: year,
+        hdhub4uUrl: hdhub4uUrl,
       );
       return links
           .map(

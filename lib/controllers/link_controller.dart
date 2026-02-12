@@ -31,6 +31,7 @@ class LinkController extends GetxController {
     required int tmdbId,
     required String title,
     String? year,
+    String? hdhub4uUrl,
   }) async {
     // Clear stale links if switching to a different movie
     if (_currentTmdbId != tmdbId) {
@@ -60,7 +61,12 @@ class LinkController extends GetxController {
     try {
       // Added timeout for reliability (60s for scraping)
       final results = await _resolverService
-          .resolveLinks(tmdbId: tmdbId, title: title, year: year)
+          .resolveLinks(
+            tmdbId: tmdbId,
+            title: title,
+            year: year,
+            hdhub4uUrl: hdhub4uUrl,
+          )
           .timeout(
             const Duration(seconds: 60),
             onTimeout: () => throw TimeoutException(
@@ -88,8 +94,18 @@ class LinkController extends GetxController {
     }
   }
 
-  void retryFetch({required int tmdbId, required String title, String? year}) {
-    fetchLinks(tmdbId: tmdbId, title: title, year: year);
+  void retryFetch({
+    required int tmdbId,
+    required String title,
+    String? year,
+    String? hdhub4uUrl,
+  }) {
+    fetchLinks(
+      tmdbId: tmdbId,
+      title: title,
+      year: year,
+      hdhub4uUrl: hdhub4uUrl,
+    );
   }
 
   /// Explicitly clear all links and tracking state (call when opening a new movie).

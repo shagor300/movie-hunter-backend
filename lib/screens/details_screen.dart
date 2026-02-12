@@ -245,6 +245,7 @@ class _DetailsScreenState extends State<DetailsScreen> {
           tmdbId: widget.movie.tmdbId ?? 0,
           title: widget.movie.title,
           year: widget.movie.year != 'N/A' ? widget.movie.year : null,
+          hdhub4uUrl: widget.movie.hdhub4uUrl,
         ),
         style: ElevatedButton.styleFrom(
           backgroundColor: Colors.transparent,
@@ -345,6 +346,7 @@ class _DetailsScreenState extends State<DetailsScreen> {
                       year: widget.movie.year != 'N/A'
                           ? widget.movie.year
                           : null,
+                      hdhub4uUrl: widget.movie.hdhub4uUrl,
                     ),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.blueAccent,

@@ -4,6 +4,7 @@ import 'search_screen.dart';
 import 'library_screen.dart';
 import 'downloads_screen.dart';
 import 'recommendations_screen.dart';
+import 'hdhub4u/hdhub4u_tab.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -18,6 +19,7 @@ class _HomeScreenState extends State<HomeScreen> {
   final _screens = const [
     SearchScreen(),
     RecommendationsScreen(),
+    HDHub4uTab(),
     LibraryScreen(),
     DownloadsScreen(),
   ];
@@ -61,6 +63,11 @@ class _HomeScreenState extends State<HomeScreen> {
               icon: Icon(Icons.auto_awesome_outlined),
               activeIcon: Icon(Icons.auto_awesome, size: 28),
               label: 'For You',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.fiber_new_outlined),
+              activeIcon: Icon(Icons.fiber_new, size: 28),
+              label: 'Latest',
             ),
             BottomNavigationBarItem(
               icon: Icon(Icons.video_library_outlined),

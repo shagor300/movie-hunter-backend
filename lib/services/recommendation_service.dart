@@ -6,7 +6,7 @@ import '../models/watchlist_movie.dart';
 import '../services/watchlist_service.dart';
 
 class RecommendationService {
-  static const String _apiKey = "05e5e579c17f5d2539dc6e19fbeac60f";
+  static const String _apiKey = "7efd8424c17ff5b3e8dc9cebf4a33f73";
   static const String _baseUrl = "https://api.themoviedb.org/3";
 
   final WatchlistService _watchlistService = WatchlistService();

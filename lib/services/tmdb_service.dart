@@ -4,7 +4,7 @@ import 'package:http/http.dart' as http;
 import '../models/movie.dart';
 
 class TmdbService {
-  static const String _apiKey = "05e5e579c17f5d2539dc6e19fbeac60f";
+  static const String _apiKey = "7efd8424c17ff5b3e8dc9cebf4a33f73";
   static const String _baseUrl = "https://api.themoviedb.org/3";
 
   Future<List<Movie>> searchMovies(String query) async {

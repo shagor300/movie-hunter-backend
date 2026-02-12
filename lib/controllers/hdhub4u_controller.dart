@@ -25,6 +25,12 @@ class HDHub4uController extends GetxController {
       final results = await _apiService.getLatestFromHDHub4u(maxResults: 50);
 
       movies.value = results.map((json) => Movie.fromJson(json)).toList();
+
+      if (movies.isEmpty) {
+        hasError.value = true;
+        errorMessage.value =
+            'No movies returned from server. The backend may still be deploying.';
+      }
     } catch (e) {
       hasError.value = true;
       errorMessage.value = e.toString();

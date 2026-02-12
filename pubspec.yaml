@@ -43,6 +43,6 @@ flutter:
 
 flutter_launcher_icons:
   android: "launcher_icon"
-  ios: true
-  image_path: "assets/images/moviehub_logo.png"
+  ios: false
+  image_path: "assets/images/moviehub_app_icon_1770564869942.jpg"
   min_sdk_android: 21

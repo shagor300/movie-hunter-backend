@@ -45,28 +45,82 @@ class _DetailsScreenState extends State<DetailsScreen> {
               SliverAppBar(
                 expandedHeight: 450,
                 pinned: true,
-                backgroundColor: const Color(0xFF0F0F1E),
+                stretch: true,
+                backgroundColor: Colors.transparent,
                 elevation: 0,
-                leading: IconButton(
-                  icon: const Icon(
-                    Icons.arrow_back_ios_new,
-                    color: Colors.white,
+                leading: Container(
+                  margin: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withOpacity(0.4),
+                    shape: BoxShape.circle,
                   ),
-                  onPressed: () => Navigator.pop(context),
+                  child: IconButton(
+                    icon: const Icon(
+                      Icons.arrow_back_ios_new,
+                      color: Colors.white,
+                      size: 20,
+                    ),
+                    onPressed: () => Navigator.pop(context),
+                  ),
                 ),
                 actions: [
-                  // Watchlist toggle
+                  // Favorite toggle
                   Obx(() {
                     final isIn = _watchlistController.isInWatchlist(
                       widget.movie.tmdbId,
                     );
-                    return IconButton(
-                      icon: Icon(
-                        isIn ? Icons.bookmark : Icons.bookmark_border,
-                        color: Colors.amber,
-                      ),
-                      onPressed: () =>
-                          _watchlistController.toggleWatchlist(widget.movie),
+                    final isFav = _watchlistController.isFavorite(
+                      widget.movie.tmdbId,
+                    );
+                    return Row(
+                      children: [
+                        Container(
+                          margin: const EdgeInsets.symmetric(horizontal: 4),
+                          decoration: BoxDecoration(
+                            color: Colors.black.withOpacity(0.4),
+                            shape: BoxShape.circle,
+                          ),
+                          child: IconButton(
+                            icon: Icon(
+                              isFav ? Icons.favorite : Icons.favorite_border,
+                              color: isFav ? Colors.redAccent : Colors.white,
+                              size: 22,
+                            ),
+                            tooltip: isFav
+                                ? 'Remove from Favorites'
+                                : 'Add to Favorites',
+                            onPressed: () {
+                              if (!isIn) {
+                                _watchlistController.toggleWatchlist(
+                                  widget.movie,
+                                );
+                              }
+                              _watchlistController.toggleFavorite(
+                                widget.movie.tmdbId ?? 0,
+                              );
+                            },
+                          ),
+                        ),
+                        Container(
+                          margin: const EdgeInsets.only(right: 8),
+                          decoration: BoxDecoration(
+                            color: Colors.black.withOpacity(0.4),
+                            shape: BoxShape.circle,
+                          ),
+                          child: IconButton(
+                            icon: Icon(
+                              isIn ? Icons.bookmark : Icons.bookmark_border,
+                              color: isIn ? Colors.amber : Colors.white,
+                              size: 22,
+                            ),
+                            tooltip: isIn
+                                ? 'Remove from Watchlist'
+                                : 'Add to Watchlist',
+                            onPressed: () => _watchlistController
+                                .toggleWatchlist(widget.movie),
+                          ),
+                        ),
+                      ],
                     );
                   }),
                 ],

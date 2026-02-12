@@ -46,6 +46,12 @@ class WatchlistController extends GetxController {
     return _service.isInWatchlist(tmdbId);
   }
 
+  bool isFavorite(int? tmdbId) {
+    if (tmdbId == null || tmdbId <= 0) return false;
+    final movie = allMovies.firstWhereOrNull((m) => m.tmdbId == tmdbId);
+    return movie?.favorite ?? false;
+  }
+
   List<WatchlistMovie> getByCategory(WatchlistCategory category) {
     return allMovies.where((m) => m.category == category).toList();
   }

@@ -21,6 +21,9 @@ class Movie {
   final List<MovieSource> sources;
   final String? hdhub4uUrl;
   final String? hdhub4uTitle;
+  final String? skyMoviesHDUrl;
+  final String? skyMoviesHDTitle;
+  final String sourceType; // 'hdhub4u' or 'skymovieshd'
 
   Movie({
     this.tmdbId,
@@ -32,6 +35,9 @@ class Movie {
     required this.sources,
     this.hdhub4uUrl,
     this.hdhub4uTitle,
+    this.skyMoviesHDUrl,
+    this.skyMoviesHDTitle,
+    this.sourceType = 'hdhub4u',
   });
 
   factory Movie.fromJson(Map<String, dynamic> json) {
@@ -71,6 +77,9 @@ class Movie {
       sources: parsedSources,
       hdhub4uUrl: json['hdhub4u_url'],
       hdhub4uTitle: json['hdhub4u_title'],
+      skyMoviesHDUrl: json['skymovieshd_url'] ?? json['url'],
+      skyMoviesHDTitle: json['skymovieshd_title'] ?? json['original_title'],
+      sourceType: json['source_type'] ?? 'hdhub4u',
     );
   }
 

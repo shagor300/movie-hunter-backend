@@ -2,8 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:video_player/video_player.dart';
-import 'package:chewie/chewie.dart';
+import 'package:better_player/better_player.dart';
 import 'dart:io';
 import '../controllers/video_player_controller.dart';
 
@@ -28,13 +27,13 @@ class VideoPlayerScreen extends StatefulWidget {
 }
 
 class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
-  late VideoPlayerController _videoController;
-  ChewieController? _chewieController;
+  BetterPlayerController? _betterPlayerController;
   final VideoPlayerGetxController _positionController =
       Get.find<VideoPlayerGetxController>();
 
   bool _isInitializing = true;
   String? _errorMessage;
+  Duration? _lastSavedPosition;
 
   @override
   void initState() {
@@ -50,6 +49,8 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
 
   Future<void> _initPlayer() async {
     try {
+      BetterPlayerDataSource dataSource;
+
       if (widget.localFilePath != null && widget.localFilePath!.isNotEmpty) {
         final file = File(widget.localFilePath!);
         if (!await file.exists()) {
@@ -59,13 +60,19 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
           });
           return;
         }
-        _videoController = VideoPlayerController.file(file);
+        dataSource = BetterPlayerDataSource(
+          BetterPlayerDataSourceType.file,
+          widget.localFilePath!,
+        );
       } else if (widget.videoUrl.isNotEmpty) {
-        _videoController = VideoPlayerController.networkUrl(
-          Uri.parse(widget.videoUrl),
-          httpHeaders: const {
+        dataSource = BetterPlayerDataSource(
+          BetterPlayerDataSourceType.network,
+          widget.videoUrl,
+          videoFormat: BetterPlayerVideoFormat.other,
+          headers: const {
             'User-Agent':
                 'Mozilla/5.0 (Linux; Android 13) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36',
+            'Referer': 'https://hdstream4u.com/',
           },
         );
       } else {
@@ -76,73 +83,99 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
         return;
       }
 
-      await _videoController.initialize().timeout(
-        const Duration(seconds: 30),
-        onTimeout: () => throw Exception(
-          'Video took too long to load. The source may be unreachable.',
-        ),
-      );
-
-      if (!_videoController.value.isInitialized) {
-        throw Exception('Video source could not be initialized.');
-      }
-
       // Resume from saved position
+      Duration? startAt;
       if (widget.tmdbId != null) {
         final savedPosition = _positionController.getPosition(widget.tmdbId!);
         if (savedPosition != null && savedPosition.positionMs > 0) {
-          await _videoController.seekTo(
-            Duration(milliseconds: savedPosition.positionMs),
-          );
+          startAt = Duration(milliseconds: savedPosition.positionMs);
         }
       }
 
-      _chewieController = ChewieController(
-        videoPlayerController: _videoController,
-        autoPlay: true,
-        looping: false,
-        allowFullScreen: true,
-        allowMuting: true,
-        showControls: true,
-        allowPlaybackSpeedChanging: true,
-        playbackSpeeds: const [0.5, 0.75, 1.0, 1.25, 1.5, 1.75, 2.0],
-        materialProgressColors: ChewieProgressColors(
-          playedColor: Colors.blueAccent,
-          handleColor: Colors.blueAccent,
-          backgroundColor: Colors.white24,
-          bufferedColor: Colors.white38,
-        ),
-        errorBuilder: (context, errorMessage) {
-          return Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Icon(Icons.error, color: Colors.redAccent, size: 60),
-                const SizedBox(height: 16),
-                Text(
-                  'Playback Error',
-                  style: GoogleFonts.poppins(
-                    color: Colors.white,
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
+      _betterPlayerController = BetterPlayerController(
+        BetterPlayerConfiguration(
+          // Player behavior
+          autoPlay: true,
+          looping: false,
+          fullScreenByDefault: false,
+          allowedScreenSleep: false,
+          startAt: startAt,
+
+          // Aspect ratio
+          aspectRatio: 16 / 9,
+          autoDetectFullscreenAspectRatio: true,
+          autoDetectFullscreenDeviceOrientation: true,
+          fit: BoxFit.contain,
+
+          // UI configuration
+          controlsConfiguration: BetterPlayerControlsConfiguration(
+            // Player controls
+            enablePlayPause: true,
+            enableMute: true,
+            enableFullscreen: true,
+            enablePip: true,
+            enableSkips: true,
+            enableProgressBar: true,
+            enableProgressText: true,
+            enableProgressBarDrag: true,
+            enableSubtitles: true,
+            enableQualities: true,
+            enablePlaybackSpeed: true,
+            enableOverflowMenu: true,
+            enableRetry: true,
+
+            // Skip durations
+            skipBackIcon: Icons.replay_10,
+            skipForwardIcon: Icons.forward_10,
+
+            // Colors (modern style)
+            progressBarPlayedColor: Colors.blueAccent,
+            progressBarHandleColor: Colors.blueAccent,
+            progressBarBufferedColor: Colors.white24,
+            progressBarBackgroundColor: Colors.white12,
+
+            // Control bar
+            controlBarHeight: 48,
+            iconsColor: Colors.white,
+
+            // Loading widget
+            loadingWidget: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const CircularProgressIndicator(color: Colors.blueAccent),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Loading video...',
+                    style: GoogleFonts.inter(color: Colors.white54),
                   ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  errorMessage,
-                  style: GoogleFonts.inter(color: Colors.white54),
-                  textAlign: TextAlign.center,
-                ),
-              ],
+                ],
+              ),
             ),
-          );
-        },
+          ),
+
+          // Buffering configuration
+          // Event listener
+          eventListener: (BetterPlayerEvent event) {
+            if (event.betterPlayerEventType ==
+                BetterPlayerEventType.initialized) {
+              setState(() => _isInitializing = false);
+            } else if (event.betterPlayerEventType ==
+                BetterPlayerEventType.progress) {
+              _onPositionChanged();
+            } else if (event.betterPlayerEventType ==
+                BetterPlayerEventType.exception) {
+              setState(() {
+                _errorMessage = 'Playback error occurred';
+                _isInitializing = false;
+              });
+            }
+          },
+        ),
+        betterPlayerDataSource: dataSource,
       );
 
-      // Periodic position save
-      _videoController.addListener(_onPositionChanged);
-
-      setState(() => _isInitializing = false);
+      setState(() {});
     } catch (e) {
       setState(() {
         _errorMessage = 'Failed to play video:\n$e';
@@ -153,13 +186,22 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
 
   void _onPositionChanged() {
     if (widget.tmdbId == null) return;
-    if (!_videoController.value.isInitialized) return;
+    if (_betterPlayerController == null) return;
 
-    final position = _videoController.value.position;
-    final duration = _videoController.value.duration;
+    final videoPlayerValue =
+        _betterPlayerController!.videoPlayerController?.value;
+    if (videoPlayerValue == null || !videoPlayerValue.initialized) return;
+
+    final position = videoPlayerValue.position;
+    final duration = videoPlayerValue.duration;
+    if (duration == null) return;
 
     // Save every 5 seconds of playback
-    if (position.inSeconds % 5 == 0 && position.inSeconds > 0) {
+    if (position.inSeconds % 5 == 0 &&
+        position.inSeconds > 0 &&
+        (_lastSavedPosition == null ||
+            (position - _lastSavedPosition!).inSeconds.abs() >= 4)) {
+      _lastSavedPosition = position;
       _positionController.savePosition(
         tmdbId: widget.tmdbId!,
         movieTitle: widget.movieTitle ?? 'Unknown',
@@ -175,21 +217,24 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
   @override
   void dispose() {
     // Save final position
-    if (widget.tmdbId != null && _videoController.value.isInitialized) {
-      _positionController.savePosition(
-        tmdbId: widget.tmdbId!,
-        movieTitle: widget.movieTitle ?? 'Unknown',
-        posterUrl: widget.posterUrl,
-        positionMs: _videoController.value.position.inMilliseconds,
-        durationMs: _videoController.value.duration.inMilliseconds,
-        videoUrl: widget.videoUrl.isNotEmpty ? widget.videoUrl : null,
-        localFilePath: widget.localFilePath,
-      );
+    if (widget.tmdbId != null && _betterPlayerController != null) {
+      final videoPlayerValue =
+          _betterPlayerController!.videoPlayerController?.value;
+      if (videoPlayerValue != null && videoPlayerValue.initialized) {
+        _positionController.savePosition(
+          tmdbId: widget.tmdbId!,
+          movieTitle: widget.movieTitle ?? 'Unknown',
+          posterUrl: widget.posterUrl,
+          positionMs: videoPlayerValue.position.inMilliseconds,
+          durationMs:
+              (videoPlayerValue.duration ?? Duration.zero).inMilliseconds,
+          videoUrl: widget.videoUrl.isNotEmpty ? widget.videoUrl : null,
+          localFilePath: widget.localFilePath,
+        );
+      }
     }
 
-    _videoController.removeListener(_onPositionChanged);
-    _chewieController?.dispose();
-    _videoController.dispose();
+    _betterPlayerController?.dispose();
 
     SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
@@ -200,7 +245,7 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.black,
-      body: _isInitializing
+      body: _isInitializing && _betterPlayerController == null
           ? _buildLoading()
           : _errorMessage != null
           ? _buildError()
@@ -268,8 +313,8 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
     return Stack(
       children: [
         Center(
-          child: _chewieController != null
-              ? Chewie(controller: _chewieController!)
+          child: _betterPlayerController != null
+              ? BetterPlayer(controller: _betterPlayerController!)
               : const SizedBox.shrink(),
         ),
         // Back button overlay

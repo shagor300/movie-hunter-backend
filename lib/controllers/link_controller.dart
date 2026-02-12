@@ -10,6 +10,7 @@ class LinkController extends GetxController {
   var errorMessage = "".obs;
   var progressText = "".obs;
   var links = <Map<String, String>>[].obs;
+  var embedLinks = <Map<String, String>>[].obs;
   var currentProgress = 0.0.obs;
 
   /// Tracks which movie's links are currently loaded.
@@ -20,6 +21,7 @@ class LinkController extends GetxController {
     "Searching HDHub4u for 4K quality...",
     "Bypassing ad-gateways...",
     "Extracting direct download links...",
+    "Scanning for streaming sources...",
     "Optimizing stream sources...",
     "Finalizing results...",
   ];
@@ -32,10 +34,13 @@ class LinkController extends GetxController {
     required String title,
     String? year,
     String? hdhub4uUrl,
+    String? source,
+    String? skyMoviesHDUrl,
   }) async {
     // Clear stale links if switching to a different movie
     if (_currentTmdbId != tmdbId) {
       links.clear();
+      embedLinks.clear();
     }
     _currentTmdbId = tmdbId;
 
@@ -43,6 +48,7 @@ class LinkController extends GetxController {
     hasError.value = false;
     errorMessage.value = "";
     links.clear();
+    embedLinks.clear();
     currentProgress.value = 0.0;
     _messageIndex = 0;
     progressText.value = _loadingMessages[0];
@@ -66,6 +72,8 @@ class LinkController extends GetxController {
             title: title,
             year: year,
             hdhub4uUrl: hdhub4uUrl,
+            source: source,
+            skyMoviesHDUrl: skyMoviesHDUrl,
           )
           .timeout(
             const Duration(seconds: 60),
@@ -74,11 +82,15 @@ class LinkController extends GetxController {
             ),
           );
 
-      if (results.isEmpty) {
+      final downloadLinks = results['downloadLinks'] ?? [];
+      final embeds = results['embedLinks'] ?? [];
+
+      if (downloadLinks.isEmpty && embeds.isEmpty) {
         throw Exception("No links found for this title. Try another source.");
       }
 
-      links.assignAll(results);
+      links.assignAll(downloadLinks);
+      embedLinks.assignAll(embeds);
     } catch (e) {
       hasError.value = true;
       errorMessage.value = e.toString().contains("Exception:")
@@ -99,18 +111,23 @@ class LinkController extends GetxController {
     required String title,
     String? year,
     String? hdhub4uUrl,
+    String? source,
+    String? skyMoviesHDUrl,
   }) {
     fetchLinks(
       tmdbId: tmdbId,
       title: title,
       year: year,
       hdhub4uUrl: hdhub4uUrl,
+      source: source,
+      skyMoviesHDUrl: skyMoviesHDUrl,
     );
   }
 
   /// Explicitly clear all links and tracking state (call when opening a new movie).
   void clearData() {
     links.clear();
+    embedLinks.clear();
     _currentTmdbId = null;
     hasError.value = false;
     errorMessage.value = "";

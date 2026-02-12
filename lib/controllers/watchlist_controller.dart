@@ -69,6 +69,28 @@ class WatchlistController extends GetxController {
     _loadAll();
   }
 
+  /// Toggle favorite independently — does NOT require or affect watchlist.
+  /// If the movie isn't in the Hive box yet, adds it with favorite=true.
+  /// If it is, just flips the favorite flag without touching the watchlist bookmark.
+  Future<void> toggleFavoriteIndependent(Movie movie) async {
+    final tmdbId = movie.tmdbId;
+    if (tmdbId == null || tmdbId <= 0) return;
+
+    if (!isInWatchlist(tmdbId)) {
+      // Add silently with favorite=true — this is NOT a watchlist add
+      await _service.addToWatchlist(
+        movie,
+        category: WatchlistCategory.favorites,
+      );
+      // Immediately mark as favorite
+      await _service.toggleFavorite(tmdbId);
+    } else {
+      // Already exists — just toggle the favorite flag
+      await _service.toggleFavorite(tmdbId);
+    }
+    _loadAll();
+  }
+
   Future<void> addRating(int tmdbId, int rating, {String? notes}) async {
     await _service.addRating(tmdbId, rating, notes: notes);
     _loadAll();

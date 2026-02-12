@@ -90,13 +90,9 @@ class _DetailsScreenState extends State<DetailsScreen> {
                                 ? 'Remove from Favorites'
                                 : 'Add to Favorites',
                             onPressed: () {
-                              if (!isIn) {
-                                _watchlistController.toggleWatchlist(
-                                  widget.movie,
-                                );
-                              }
-                              _watchlistController.toggleFavorite(
-                                widget.movie.tmdbId ?? 0,
+                              // ONLY toggle favorite — completely independent
+                              _watchlistController.toggleFavoriteIndependent(
+                                widget.movie,
                               );
                             },
                           ),
@@ -228,6 +224,58 @@ class _DetailsScreenState extends State<DetailsScreen> {
                                 ),
                               ),
                               const SizedBox(height: 16),
+                              // --- Embed/Streaming Links ---
+                              if (_linkController.embedLinks.isNotEmpty) ...[
+                                Row(
+                                  children: [
+                                    const Icon(
+                                      Icons.play_circle_fill,
+                                      color: Colors.greenAccent,
+                                      size: 20,
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      'Stream Online',
+                                      style: GoogleFonts.poppins(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w600,
+                                        color: Colors.greenAccent,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 10),
+                                ..._linkController.embedLinks
+                                    .asMap()
+                                    .entries
+                                    .map((entry) {
+                                      return _buildEmbedLinkItem(
+                                        entry.value,
+                                        entry.key,
+                                      );
+                                    }),
+                                const SizedBox(height: 20),
+                                Row(
+                                  children: [
+                                    const Icon(
+                                      Icons.cloud_download,
+                                      color: Colors.blueAccent,
+                                      size: 20,
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      'Download',
+                                      style: GoogleFonts.poppins(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w600,
+                                        color: Colors.blueAccent,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 10),
+                              ],
+                              // --- Download Links ---
                               ..._linkController.links.asMap().entries.map((
                                 entry,
                               ) {
@@ -300,6 +348,8 @@ class _DetailsScreenState extends State<DetailsScreen> {
           title: widget.movie.title,
           year: widget.movie.year != 'N/A' ? widget.movie.year : null,
           hdhub4uUrl: widget.movie.hdhub4uUrl,
+          source: widget.movie.sourceType,
+          skyMoviesHDUrl: widget.movie.skyMoviesHDUrl,
         ),
         style: ElevatedButton.styleFrom(
           backgroundColor: Colors.transparent,
@@ -401,6 +451,8 @@ class _DetailsScreenState extends State<DetailsScreen> {
                           ? widget.movie.year
                           : null,
                       hdhub4uUrl: widget.movie.hdhub4uUrl,
+                      source: widget.movie.sourceType,
+                      skyMoviesHDUrl: widget.movie.skyMoviesHDUrl,
                     ),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.blueAccent,
@@ -550,6 +602,107 @@ class _DetailsScreenState extends State<DetailsScreen> {
             if (await canLaunchUrl(url)) {
               await launchUrl(url, mode: LaunchMode.externalApplication);
             }
+          },
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEmbedLinkItem(Map<String, String> link, int index) {
+    return TweenAnimationBuilder(
+      duration: Duration(milliseconds: 400 + (index * 100)),
+      tween: Tween<double>(begin: 0, end: 1),
+      builder: (context, value, child) {
+        return Opacity(
+          opacity: value,
+          child: Transform.translate(
+            offset: Offset(0, 20 * (1 - value)),
+            child: child,
+          ),
+        );
+      },
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 10),
+        decoration: BoxDecoration(
+          color: Colors.greenAccent.withValues(alpha: 0.05),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: Colors.greenAccent.withValues(alpha: 0.2)),
+        ),
+        child: ListTile(
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 4,
+          ),
+          leading: Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  Colors.greenAccent.withValues(alpha: 0.2),
+                  Colors.tealAccent.withValues(alpha: 0.1),
+                ],
+              ),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(Icons.play_arrow, color: Colors.greenAccent),
+          ),
+          title: Text(
+            link['player'] ?? 'Player ${index + 1}',
+            style: GoogleFonts.inter(
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          subtitle: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(
+                  color: Colors.greenAccent.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: Text(
+                  link['quality'] ?? 'HD',
+                  style: GoogleFonts.inter(
+                    color: Colors.greenAccent,
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                'Stream',
+                style: GoogleFonts.inter(color: Colors.white38, fontSize: 12),
+              ),
+            ],
+          ),
+          trailing: const Icon(Icons.chevron_right, color: Colors.greenAccent),
+          onTap: () {
+            final url = link['url'] ?? '';
+            if (url.isEmpty || !url.startsWith('http')) {
+              Get.snackbar(
+                'Invalid Link',
+                'This link cannot be streamed.',
+                snackPosition: SnackPosition.BOTTOM,
+                backgroundColor: Colors.redAccent.withValues(alpha: 0.8),
+                colorText: Colors.white,
+                margin: const EdgeInsets.all(20),
+                duration: const Duration(seconds: 2),
+              );
+              return;
+            }
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => VideoPlayerScreen(
+                  videoUrl: url,
+                  tmdbId: widget.movie.tmdbId,
+                  movieTitle: widget.movie.title,
+                  posterUrl: widget.movie.fullPosterPath,
+                ),
+              ),
+            );
           },
         ),
       ),

@@ -32,18 +32,23 @@ class ApiService {
     }
   }
 
-  /// Fetch download links via the backend `/links` endpoint.
-  Future<List<Map<String, dynamic>>> getLinks({
+  /// Fetch download + embed links via the backend `/links` endpoint.
+  /// Returns the full response: { links: [...], embed_links: [...], ... }
+  Future<Map<String, dynamic>> getLinks({
     required int tmdbId,
     required String title,
     String? year,
     String? hdhub4uUrl,
+    String? source,
+    String? skyMoviesHDUrl,
   }) async {
     final queryParams = {
       'tmdb_id': tmdbId.toString(),
       'title': title,
       if (year != null) 'year': year,
       if (hdhub4uUrl != null) 'hdhub4u_url': hdhub4uUrl,
+      if (source != null) 'source': source,
+      if (skyMoviesHDUrl != null) 'skymovieshd_url': skyMoviesHDUrl,
     };
     final url = Uri.parse(
       '$baseUrl/links',
@@ -57,15 +62,14 @@ class ApiService {
       debugPrint('Links response status: ${response.statusCode}');
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        final links = List<Map<String, dynamic>>.from(data['links'] ?? []);
-        debugPrint('Links received: ${links.length}');
-        return links;
+        // Return full response with both download and embed links
+        return data as Map<String, dynamic>;
       }
       debugPrint('Links API error: ${response.statusCode}');
-      return [];
+      return {};
     } catch (e) {
       debugPrint('Error getting links: $e');
-      return [];
+      return {};
     }
   }
 

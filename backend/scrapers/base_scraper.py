@@ -61,14 +61,31 @@ class BaseMovieScraper(ABC):
         Input:  "Inception 2010 1080p BluRay Hindi Dubbed"
         Output: ("Inception", "2010")
         """
+        # Remove bracketed content [anything] and (anything with tech terms)
+        title = re.sub(r'\[.*?\]', '', title)
+        title = re.sub(r'\((?:.*?(?:MB|GB|Rip|Audio|HD|ESub).*?)\)', '', title, flags=re.I)
+
         # Remove quality markers
         title = re.sub(
-            r'\b(480p|720p|1080p|2160p|4K|HDRip|BluRay|WEB-DL|WEBRip|HEVC|x264|x265|BRRip)\b',
+            r'\b(480p|720p|1080p|2160p|4K|HDRip|BluRay|Blu\-?Ray|WEB-DL|WEB\s*DL|'
+            r'WEBRip|HEVC|x264|x265|BRRip|DVDRip|HDR|SDR|REMUX|CAMRip|HDTS|'
+            r'PreDVD|DVDScr|HDCAM|HDR10|DV|Atmos)\b',
             '', title, flags=re.I
         )
-        # Remove language markers
+        # Remove language markers (expanded for all Indian + common languages)
         title = re.sub(
-            r'\b(Hindi|English|Tamil|Telugu|Dual\s*Audio|Multi\s*Audio|Dubbed|ORG)\b',
+            r'\b(Hindi|English|Tamil|Telugu|Kannada|Malayalam|Bengali|Bangla|'
+            r'Marathi|Gujarati|Punjabi|Urdu|Bhojpuri|Assamese|Odia|Nepali|'
+            r'Korean|Japanese|Chinese|Spanish|French|German|Russian|Arabic|'
+            r'Dual\s*Audio|Multi\s*Audio|Dubbed|ORG|Original|ESubs?|SubTitle[sd]?|'
+            r'Full|Movie|Pakistani|Bollywood|Hollywood|South|Indian|'
+            r'Download|Free|Watch|Online|Film)\b',
+            '', title, flags=re.I
+        )
+        # Remove audio format markers
+        title = re.sub(
+            r'\b(AAC|AC3|DTS|DD|DDP|DD\+?\s*\d\.?\d?|5\.1|7\.1|2\.0|Atmos|'
+            r'FLAC|MP3|Opus)\b',
             '', title, flags=re.I
         )
         # Remove size markers
@@ -80,10 +97,11 @@ class BaseMovieScraper(ABC):
 
         # Remove year from title
         if year:
-            title = title.replace(year, '')
+            title = title.replace(year, '', 1)
 
-        # Clean up separators and whitespace
-        title = re.sub(r'[:\-\|]+', ' ', title)
+        # Clean up separators, dots, pipes, dashes, and extra whitespace
+        title = re.sub(r'[:\-|\\/.]+', ' ', title)
+        title = re.sub(r'\(\s*\)', '', title)  # Remove empty parens
         title = re.sub(r'\s+', ' ', title).strip()
 
         return title, year

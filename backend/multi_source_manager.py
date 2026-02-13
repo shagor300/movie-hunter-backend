@@ -201,7 +201,7 @@ class MultiSourceManager:
             logger.info(f"[SkyMoviesHD] Extracting links from: {movie_url}")
             return await asyncio.wait_for(
                 self.sky_scraper.extract_links(movie_url),
-                timeout=60
+                timeout=120  # HubDrive countdowns can take 30s+ each
             )
 
         except asyncio.TimeoutError:

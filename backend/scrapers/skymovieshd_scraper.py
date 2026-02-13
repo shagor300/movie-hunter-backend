@@ -117,6 +117,10 @@ class SkyMoviesHDScraper(BaseMovieScraper):
             soup = BeautifulSoup(content, 'html.parser')
             all_links = soup.find_all('a', href=True)
 
+            # Prepare query words for relevance matching
+            query_words = [w.lower() for w in query.split() if len(w) >= 3 and not w.isdigit()]
+            seen_urls = set()
+
             for link in all_links:
                 href = link.get('href', '')
                 text = link.get_text(strip=True)
@@ -125,6 +129,21 @@ class SkyMoviesHDScraper(BaseMovieScraper):
                 if '/movie/' not in href or not text or len(text) < 5:
                     continue
                 if '/category/' in href or '/search.php' in href:
+                    continue
+
+                # Deduplicate by URL
+                url_key = href.split('?')[0].rstrip('/')
+                if url_key in seen_urls:
+                    continue
+                seen_urls.add(url_key)
+
+                # RELEVANCE FILTER: At least one query word must appear
+                # in the link text OR the URL path
+                combined = (text + ' ' + href).lower()
+                if not any(word in combined for word in query_words):
+                    logger.debug(
+                        f"[{self.source_name}] Skipped (no relevance): {text[:60]}"
+                    )
                     continue
 
                 raw_title = text

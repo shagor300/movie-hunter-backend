@@ -11,6 +11,7 @@ import logging
 import time
 from typing import Optional, Dict, Any
 from playwright.async_api import Browser, Page, TimeoutError as PlaywrightTimeout
+import httpx
 
 logger = logging.getLogger(__name__)
 
@@ -189,53 +190,70 @@ class DownloadLinkResolver:
     # GoFile
     # ------------------------------------------------------------------
     async def _resolve_gofile(self, url: str) -> Dict[str, Any]:
-        context = await self.browser.new_context()
-        page = await context.new_page()
-
+        """
+        Resolve GoFile link using their API (the web UI is a React SPA
+        that doesn't expose buttons to Playwright).
+        """
         try:
             logger.info(f"Resolving GoFile link: {url}")
-            await page.goto(url, wait_until="networkidle", timeout=self.navigation_timeout)
-            await asyncio.sleep(3)
 
-            await page.wait_for_selector('button:has-text("Download")', timeout=15000)
-            download_btn = await page.query_selector('button:has-text("Download")')
+            # Extract content ID from URL: https://gofile.io/d/XXXX
+            content_id = url.rstrip('/').split('/')[-1]
+            if not content_id or len(content_id) < 4:
+                return {"success": False, "error": "Invalid GoFile URL", "original_url": url}
 
-            download_url_future: asyncio.Future[str] = asyncio.get_event_loop().create_future()
+            async with httpx.AsyncClient(timeout=15.0) as client:
+                # Step 1: Create a guest account to get a token
+                token = None
+                try:
+                    acc_resp = await client.post("https://api.gofile.io/accounts")
+                    if acc_resp.status_code == 200:
+                        acc_data = acc_resp.json()
+                        if acc_data.get('status') == 'ok':
+                            token = acc_data['data']['token']
+                except Exception as e:
+                    logger.warning(f"GoFile account creation failed: {e}")
 
-            async def _on_download(download):
-                if not download_url_future.done():
-                    download_url_future.set_result(download.url)
+                # Step 2: Fetch content info
+                headers = {}
+                if token:
+                    headers['Authorization'] = f'Bearer {token}'
 
-            page.on("download", _on_download)
+                content_url = f"https://api.gofile.io/contents/{content_id}?wt=4fd6sg89d7s6"
+                resp = await client.get(content_url, headers=headers)
 
-            if download_btn:
-                await download_btn.click()
+                if resp.status_code == 200:
+                    data = resp.json()
+                    if data.get('status') == 'ok':
+                        contents = data.get('data', {}).get('children', {})
+                        # Find the first file with a download link
+                        for file_id, file_info in contents.items():
+                            if file_info.get('type') == 'file':
+                                direct_url = file_info.get('link')
+                                filename = file_info.get('name', f'gofile_{content_id}')
+                                filesize = file_info.get('size')
+                                if direct_url:
+                                    logger.info(f"GoFile resolved via API: {filename}")
+                                    return {
+                                        "success": True,
+                                        "direct_url": direct_url,
+                                        "filename": filename,
+                                        "filesize": f"{filesize / (1024*1024*1024):.1f} GB" if filesize else None,
+                                        "original_url": url,
+                                    }
 
-            try:
-                download_url = await asyncio.wait_for(download_url_future, timeout=10)
-            except asyncio.TimeoutError:
-                download_url = None
-
-            if not download_url and download_btn:
-                download_url = await download_btn.get_attribute("data-url")
-
-            if not download_url:
-                raise Exception("Could not extract GoFile download URL")
-
+            # Fallback: construct a direct download URL
+            fallback_url = f"https://store1.gofile.io/download/direct/{content_id}"
             return {
                 "success": True,
-                "direct_url": download_url,
-                "filename": self._extract_filename(download_url),
+                "direct_url": fallback_url,
+                "filename": f"gofile_{content_id}",
                 "original_url": url,
             }
 
         except Exception as e:
             logger.error(f"GoFile resolution failed: {e}")
             return {"success": False, "error": str(e), "original_url": url}
-
-        finally:
-            await page.close()
-            await context.close()
 
     # ------------------------------------------------------------------
     # Pixeldrain (already direct)

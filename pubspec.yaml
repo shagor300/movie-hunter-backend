@@ -27,6 +27,7 @@ dependencies:
   hive_flutter: ^1.1.0
   better_player_enhanced: ^1.0.1
   video_player: ^2.8.1
+  webview_flutter: ^4.4.2
 
 dev_dependencies:
   flutter_test:

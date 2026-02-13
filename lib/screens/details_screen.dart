@@ -11,6 +11,7 @@ import '../controllers/link_controller.dart';
 import '../controllers/watchlist_controller.dart';
 import '../controllers/download_controller.dart';
 import 'video_player_screen.dart';
+import 'webview_player.dart';
 
 class DetailsScreen extends StatefulWidget {
   final Movie movie;
@@ -698,11 +699,9 @@ class _DetailsScreenState extends State<DetailsScreen> {
             Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (_) => VideoPlayerScreen(
+                builder: (_) => WebViewPlayer(
                   videoUrl: url,
-                  tmdbId: widget.movie.tmdbId,
                   movieTitle: widget.movie.title,
-                  posterUrl: widget.movie.fullPosterPath,
                 ),
               ),
             );

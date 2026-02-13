@@ -22,11 +22,11 @@ class DownloadService {
   Future<void> init() async {
     if (_initialized) return;
 
-    await FlutterDownloader.initialize(debug: kDebugMode, ignoreSsl: true);
-
     _box = await Hive.openBox<Download>('downloads');
 
     // Register port for background isolate communication
+    // Remove existing mapping first to avoid conflicts
+    IsolateNameServer.removePortNameMapping('downloader_send_port');
     IsolateNameServer.registerPortWithName(
       _port.sendPort,
       'downloader_send_port',
@@ -40,9 +40,8 @@ class DownloadService {
       _updateDownloadFromCallback(taskId, status, progress);
     });
 
-    FlutterDownloader.registerCallback(downloadCallback);
-
     _initialized = true;
+    debugPrint('✅ DownloadService initialized with port binding');
   }
 
   @pragma('vm:entry-point')

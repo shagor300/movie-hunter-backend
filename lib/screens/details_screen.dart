@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter/services.dart';
 import '../models/movie.dart';
@@ -368,46 +367,185 @@ class _DetailsScreenState extends State<DetailsScreen> {
     );
   }
 
+  // Stage icons mapped to LinkController loading messages
+  static const List<IconData> _stageIcons = [
+    Icons.language, // Connecting
+    Icons.search, // Searching HDHub4u
+    Icons.security, // Bypassing ads
+    Icons.cloud_download, // Extracting links
+    Icons.stream, // Scanning streams
+    Icons.tune, // Optimizing
+    Icons.check_circle, // Finalizing
+  ];
+
+  static const List<Color> _stageColors = [
+    Color(0xFF42A5F5), // blue
+    Color(0xFF7C4DFF), // purple
+    Color(0xFFFF7043), // orange
+    Color(0xFF26C6DA), // cyan
+    Color(0xFF66BB6A), // green
+    Color(0xFFFFCA28), // amber
+    Color(0xFF00E676), // green accent
+  ];
+
   Widget _buildLoadingOverlay() {
     return BackdropFilter(
       filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
       child: Container(
-        color: Colors.black.withOpacity(0.8),
+        color: Colors.black.withValues(alpha: 0.85),
         width: double.infinity,
         height: double.infinity,
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             if (_linkController.isLoading.value) ...[
-              const SpinKitCubeGrid(color: Colors.blueAccent, size: 70),
-              const SizedBox(height: 40),
+              // ── Animated Stage Icon ──
+              Obx(() {
+                final idx =
+                    (_linkController.currentProgress.value *
+                            (_stageIcons.length - 1))
+                        .round()
+                        .clamp(0, _stageIcons.length - 1);
+                final color = _stageColors[idx];
+                return TweenAnimationBuilder<double>(
+                  key: ValueKey(idx),
+                  tween: Tween(begin: 0.7, end: 1.0),
+                  duration: const Duration(milliseconds: 600),
+                  curve: Curves.easeOutBack,
+                  builder: (_, scale, child) =>
+                      Transform.scale(scale: scale, child: child),
+                  child: Container(
+                    width: 80,
+                    height: 80,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      gradient: RadialGradient(
+                        colors: [
+                          color.withValues(alpha: 0.3),
+                          Colors.transparent,
+                        ],
+                        radius: 0.8,
+                      ),
+                    ),
+                    child: Icon(_stageIcons[idx], color: color, size: 44),
+                  ),
+                );
+              }),
+
+              const SizedBox(height: 28),
+
+              // ── Stage Message ──
               AnimatedSwitcher(
                 duration: const Duration(milliseconds: 500),
+                transitionBuilder: (child, anim) => FadeTransition(
+                  opacity: anim,
+                  child: SlideTransition(
+                    position: Tween(
+                      begin: const Offset(0, 0.3),
+                      end: Offset.zero,
+                    ).animate(anim),
+                    child: child,
+                  ),
+                ),
                 child: Obx(
                   () => Text(
                     _linkController.progressText.value,
                     key: ValueKey(_linkController.progressText.value),
                     style: GoogleFonts.poppins(
                       color: Colors.white,
-                      fontSize: 18,
+                      fontSize: 17,
                       fontWeight: FontWeight.w500,
                     ),
                     textAlign: TextAlign.center,
                   ),
                 ),
               ),
-              const SizedBox(height: 20),
+
+              const SizedBox(height: 24),
+
+              // ── Gradient Progress Bar + Percentage ──
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 50),
-                child: Obx(
-                  () => LinearProgressIndicator(
-                    value: _linkController.currentProgress.value,
-                    backgroundColor: Colors.white12,
-                    color: Colors.blueAccent,
-                    minHeight: 4,
-                  ),
-                ),
+                child: Obx(() {
+                  final progress = _linkController.currentProgress.value;
+                  final pct = (progress * 100).round();
+                  return Column(
+                    children: [
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(6),
+                        child: SizedBox(
+                          height: 6,
+                          child: Stack(
+                            children: [
+                              // Background
+                              Container(color: Colors.white12),
+                              // Gradient fill
+                              FractionallySizedBox(
+                                widthFactor: progress,
+                                child: Container(
+                                  decoration: const BoxDecoration(
+                                    gradient: LinearGradient(
+                                      colors: [
+                                        Color(0xFF42A5F5),
+                                        Color(0xFF7C4DFF),
+                                        Color(0xFF00E676),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      Text(
+                        '$pct%',
+                        style: GoogleFonts.inter(
+                          color: Colors.white60,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  );
+                }),
               ),
+
+              const SizedBox(height: 20),
+
+              // ── Stage Dots ──
+              Obx(() {
+                final total = _stageIcons.length;
+                final activeIdx =
+                    (_linkController.currentProgress.value * (total - 1))
+                        .round()
+                        .clamp(0, total - 1);
+                return Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: List.generate(total, (i) {
+                    final isActive = i <= activeIdx;
+                    return AnimatedContainer(
+                      duration: const Duration(milliseconds: 300),
+                      margin: const EdgeInsets.symmetric(horizontal: 4),
+                      width: isActive ? 10 : 8,
+                      height: isActive ? 10 : 8,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: isActive ? _stageColors[i] : Colors.white24,
+                        boxShadow: isActive
+                            ? [
+                                BoxShadow(
+                                  color: _stageColors[i].withValues(alpha: 0.5),
+                                  blurRadius: 6,
+                                ),
+                              ]
+                            : null,
+                      ),
+                    );
+                  }),
+                );
+              }),
             ] else if (_linkController.hasError.value) ...[
               const Icon(
                 Icons.error_outline,

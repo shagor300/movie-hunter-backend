@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -191,12 +192,69 @@ class DownloadsScreen extends StatelessWidget {
                         overflow: TextOverflow.ellipsis,
                       ),
                       const SizedBox(height: 4),
+                      Row(
+                        children: [
+                          // Quality badge
+                          if (download.quality != null)
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 6,
+                                vertical: 2,
+                              ),
+                              margin: const EdgeInsets.only(right: 8),
+                              decoration: BoxDecoration(
+                                color: Colors.blueAccent.withValues(alpha: 0.2),
+                                borderRadius: BorderRadius.circular(4),
+                                border: Border.all(
+                                  color: Colors.blueAccent.withValues(
+                                    alpha: 0.4,
+                                  ),
+                                ),
+                              ),
+                              child: Text(
+                                download.quality!,
+                                style: GoogleFonts.inter(
+                                  color: Colors.blueAccent,
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          // File size (completed only)
+                          if (download.status == DownloadStatus.completed &&
+                              download.savedPath != null)
+                            Builder(
+                              builder: (_) {
+                                try {
+                                  final file = File(download.savedPath!);
+                                  if (file.existsSync()) {
+                                    final bytes = file.lengthSync();
+                                    final size = bytes > 1024 * 1024 * 1024
+                                        ? '${(bytes / (1024 * 1024 * 1024)).toStringAsFixed(1)} GB'
+                                        : '${(bytes / (1024 * 1024)).toStringAsFixed(0)} MB';
+                                    return Text(
+                                      size,
+                                      style: GoogleFonts.inter(
+                                        color: Colors.white38,
+                                        fontSize: 11,
+                                      ),
+                                    );
+                                  }
+                                } catch (_) {}
+                                return const SizedBox.shrink();
+                              },
+                            ),
+                        ],
+                      ),
+                      const SizedBox(height: 2),
                       Text(
-                        download.quality ?? download.filename,
+                        download.filename,
                         style: GoogleFonts.inter(
-                          color: Colors.white38,
-                          fontSize: 12,
+                          color: Colors.white24,
+                          fontSize: 10,
                         ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ],
                   ),

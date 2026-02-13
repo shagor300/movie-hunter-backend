@@ -199,14 +199,17 @@ class DownloadController extends GetxController {
 
       // Step 2: Use the resolved direct URL
       final directUrl = resolved['directUrl'] as String;
-      final resolvedFilename = (resolved['filename'] as String?) ?? filename;
+
+      // ── FIX: Force proper filename (Title_Year_Quality.mp4) ──
+      // Don't use server-suggested filename — it's often random gibberish.
+      final properFilename = _createProperFilename(movieTitle, quality);
 
       debugPrint('✅ Resolved URL: $directUrl');
-      debugPrint('📄 Filename: $resolvedFilename');
+      debugPrint('📄 Filename: $properFilename');
 
       await _service.startDownload(
         url: directUrl,
-        filename: resolvedFilename,
+        filename: properFilename,
         tmdbId: tmdbId,
         quality: quality,
         movieTitle: movieTitle,
@@ -215,13 +218,13 @@ class DownloadController extends GetxController {
       _ensureTimerRunning();
 
       Get.snackbar(
-        'Download Started',
-        '$movieTitle${quality != null ? ' - $quality' : ''}',
+        '✅ Download Started',
+        '$movieTitle${quality != null ? ' ($quality)' : ''}\n$properFilename',
         snackPosition: SnackPosition.BOTTOM,
         backgroundColor: Colors.green.withValues(alpha: 0.85),
         colorText: Colors.white,
         margin: const EdgeInsets.all(20),
-        duration: const Duration(seconds: 2),
+        duration: const Duration(seconds: 3),
         icon: const Icon(Icons.download_done, color: Colors.white),
       );
     } catch (e) {
@@ -239,6 +242,19 @@ class DownloadController extends GetxController {
         duration: const Duration(seconds: 3),
       );
     }
+  }
+
+  /// Create a clean filename: Movie_Title_Quality.mp4
+  String _createProperFilename(String movieTitle, String? quality) {
+    // Sanitize title: replace spaces/special chars with underscores
+    final sanitized = movieTitle
+        .replaceAll(RegExp(r'[<>:"/\\|?*]'), '')
+        .replaceAll(RegExp(r'\s+'), '_')
+        .replaceAll(RegExp(r'_+'), '_')
+        .trim();
+
+    final q = quality?.replaceAll(' ', '') ?? 'HD';
+    return '${sanitized}_$q.mp4';
   }
 
   Future<void> pauseDownload(Download download) async {

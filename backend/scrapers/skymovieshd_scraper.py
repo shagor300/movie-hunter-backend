@@ -433,28 +433,73 @@ class SkyMoviesHDScraper(BaseMovieScraper):
 
     async def _extract_gdrive_from_intermediates(self, intermediate_links: List[Dict]) -> List[Dict]:
         """
-        Visit each intermediate host page and extract Google Drive URLs.
-        Uses Playwright for pages that require button clicking + timer waiting.
+        Visit each intermediate host page and extract download URLs.
+        Uses INCREMENTAL collection — results are saved as they complete,
+        so timeout on one link doesn't discard already-resolved links.
         """
-        gdrive_links = []
-        semaphore = asyncio.Semaphore(2)  # Limit concurrent browser pages
+        resolved_links = []  # Shared list — appended to as each completes
+        semaphore = asyncio.Semaphore(2)  # Max 2 concurrent browser pages
 
-        async def extract_one(link: Dict) -> Optional[Dict]:
+        # Prioritize known-fast hosts (hubdrive resolves reliably)
+        priority_order = {'hubdrive': 0, 'hubcloud': 1, 'gdflix': 2, 'gofile': 3, 'gdrive': 0}
+        sorted_links = sorted(
+            intermediate_links,
+            key=lambda x: priority_order.get(x.get('host_type', ''), 5)
+        )
+
+        # Skip unknown hosts — they waste browser pages
+        actionable_links = [
+            link for link in sorted_links
+            if link.get('host_type') in ('hubdrive', 'hubcloud', 'gdflix', 'gofile', 'gdrive', 'filepress', 'dgdrive')
+        ]
+
+        if not actionable_links:
+            logger.warning(f"[{self.source_name}] ⚠️ No actionable intermediate hosts found")
+            return resolved_links
+
+        logger.info(
+            f"[{self.source_name}] 🚀 Processing {len(actionable_links)} intermediate links "
+            f"(skipped {len(intermediate_links) - len(actionable_links)} unknown hosts)"
+        )
+
+        async def extract_one(link: Dict, index: int):
+            """Extract from one link and append to shared list immediately."""
             async with semaphore:
-                return await self._extract_gdrive_from_page(link)
+                try:
+                    result = await asyncio.wait_for(
+                        self._extract_gdrive_from_page(link),
+                        timeout=45  # Fail fast — 45s per link max
+                    )
+                    if result and result.get('url'):
+                        resolved_links.append(result)
+                        logger.info(
+                            f"[{self.source_name}] ✅ [{index+1}/{len(actionable_links)}] "
+                            f"Resolved {link.get('host_type')}: {result['url'][:60]}..."
+                        )
+                    else:
+                        logger.warning(
+                            f"[{self.source_name}] ❌ [{index+1}/{len(actionable_links)}] "
+                            f"No URL from {link.get('host_type')}: {link['url'][:60]}"
+                        )
+                except asyncio.TimeoutError:
+                    logger.error(
+                        f"[{self.source_name}] ⏱️ [{index+1}/{len(actionable_links)}] "
+                        f"Timeout on {link.get('host_type')}: {link['url'][:60]}"
+                    )
+                except Exception as e:
+                    logger.error(
+                        f"[{self.source_name}] 💥 [{index+1}/{len(actionable_links)}] "
+                        f"Error on {link.get('host_type')}: {e}"
+                    )
 
-        tasks = [extract_one(link) for link in intermediate_links]
-        results = await asyncio.gather(*tasks, return_exceptions=True)
+        # Fire all tasks — each appends to resolved_links independently
+        tasks = [extract_one(link, i) for i, link in enumerate(actionable_links)]
+        await asyncio.gather(*tasks, return_exceptions=True)
 
-        for i, result in enumerate(results):
-            if isinstance(result, dict) and result.get('url'):
-                gdrive_links.append(result)
-            elif isinstance(result, Exception):
-                logger.error(
-                    f"[{self.source_name}] GDrive extraction [{i+1}] error: {result}"
-                )
-
-        return gdrive_links
+        logger.info(
+            f"[{self.source_name}] 📊 Resolved {len(resolved_links)}/{len(actionable_links)} links"
+        )
+        return resolved_links
 
     async def _extract_gdrive_from_page(self, intermediate_link: Dict) -> Optional[Dict]:
         """
@@ -491,7 +536,7 @@ class SkyMoviesHDScraper(BaseMovieScraper):
                 )
                 result = await asyncio.wait_for(
                     self._download_resolver.resolve_download_link(url),
-                    timeout=90
+                    timeout=40  # Fail fast — don't block other links
                 )
                 if result.get('success') and result.get('direct_url'):
                     direct_url = result['direct_url']

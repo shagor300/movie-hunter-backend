@@ -485,6 +485,77 @@ async def test_resolver():
     return {"test_url": test_url, "result": result}
 
 
+@app.get("/test/skymovieshd")
+async def test_skymovieshd(
+    movie_url: Optional[str] = Query(None, description="Direct SkyMoviesHD movie page URL"),
+    search: Optional[str] = Query(None, description="Search query (alternative to URL)"),
+):
+    """
+    🧪 Debug endpoint: test SkyMoviesHD extraction with full logging.
+    
+    Usage:
+      /test/skymovieshd?movie_url=https://skymovieshd.mba/movie/...
+      /test/skymovieshd?search=Tagar+2025
+    """
+    import time
+    import traceback
+
+    start = time.time()
+
+    try:
+        if not multi_source.sky_scraper:
+            return {"error": "SkyMoviesHD scraper not initialized"}
+
+        sky = multi_source.sky_scraper
+
+        # Step 1: Search or use direct URL
+        if search:
+            logger.info(f"🧪 [TEST] Searching SkyMoviesHD for: {search}")
+            results = await sky.search_movies(search, max_results=5)
+            if not results:
+                return {
+                    "error": "No search results",
+                    "query": search,
+                    "elapsed": f"{time.time() - start:.1f}s",
+                }
+            movie_url = results[0].get('url')
+            search_results = [
+                {"title": r.get("title"), "url": r.get("url"), "quality": r.get("quality")}
+                for r in results
+            ]
+        else:
+            search_results = None
+
+        if not movie_url:
+            return {"error": "Provide movie_url or search parameter"}
+
+        # Step 2: Extract links
+        logger.info(f"🧪 [TEST] Extracting from: {movie_url}")
+        extraction = await sky.extract_links(movie_url)
+
+        elapsed = time.time() - start
+
+        return {
+            "status": "success",
+            "movie_url": movie_url,
+            "elapsed": f"{elapsed:.1f}s",
+            "search_results": search_results,
+            "links": extraction.get('links', []),
+            "embed_links": extraction.get('embed_links', []),
+            "intermediate_links": extraction.get('intermediate_links', []),
+            "total_links": len(extraction.get('links', [])),
+            "total_embeds": len(extraction.get('embed_links', [])),
+            "total_intermediates": len(extraction.get('intermediate_links', [])),
+        }
+
+    except Exception as e:
+        return {
+            "error": str(e),
+            "traceback": traceback.format_exc(),
+            "elapsed": f"{time.time() - start:.1f}s",
+        }
+
+
 if __name__ == "__main__":
     import uvicorn
     port = int(os.getenv("PORT", 8000))

@@ -53,6 +53,23 @@ class HDHub4uTab extends StatelessWidget {
           ],
         ),
         actions: [
+          // Subtle sync indicator (background incremental sync)
+          Obx(() {
+            if (controller.isSyncing.value && controller.movies.isNotEmpty) {
+              return const Padding(
+                padding: EdgeInsets.only(right: 8),
+                child: SizedBox(
+                  width: 18,
+                  height: 18,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    valueColor: AlwaysStoppedAnimation(Colors.blueAccent),
+                  ),
+                ),
+              );
+            }
+            return const SizedBox.shrink();
+          }),
           Obx(() {
             if (controller.isLoading.value) {
               return const Padding(

@@ -10,6 +10,7 @@ from contextlib import asynccontextmanager
 from scraper import scraper_instance, tmdb_helper, DOMAINS
 from hdhub4u_homepage_scraper import HDHub4uScraper
 from hubdrive_resolver import DownloadLinkResolver
+from homepage_state import homepage_state
 from embed_link_extractor import EmbedLinkExtractor
 from multi_source_manager import MultiSourceManager
 from config.sources import MovieSources
@@ -349,22 +350,48 @@ async def clear_cache(
 
 @app.get("/browse/latest")
 async def get_latest_from_hdhub4u(
-    max_results: int = Query(50, ge=10, le=100)
+    max_results: int = Query(50, ge=10, le=100),
+    incremental: bool = Query(False, description="Only return new movies since last sync"),
 ):
-    """Get latest movies from HDHub4u homepage with TMDB data."""
-    try:
-        logger.info(f"Scraping HDHub4u homepage (max_results={max_results})...")
-        movies = await hdhub4u_scraper.scrape_homepage(max_movies=max_results)
+    """Get latest movies from HDHub4u homepage with TMDB data.
 
-        logger.info(f"Scraped {len(movies)} movies from HDHub4u")
+    When `incremental=true`, only movies newer than the last sync are returned.
+    First call (or after reset) always does a full sync.
+    """
+    try:
+        logger.info(f"Scraping HDHub4u homepage (max={max_results}, incremental={incremental})")
+        result = await hdhub4u_scraper.scrape_homepage(
+            max_movies=max_results, incremental=incremental
+        )
+
+        logger.info(f"Scraped {result['total_new']} movies (mode={result['sync_mode']})")
         return {
             "source": "HDHub4u",
-            "total": len(movies),
-            "movies": movies,
+            "sync_mode": result["sync_mode"],
+            "is_incremental": result["is_incremental"],
+            "total": result["total_new"],
+            "movies": result["movies"],
         }
     except Exception as e:
         logger.error(f"Browse latest error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/browse/latest/state")
+async def get_sync_state():
+    """Check the current incremental sync state."""
+    return {
+        "hdhub4u": homepage_state.get_info("hdhub4u"),
+    }
+
+
+@app.post("/browse/latest/reset")
+async def reset_sync_state(
+    source: str = Query("hdhub4u", description="Source to reset"),
+):
+    """Reset sync state to force a full sync on next call."""
+    homepage_state.reset(source)
+    return {"status": "ok", "message": f"{source} state reset — next call will be full sync"}
 
 
 @app.get("/browse/{site}")

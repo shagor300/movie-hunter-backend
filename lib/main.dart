@@ -8,6 +8,7 @@ import 'models/download.dart';
 import 'models/watchlist_movie.dart';
 import 'models/playback_position.dart';
 import 'models/theme_preferences.dart';
+import 'models/homepage_movie.dart';
 import 'controllers/download_controller.dart';
 import 'controllers/watchlist_controller.dart';
 import 'controllers/video_player_controller.dart';
@@ -35,6 +36,7 @@ void main() async {
   Hive.registerAdapter(PlaybackPositionAdapter());
   Hive.registerAdapter(AppThemeModeAdapter());
   Hive.registerAdapter(ThemePreferencesAdapter());
+  Hive.registerAdapter(HomepageMovieAdapter());
 
   // Initialize Flutter Downloader (CRITICAL - must be before controllers)
   await FlutterDownloader.initialize(debug: true, ignoreSsl: true);

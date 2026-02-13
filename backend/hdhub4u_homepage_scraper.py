@@ -5,6 +5,8 @@ from typing import List, Dict, Optional
 import logging
 import httpx
 
+from homepage_state import homepage_state
+
 logger = logging.getLogger(__name__)
 
 # TMDB Configuration
@@ -36,21 +38,56 @@ class HDHub4uScraper:
         self.homepage_url = "https://new3.hdhub4u.fo"
         self._scraper = scraper_instance  # shared MovieScraper (for fallback)
 
-    async def scrape_homepage(self, max_movies: int = 50) -> List[Dict]:
-        """Scrape latest movies from HDHub4u homepage."""
+    async def scrape_homepage(
+        self, max_movies: int = 50, incremental: bool = False
+    ) -> Dict:
+        """
+        Scrape latest movies from HDHub4u homepage.
+
+        When *incremental* is True and we have a saved state, only movies
+        newer than the last-known movie are returned.
+
+        Returns:
+            {
+                'sync_mode': 'full' | 'incremental',
+                'is_incremental': bool,
+                'total_new': int,
+                'movies': [...],
+            }
+        """
+        last_url = homepage_state.get_last_url('hdhub4u') if incremental else None
+        mode = 'incremental' if last_url else 'full'
+        logger.info(f"🔄 [HDHub4u] {mode.upper()} sync (max={max_movies})")
 
         # --- Strategy 1: Lightweight httpx (no browser) ---
-        movies = await self._scrape_with_httpx(max_movies)
+        movies = await self._scrape_with_httpx(max_movies, stop_at_url=last_url)
 
         # --- Strategy 2: Playwright fallback ---
-        if not movies:
-            logger.info("httpx approach returned 0 movies, trying Playwright fallback")
+        if not movies and not last_url:
+            logger.info("httpx returned 0 movies, trying Playwright fallback")
             movies = await self._scrape_with_playwright(max_movies)
 
-        logger.info(f"Total movies with TMDB data: {len(movies)}")
-        return movies
+        # Save state: first movie = newest
+        if movies:
+            first = movies[0]
+            homepage_state.update(
+                source='hdhub4u',
+                url=first.get('hdhub4u_url', ''),
+                title=first.get('title', ''),
+                total=len(movies),
+            )
 
-    async def _scrape_with_httpx(self, max_movies: int) -> List[Dict]:
+        logger.info(f"✅ [HDHub4u] {mode} sync: {len(movies)} movies")
+        return {
+            'sync_mode': mode,
+            'is_incremental': mode == 'incremental',
+            'total_new': len(movies),
+            'movies': movies,
+        }
+
+    async def _scrape_with_httpx(
+        self, max_movies: int, stop_at_url: Optional[str] = None
+    ) -> List[Dict]:
         """Fetch page with httpx and parse — no Playwright needed."""
         movies = []
         try:
@@ -75,7 +112,9 @@ class HDHub4uScraper:
 
                 html = response.text
 
-            movies = await self._parse_html(html, max_movies)
+            movies = await self._parse_html(
+                html, max_movies, stop_at_url=stop_at_url
+            )
             logger.info(f"httpx strategy found {len(movies)} movies")
 
         except Exception as e:
@@ -122,11 +161,18 @@ class HDHub4uScraper:
 
         return movies
 
-    async def _parse_html(self, html: str, max_movies: int) -> List[Dict]:
-        """Parse HTML and extract movie entries with TMDB enrichment."""
+    async def _parse_html(
+        self, html: str, max_movies: int, stop_at_url: Optional[str] = None
+    ) -> List[Dict]:
+        """Parse HTML and extract movie entries with TMDB enrichment.
+
+        If *stop_at_url* is set, parsing stops when that URL is encountered
+        (incremental mode — only return movies newer than stop_at_url).
+        """
         soup = BeautifulSoup(html, 'html.parser')
         movies = []
         seen_urls = set()
+        hit_last_known = False
 
         # --- Strategy A: Find article/div posts ---
         articles = soup.find_all(
@@ -137,9 +183,15 @@ class HDHub4uScraper:
         if articles:
             for article in articles[:max_movies * 2]:
                 movie = self._extract_from_element(article)
-                if movie and movie['url'] not in seen_urls:
-                    seen_urls.add(movie['url'])
-                    movies.append(movie)
+                if not movie or movie['url'] in seen_urls:
+                    continue
+                # Incremental: stop when we hit the last-known movie
+                if stop_at_url and movie['url'] == stop_at_url:
+                    hit_last_known = True
+                    logger.info(f"⏹️ Hit last-known movie: {movie.get('clean_title')}")
+                    break
+                seen_urls.add(movie['url'])
+                movies.append(movie)
                 if len(movies) >= max_movies:
                     break
 

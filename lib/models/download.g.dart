@@ -13,10 +13,9 @@ class DownloadAdapter extends TypeAdapter<Download> {
   @override
   Download read(BinaryReader reader) {
     final numOfFields = reader.readByte();
-    final fields = <int, dynamic>{};
-    for (int i = 0; i < numOfFields; i++) {
-      fields[reader.readByte()] = reader.read();
-    }
+    final fields = <int, dynamic>{
+      for (int i = 0; i < numOfFields; i++) reader.readByte(): reader.read(),
+    };
     return Download(
       url: fields[0] as String,
       filename: fields[1] as String,
@@ -26,7 +25,7 @@ class DownloadAdapter extends TypeAdapter<Download> {
       quality: fields[5] as String?,
       movieTitle: fields[6] as String,
       taskId: fields[7] as String?,
-      createdAt: fields[8] as DateTime,
+      createdAt: fields[8] as DateTime?,
       savedPath: fields[9] as String?,
     );
   }

@@ -46,8 +46,12 @@ void main() async {
   Hive.registerAdapter(HomepageMovieAdapter());
 
   // Initialize Flutter Downloader (CRITICAL - must be before controllers)
-  await FlutterDownloader.initialize(debug: true, ignoreSsl: true);
-  FlutterDownloader.registerCallback(downloadCallback);
+  try {
+    await FlutterDownloader.initialize(debug: true, ignoreSsl: true);
+    FlutterDownloader.registerCallback(downloadCallback);
+  } catch (e) {
+    debugPrint('❌ FlutterDownloader initialization failed: $e');
+  }
 
   // Register GetX controllers
   Get.put(WatchlistController(), permanent: true);

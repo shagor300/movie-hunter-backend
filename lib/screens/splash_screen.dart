@@ -40,44 +40,55 @@ class _SplashScreenState extends State<SplashScreen>
 
     _controller.forward();
 
-    // Run update check and navigation after splash animation
-    _initAndCheckUpdate();
+    // Run splash animation and then navigate
+    _proceedToHome();
   }
 
-  Future<void> _initAndCheckUpdate() async {
+  Future<void> _proceedToHome() async {
     // Wait for splash animation
     await Future.delayed(const Duration(seconds: 3));
 
     if (!mounted) return;
 
-    // Check for updates
-    final updateController = Get.find<UpdateController>();
-    await updateController.checkForUpdate();
+    // Start update check in background (don't await)
+    _checkUpdateInBackground();
 
-    if (!mounted) return;
+    // Navigate to Home IMMEDIATELY after animation
+    if (mounted) {
+      Navigator.of(context).pushReplacement(
+        PageRouteBuilder(
+          pageBuilder: (context, animation, secondaryAnimation) =>
+              const HomeScreen(),
+          transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            return FadeTransition(opacity: animation, child: child);
+          },
+          transitionDuration: const Duration(milliseconds: 800),
+        ),
+      );
+    }
+  }
 
-    // Navigate to Home
-    Navigator.of(context).pushReplacement(
-      PageRouteBuilder(
-        pageBuilder: (context, animation, secondaryAnimation) =>
-            const HomeScreen(),
-        transitionsBuilder: (context, animation, secondaryAnimation, child) {
-          return FadeTransition(opacity: animation, child: child);
-        },
-        transitionDuration: const Duration(milliseconds: 800),
-      ),
-    );
+  Future<void> _checkUpdateInBackground() async {
+    try {
+      final updateController = Get.find<UpdateController>();
+      await updateController.checkForUpdate();
 
-    // Show update dialog after navigation completes
-    final info = updateController.updateInfo.value;
-    if (info != null) {
-      final updateService = UpdateService();
-      final currentVersion = await updateService.getCurrentVersionName();
+      final info = updateController.updateInfo.value;
+      if (info != null) {
+        final updateService = UpdateService();
+        final currentVersion = await updateService.getCurrentVersionName();
 
-      // Small delay to ensure HomeScreen is fully rendered
-      await Future.delayed(const Duration(milliseconds: 500));
+        // Wait a bit for HomeScreen to be ready
+        await Future.delayed(const Duration(seconds: 1));
 
-      UpdateDialog.show(info: info, currentVersion: currentVersion);
+        if (Get.currentRoute == '/' ||
+            Get.currentRoute == '/HomeScreen' ||
+            true) {
+          UpdateDialog.show(info: info, currentVersion: currentVersion);
+        }
+      }
+    } catch (e) {
+      debugPrint('Background update check error: $e');
     }
   }
 

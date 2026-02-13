@@ -13,10 +13,9 @@ class WatchlistMovieAdapter extends TypeAdapter<WatchlistMovie> {
   @override
   WatchlistMovie read(BinaryReader reader) {
     final numOfFields = reader.readByte();
-    final fields = <int, dynamic>{};
-    for (int i = 0; i < numOfFields; i++) {
-      fields[reader.readByte()] = reader.read();
-    }
+    final fields = <int, dynamic>{
+      for (int i = 0; i < numOfFields; i++) reader.readByte(): reader.read(),
+    };
     return WatchlistMovie(
       tmdbId: fields[0] as int,
       title: fields[1] as String,

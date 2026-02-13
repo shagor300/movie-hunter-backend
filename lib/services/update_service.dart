@@ -30,14 +30,26 @@ class UpdateService {
 
   /// Get the current app build number.
   Future<int> getCurrentBuildNumber() async {
-    final packageInfo = await PackageInfo.fromPlatform();
-    return int.tryParse(packageInfo.buildNumber) ?? 0;
+    try {
+      final packageInfo = await PackageInfo.fromPlatform().timeout(
+        const Duration(seconds: 5),
+      );
+      return int.tryParse(packageInfo.buildNumber) ?? 0;
+    } catch (_) {
+      return 0;
+    }
   }
 
   /// Get the current app version name.
   Future<String> getCurrentVersionName() async {
-    final packageInfo = await PackageInfo.fromPlatform();
-    return packageInfo.version;
+    try {
+      final packageInfo = await PackageInfo.fromPlatform().timeout(
+        const Duration(seconds: 5),
+      );
+      return packageInfo.version;
+    } catch (_) {
+      return 'Unknown';
+    }
   }
 
   /// Check if an update is available.

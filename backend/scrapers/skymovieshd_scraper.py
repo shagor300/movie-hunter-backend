@@ -1,6 +1,9 @@
 """
-SkyMoviesHD Scraper — extracts movies and Google Drive links from SkyMoviesHD.
-Shares browser instance with the main MovieScraper for resource efficiency.
+SkyMoviesHD Scraper — extracts movies and download links from SkyMoviesHD.
+Follows the real site workflow:
+  1. Search → flat link list page
+  2. Movie page → find "Google Drive Direct Links" (howblogs.xyz mediator)
+  3. Mediator page → extract actual drive/download links
 """
 
 import asyncio
@@ -10,6 +13,7 @@ from playwright.async_api import Page
 from playwright_stealth import stealth_async
 from typing import List, Dict
 import logging
+import httpx
 
 from .base_scraper import BaseMovieScraper
 
@@ -17,6 +21,28 @@ logger = logging.getLogger(__name__)
 
 # Common user agent
 USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+
+# Known download hosts that appear on mediator pages
+DOWNLOAD_HOSTS = [
+    'drive.google.com', 'docs.google.com',
+    'dgdrive.site', 'gdrive', 'gdtot', 'gdflix',
+    'hubdrive', 'hubcloud', 'gofile.io',
+    'filepress', 'pixeldrain.com', 'krakenfiles.com',
+    'terabox.com', 'mega.nz', 'mediafire.com',
+]
+
+# Known mediator/shortener hosts
+MEDIATOR_HOSTS = [
+    'howblogs.xyz', 'hblinks.dad', 'gadgetsweb.xyz',
+    'cryptoinsights.site', 'adrinolinks.in', 'newshub.live',
+    'gplinks.co', 'kolop.net',
+]
+
+# Streaming embed hosts
+EMBED_HOSTS = [
+    'hglink.to', 'vidhide.com', 'vidsrc', 'filmxy',
+    'streamtape.com', 'doodstream', 'mixdrop',
+]
 
 
 class SkyMoviesHDScraper(BaseMovieScraper):
@@ -35,153 +61,126 @@ class SkyMoviesHDScraper(BaseMovieScraper):
         return context, page
 
     # =========================================================================
-    # SEARCH
+    # SEARCH (Step 1-3)
     # =========================================================================
 
     async def search_movies(self, query: str, max_results: int = 20) -> List[Dict]:
         """
         Search for movies on SkyMoviesHD.
-        1. Navigate to search URL
-        2. Parse search results
-        3. Clean titles, extract year/quality
-        4. Match with TMDB
+        The search page returns a flat list of <a> links (no article/div posts).
+        Each link points to /movie/Title-Here.html.
         """
-        context, page = await self._new_stealth_page()
         movies = []
 
         try:
             logger.info(f"[{self.source_name}] Searching for: {query}")
 
+            # Use HTTP first (faster, no browser needed for search)
             search_url = f"{self.base_url}/?s={query.replace(' ', '+')}"
-            success = await self._navigate_safe(page, search_url)
-            if not success:
-                return movies
+            
+            async with httpx.AsyncClient(
+                headers={"User-Agent": USER_AGENT},
+                timeout=15.0,
+                follow_redirects=True
+            ) as client:
+                resp = await client.get(search_url)
+                if resp.status_code != 200:
+                    logger.error(f"[{self.source_name}] Search HTTP {resp.status_code}")
+                    return movies
 
-            await asyncio.sleep(3)
+                content = resp.text
 
-            content = await page.content()
             soup = BeautifulSoup(content, 'html.parser')
 
-            # Find movie posts
-            posts = soup.find_all(
-                ['article', 'div'],
-                class_=re.compile(r'post|item|movie|entry', re.I)
-            )
-            logger.info(f"[{self.source_name}] Found {len(posts)} posts")
+            # SkyMoviesHD search returns flat <a> links to /movie/*.html
+            all_links = soup.find_all('a', href=True)
 
-            for post in posts[:max_results]:
-                try:
-                    movie_data = self._parse_search_result(post)
-                    if not movie_data:
-                        continue
+            for link in all_links:
+                href = link.get('href', '')
+                text = link.get_text(strip=True)
 
-                    raw_title = movie_data['title']
-                    movie_url = movie_data['url']
-                    poster_url = movie_data.get('poster')
-
-                    # Clean title and extract year
-                    clean_title, year = self._clean_title(raw_title)
-                    quality = self._extract_quality(raw_title)
-
-                    logger.info(
-                        f"[{self.source_name}] Found: {clean_title} ({year}) - {quality}"
-                    )
-
-                    # Match with TMDB
-                    tmdb_data = await self._match_with_tmdb(clean_title, year)
-
-                    if tmdb_data:
-                        movies.append({
-                            'source': self.source_name,
-                            'source_type': 'skymovieshd',
-                            'title': tmdb_data['title'],
-                            'original_title': raw_title,
-                            'url': movie_url,
-                            'year': year or tmdb_data.get('release_date', '')[:4],
-                            'quality': quality,
-                            'poster': tmdb_data['poster_url'] or poster_url,
-                            'backdrop': tmdb_data.get('backdrop_url'),
-                            'tmdb_id': tmdb_data['tmdb_id'],
-                            'rating': tmdb_data['rating'],
-                            'overview': tmdb_data['overview'],
-                            'release_date': tmdb_data['release_date'],
-                        })
-                    else:
-                        movies.append({
-                            'source': self.source_name,
-                            'source_type': 'skymovieshd',
-                            'title': clean_title,
-                            'original_title': raw_title,
-                            'url': movie_url,
-                            'year': year,
-                            'quality': quality,
-                            'poster': poster_url,
-                        })
-
-                except Exception as e:
-                    logger.error(f"[{self.source_name}] Error parsing post: {e}")
+                # Only pick links to movie pages
+                if '/movie/' not in href or not text or len(text) < 5:
                     continue
 
+                # Skip category/nav links
+                if '/category/' in href or '/search.php' in href:
+                    continue
+
+                raw_title = text
+                movie_url = href
+
+                # Ensure full URL
+                if not movie_url.startswith('http'):
+                    movie_url = f"{self.base_url}{movie_url}"
+
+                # Clean title and extract year/quality
+                clean_title, year = self._clean_title(raw_title)
+                quality = self._extract_quality(raw_title)
+
+                if not clean_title or len(clean_title) < 2:
+                    continue
+
+                logger.info(
+                    f"[{self.source_name}] Found: {clean_title} ({year}) - {quality}"
+                )
+
+                # Match with TMDB
+                tmdb_data = await self._match_with_tmdb(clean_title, year)
+
+                if tmdb_data:
+                    movies.append({
+                        'source': self.source_name,
+                        'source_type': 'skymovieshd',
+                        'title': tmdb_data['title'],
+                        'original_title': raw_title,
+                        'url': movie_url,
+                        'year': year or tmdb_data.get('release_date', '')[:4],
+                        'quality': quality,
+                        'poster': tmdb_data['poster_url'],
+                        'backdrop': tmdb_data.get('backdrop_url'),
+                        'tmdb_id': tmdb_data['tmdb_id'],
+                        'rating': tmdb_data['rating'],
+                        'overview': tmdb_data['overview'],
+                        'release_date': tmdb_data['release_date'],
+                    })
+                else:
+                    movies.append({
+                        'source': self.source_name,
+                        'source_type': 'skymovieshd',
+                        'title': clean_title,
+                        'original_title': raw_title,
+                        'url': movie_url,
+                        'year': year,
+                        'quality': quality,
+                        'poster': None,
+                    })
+
+                if len(movies) >= max_results:
+                    break
+
             logger.info(
-                f"[{self.source_name}] Extracted {len(movies)} movies"
+                f"[{self.source_name}] Extracted {len(movies)} movies from search"
             )
 
         except Exception as e:
             logger.error(f"[{self.source_name}] Search error: {e}")
-        finally:
-            await page.close()
-            await context.close()
 
         return movies
 
-    def _parse_search_result(self, post) -> dict | None:
-        """Extract title, URL, and poster from a search result element."""
-        # Find title element
-        title_elem = post.find(
-            ['h2', 'h3', 'a'],
-            class_=re.compile(r'title|entry-title', re.I)
-        )
-        if not title_elem:
-            title_elem = post.find('a', href=True)
-        if not title_elem:
-            return None
-
-        raw_title = title_elem.get_text(strip=True)
-        if not raw_title or len(raw_title) < 3:
-            return None
-
-        # Find URL
-        movie_url = None
-        if title_elem.name == 'a':
-            movie_url = title_elem.get('href')
-        else:
-            link = post.find('a', href=True)
-            if link:
-                movie_url = link['href']
-
-        if not movie_url:
-            return None
-
-        # Find poster
-        poster_elem = post.find('img', src=True)
-        poster_url = poster_elem['src'] if poster_elem else None
-
-        return {'title': raw_title, 'url': movie_url, 'poster': poster_url}
-
     # =========================================================================
-    # LINK EXTRACTION
+    # LINK EXTRACTION (Step 4-5)
     # =========================================================================
 
     async def extract_links(self, movie_url: str) -> Dict:
         """
-        Extract Google Drive links from a SkyMoviesHD movie page.
-        1. Navigate to movie page
-        2. Scroll to load all content
-        3. Find Google Drive links via 3 methods
-        4. Resolve shortener links
+        Extract download links from a SkyMoviesHD movie page.
+        Workflow:
+          1. Fetch movie page (HTTP)
+          2. Find "Google Drive Direct Links" and SERVER links (mediator URLs)
+          3. Follow each mediator URL to get actual download links
+          4. Find "WATCH ONLINE" embed links
         """
-        context, page = await self._new_stealth_page()
-
         result = {
             'links': [],
             'embed_links': [],
@@ -190,146 +189,223 @@ class SkyMoviesHDScraper(BaseMovieScraper):
         try:
             logger.info(f"[{self.source_name}] Extracting links from: {movie_url}")
 
-            success = await self._navigate_safe(page, movie_url)
-            if not success:
-                return result
+            # Step 1: Fetch movie page via HTTP (fast)
+            async with httpx.AsyncClient(
+                headers={"User-Agent": USER_AGENT},
+                timeout=15.0,
+                follow_redirects=True
+            ) as client:
+                resp = await client.get(movie_url)
+                if resp.status_code != 200:
+                    logger.error(f"[{self.source_name}] Movie page HTTP {resp.status_code}")
+                    return result
+                movie_html = resp.text
 
-            await asyncio.sleep(3)
+            soup = BeautifulSoup(movie_html, 'html.parser')
+            all_links = soup.find_all('a', href=True)
 
-            # Scroll to load lazy content
-            for _ in range(3):
-                await page.evaluate('window.scrollBy(0, window.innerHeight)')
-                await asyncio.sleep(1)
+            mediator_urls = []
+            embed_urls = []
 
-            content = await page.content()
-            soup = BeautifulSoup(content, 'html.parser')
+            for link in all_links:
+                href = link.get('href', '')
+                text = link.get_text(strip=True)
 
-            found_links = []
-
-            # --- Method 1: Find "Google Drive" section headers ---
-            gdrive_headers = soup.find_all(
-                string=re.compile(r'Google\s*Drive|G-?Drive|Download\s*Links', re.I)
-            )
-            for header in gdrive_headers:
-                parent = header.find_parent()
-                if not parent:
+                # Skip self-referencing and navigation links
+                if not href or href.startswith('#') or 'javascript:' in href:
                     continue
-                section = parent.find_next_sibling()
-                if not section:
-                    section = parent.find_parent()
-                    if section:
-                        section = section.find_next_sibling()
-                if section:
-                    for link in section.find_all('a', href=True):
-                        self._collect_drive_link(link, found_links)
 
-            # --- Method 2: Buttons with "Google Drive" text ---
-            gdrive_buttons = soup.find_all(
-                ['a', 'button'],
-                string=re.compile(r'Google.*Drive|G-?Drive', re.I)
-            )
-            for button in gdrive_buttons:
-                href = button.get('href')
-                if href:
-                    self._collect_drive_link(button, found_links)
+                # Check for mediator links (howblogs.xyz, etc.)
+                if self._is_mediator_link(href):
+                    mediator_urls.append({
+                        'url': href,
+                        'text': text,
+                    })
+                    logger.info(f"[{self.source_name}] Found mediator: {text} → {href}")
 
-            # --- Method 3: All links on page matching Drive patterns ---
-            for link in soup.find_all('a', href=True):
-                self._collect_drive_link(link, found_links)
+                # Check for embed/streaming links
+                elif self._is_embed_link(href):
+                    embed_urls.append({
+                        'url': href,
+                        'quality': self._extract_quality(text) if text else 'HD',
+                        'player': text or 'Player',
+                        'type': 'embed',
+                    })
 
-            # Resolve shortener links
-            found_links = await self._resolve_shorteners(found_links, page)
+                # Check for direct download links on the page itself
+                elif self._is_download_link(href):
+                    quality = self._extract_quality(text) if text else 'HD'
+                    result['links'].append({
+                        'name': text[:80] if text else f'Download - {quality}',
+                        'url': href,
+                        'quality': quality,
+                        'type': 'Google Drive',
+                        'source': self.source_name,
+                    })
 
-            result['links'] = found_links
+            # Step 2: Follow mediator links to get actual download URLs
+            if mediator_urls:
+                logger.info(
+                    f"[{self.source_name}] Following {len(mediator_urls)} mediator links..."
+                )
+                download_links = await self._resolve_mediator_links(mediator_urls)
+                result['links'].extend(download_links)
+
+            # Deduplicate links by URL
+            seen = set()
+            unique_links = []
+            for link in result['links']:
+                url_key = link['url'].split('?')[0]
+                if url_key not in seen:
+                    seen.add(url_key)
+                    unique_links.append(link)
+            result['links'] = unique_links
+
+            result['embed_links'] = embed_urls
 
             logger.info(
-                f"[{self.source_name}] Found {len(found_links)} download links"
+                f"[{self.source_name}] Final: {len(result['links'])} download links, "
+                f"{len(result['embed_links'])} embed links"
             )
 
         except Exception as e:
             logger.error(f"[{self.source_name}] Link extraction error: {e}")
-        finally:
-            await page.close()
-            await context.close()
 
         return result
 
-    def _collect_drive_link(self, link_elem, found_links: list):
-        """Add a Drive-compatible link to found_links if not duplicate."""
-        href = link_elem.get('href', '')
-        if not href or not self._is_drive_link(href):
-            return
+    async def _resolve_mediator_links(self, mediator_urls: List[Dict]) -> List[Dict]:
+        """
+        Follow mediator/shortener URLs (howblogs.xyz, etc.) to extract
+        actual download links. Uses HTTP GET — no browser needed.
+        """
+        all_links = []
 
-        # Skip duplicates
-        if any(l['url'] == href for l in found_links):
-            return
+        # Process mediators concurrently (max 3 at a time)
+        semaphore = asyncio.Semaphore(3)
 
-        text = link_elem.get_text(strip=True)
-        quality = self._extract_quality(text) if text else 'HD'
+        async def resolve_one(mediator: Dict) -> List[Dict]:
+            async with semaphore:
+                return await self._fetch_mediator_page(
+                    mediator['url'], mediator['text']
+                )
 
-        found_links.append({
-            'name': f"Google Drive - {quality}",
-            'url': href,
-            'quality': quality,
-            'type': 'Google Drive',
-            'source': self.source_name,
-        })
+        tasks = [resolve_one(m) for m in mediator_urls]
+        results = await asyncio.gather(*tasks, return_exceptions=True)
 
-    def _is_drive_link(self, url: str) -> bool:
-        """Check if URL is a Google Drive link or known shortener."""
-        patterns = [
-            'drive.google.com',
-            'docs.google.com',
-            'gdrive',
-            'gdtot',
-            'hubdrive',
-            'hubcloud',
-        ]
-        return any(p in url.lower() for p in patterns)
+        for result in results:
+            if isinstance(result, list):
+                all_links.extend(result)
+            elif isinstance(result, Exception):
+                logger.error(f"[{self.source_name}] Mediator resolve error: {result}")
 
-    async def _resolve_shorteners(self, links: List[Dict],
-                                   page: Page) -> List[Dict]:
-        """Resolve shortener links to final Google Drive URLs."""
-        resolved = []
+        return all_links
 
-        for link in links:
-            url = link['url']
+    async def _fetch_mediator_page(self, mediator_url: str, 
+                                     button_text: str) -> List[Dict]:
+        """
+        Fetch a mediator page (e.g., howblogs.xyz/375923) and extract
+        download links from its content.
+        """
+        links = []
 
-            # Already a direct Drive link
-            if 'drive.google.com/file/' in url or 'drive.google.com/uc' in url:
-                resolved.append(link)
-                continue
+        try:
+            logger.info(f"[{self.source_name}] Resolving mediator: {mediator_url}")
 
-            # Try to follow the redirect
-            try:
-                logger.info(f"[{self.source_name}] Resolving shortener: {url}")
-                await page.goto(url, wait_until='domcontentloaded', timeout=15000)
-                await asyncio.sleep(2)
-
-                current_url = page.url
-                if 'drive.google.com' in current_url:
-                    link['url'] = current_url
-                    resolved.append(link)
-                    logger.info(f"[{self.source_name}] Resolved to: {current_url}")
-                else:
-                    # Look for Drive link in the intermediate page
-                    content = await page.content()
-                    soup = BeautifulSoup(content, 'html.parser')
-                    drive_link = soup.find(
-                        'a', href=re.compile(r'drive\.google\.com')
+            async with httpx.AsyncClient(
+                headers={"User-Agent": USER_AGENT},
+                timeout=15.0,
+                follow_redirects=True
+            ) as client:
+                resp = await client.get(mediator_url)
+                if resp.status_code != 200:
+                    logger.warning(
+                        f"[{self.source_name}] Mediator HTTP {resp.status_code}: {mediator_url}"
                     )
-                    if drive_link:
-                        link['url'] = drive_link['href']
-                        resolved.append(link)
-                    else:
-                        # Keep original
-                        resolved.append(link)
-                        logger.warning(
-                            f"[{self.source_name}] Could not resolve: {url}"
-                        )
+                    return links
 
-            except Exception as e:
-                logger.error(f"[{self.source_name}] Resolve error for {url}: {e}")
-                resolved.append(link)
+                content = resp.text
 
-        return resolved
+            soup = BeautifulSoup(content, 'html.parser')
+
+            # Method 1: Find download links in <a> tags
+            for a in soup.find_all('a', href=True):
+                href = a.get('href', '')
+                if self._is_download_link(href):
+                    text = a.get_text(strip=True)
+                    quality = self._extract_quality(text or button_text)
+                    links.append({
+                        'name': f"{button_text} - {quality}" if button_text else f'Download - {quality}',
+                        'url': href,
+                        'quality': quality,
+                        'type': 'Google Drive',
+                        'source': self.source_name,
+                    })
+
+            # Method 2: Find download links in plain text (common for howblogs.xyz)
+            # These links appear as raw URLs in the page content
+            url_pattern = re.compile(
+                r'https?://[^\s"\'<>\]]+(?:' +
+                '|'.join(re.escape(h) for h in DOWNLOAD_HOSTS) +
+                r')[^\s"\'<>\]]*',
+                re.IGNORECASE
+            )
+
+            existing_urls = {l['url'] for l in links}
+            text_content = soup.get_text()
+
+            for match in url_pattern.finditer(text_content):
+                url = match.group(0).rstrip('.')
+                if url not in existing_urls:
+                    existing_urls.add(url)
+                    quality = self._extract_quality(button_text)
+                    links.append({
+                        'name': f"{button_text} - {quality}" if button_text else f'Download - {quality}',
+                        'url': url,
+                        'quality': quality,
+                        'type': 'Google Drive',
+                        'source': self.source_name,
+                    })
+
+            # Method 3: Find links in page source (JS-embedded URLs)
+            for match in url_pattern.finditer(content):
+                url = match.group(0).rstrip('.')
+                if url not in existing_urls:
+                    existing_urls.add(url)
+                    quality = self._extract_quality(button_text)
+                    links.append({
+                        'name': f"{button_text} - {quality}" if button_text else f'Download - {quality}',
+                        'url': url,
+                        'quality': quality,
+                        'type': 'Google Drive',
+                        'source': self.source_name,
+                    })
+
+            logger.info(
+                f"[{self.source_name}] Mediator '{button_text}' → {len(links)} links"
+            )
+
+        except Exception as e:
+            logger.error(
+                f"[{self.source_name}] Error fetching mediator {mediator_url}: {e}"
+            )
+
+        return links
+
+    # =========================================================================
+    # HELPERS
+    # =========================================================================
+
+    def _is_download_link(self, url: str) -> bool:
+        """Check if URL points to a known download host."""
+        url_lower = url.lower()
+        return any(host in url_lower for host in DOWNLOAD_HOSTS)
+
+    def _is_mediator_link(self, url: str) -> bool:
+        """Check if URL points to a known mediator/shortener host."""
+        url_lower = url.lower()
+        return any(host in url_lower for host in MEDIATOR_HOSTS)
+
+    def _is_embed_link(self, url: str) -> bool:
+        """Check if URL points to a known streaming embed host."""
+        url_lower = url.lower()
+        return any(host in url_lower for host in EMBED_HOSTS)

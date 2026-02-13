@@ -41,7 +41,20 @@ SKIP_PATTERNS = [
 
 
 class EmbedLinkExtractor:
-    """Extract embed/streaming links from movie pages for in-app playback."""
+    # User-friendly name mappings for embed players
+    BEAUTIFUL_NAMES = {
+        1: "⚡ Instant Play (Recommended)",
+        2: "🚀 High Speed Player",
+        3: "📺 Standard Player",
+        4: "🔄 Backup Player",
+        5: "⭐ Premium Player",
+    }
+
+    SPEED_INDICATORS = {
+        1: "fastest",
+        2: "fast",
+        3: "medium",
+    }
 
     def _is_embed_url(self, url: str) -> bool:
         """Check if a URL matches known embed/streaming patterns."""
@@ -80,11 +93,22 @@ class EmbedLinkExtractor:
             return f"Player-{match.group(1)}"
         return 'Embedded Player'
 
+    def _beautify_links(self, embed_links: list) -> list:
+        """Post-process embed links with beautiful names, speed indicators, and recommendation flags."""
+        for i, link in enumerate(embed_links):
+            player_number = i + 1
+            link['name'] = self.BEAUTIFUL_NAMES.get(player_number, f"🎬 Player {player_number}")
+            link['display_name'] = f"{link['name']} - {link.get('quality', 'HD')}"
+            link['speed_indicator'] = self.SPEED_INDICATORS.get(player_number, 'backup')
+            link['player_number'] = player_number
+            link['is_recommended'] = player_number == 1
+        return embed_links
+
     def extract_from_html(self, html: str, page_url: str) -> List[Dict]:
         """
         Extract embed links from HTML content.
         
-        Returns list of dicts with keys: url, quality, player, type
+        Returns list of dicts with keys: url, quality, player, type, name, speed_indicator, is_recommended
         """
         soup = BeautifulSoup(html, 'html.parser')
         embed_links = []
@@ -144,6 +168,9 @@ class EmbedLinkExtractor:
                     'player': self._extract_player_name(href, full_text),
                     'type': 'embed',
                 })
+
+        # Assign beautiful names and metadata
+        embed_links = self._beautify_links(embed_links)
 
         logger.info(f"Found {len(embed_links)} embed links from {page_url}")
         return embed_links

@@ -217,12 +217,49 @@ class DownloadsScreen extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 6),
-              Align(
-                alignment: Alignment.centerRight,
-                child: Text(
-                  '${download.progress}%',
-                  style: GoogleFonts.inter(color: Colors.white38, fontSize: 11),
-                ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  // Speed + ETA
+                  if (download.status == DownloadStatus.downloading)
+                    Row(
+                      children: [
+                        Icon(Icons.speed, size: 12, color: Colors.white24),
+                        const SizedBox(width: 4),
+                        Text(
+                          controller.getSpeedText(download.taskId),
+                          style: GoogleFonts.inter(
+                            color: Colors.blueAccent,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Icon(
+                          Icons.timer_outlined,
+                          size: 12,
+                          color: Colors.white24,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          controller.getETAText(download.taskId),
+                          style: GoogleFonts.inter(
+                            color: Colors.white38,
+                            fontSize: 11,
+                          ),
+                        ),
+                      ],
+                    )
+                  else
+                    const SizedBox.shrink(),
+                  Text(
+                    '${download.progress}%',
+                    style: GoogleFonts.inter(
+                      color: Colors.white38,
+                      fontSize: 11,
+                    ),
+                  ),
+                ],
               ),
             ],
           ],

@@ -609,6 +609,61 @@ class _DetailsScreenState extends State<DetailsScreen> {
   }
 
   Widget _buildEmbedLinkItem(Map<String, String> link, int index) {
+    // Gradient colors based on player priority
+    final gradients = <List<Color>>[
+      [
+        const Color(0xFF6B46C1),
+        const Color(0xFF9333EA),
+      ], // Purple - Recommended
+      [const Color(0xFF2563EB), const Color(0xFF3B82F6)], // Blue - High Speed
+      [const Color(0xFF059669), const Color(0xFF10B981)], // Green - Standard
+      [const Color(0xFFD97706), const Color(0xFFF59E0B)], // Orange - Backup
+      [const Color(0xFF4B5563), const Color(0xFF6B7280)], // Gray - Extra
+    ];
+    final colors = index < gradients.length ? gradients[index] : gradients.last;
+
+    // Beautiful name from backend, fallback to generated
+    final beautifulNames = [
+      '⚡ Instant Play (Recommended)',
+      '🚀 High Speed Player',
+      '📺 Standard Player',
+      '🔄 Backup Player',
+      '⭐ Premium Player',
+    ];
+    final displayName =
+        link['name'] ??
+        (index < beautifulNames.length
+            ? beautifulNames[index]
+            : 'Player ${index + 1}');
+
+    final quality = link['quality'] ?? 'HD';
+    final isRecommended = index == 0;
+
+    // Speed indicator
+    final speedIcons = [
+      Icons.bolt,
+      Icons.speed,
+      Icons.network_check,
+      Icons.backup,
+    ];
+    final speedTexts = ['Lightning Fast', 'Fast', 'Stable', 'Backup'];
+    final speedIcon = index < speedIcons.length
+        ? speedIcons[index]
+        : Icons.backup;
+    final speedText = index < speedTexts.length ? speedTexts[index] : 'Backup';
+
+    // Quality badge color
+    Color qualityColor;
+    if (quality.contains('4K') || quality.contains('2160')) {
+      qualityColor = Colors.purple;
+    } else if (quality.contains('1080')) {
+      qualityColor = Colors.blue;
+    } else if (quality.contains('720')) {
+      qualityColor = Colors.green;
+    } else {
+      qualityColor = Colors.orange;
+    }
+
     return TweenAnimationBuilder(
       duration: Duration(milliseconds: 400 + (index * 100)),
       tween: Tween<double>(begin: 0, end: 1),
@@ -621,63 +676,11 @@ class _DetailsScreenState extends State<DetailsScreen> {
           ),
         );
       },
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 10),
-        decoration: BoxDecoration(
-          color: Colors.greenAccent.withValues(alpha: 0.05),
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: Colors.greenAccent.withValues(alpha: 0.2)),
-        ),
-        child: ListTile(
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: 16,
-            vertical: 4,
-          ),
-          leading: Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  Colors.greenAccent.withValues(alpha: 0.2),
-                  Colors.tealAccent.withValues(alpha: 0.1),
-                ],
-              ),
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(Icons.play_arrow, color: Colors.greenAccent),
-          ),
-          title: Text(
-            link['player'] ?? 'Player ${index + 1}',
-            style: GoogleFonts.inter(
-              color: Colors.white,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          subtitle: Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                decoration: BoxDecoration(
-                  color: Colors.greenAccent.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(4),
-                ),
-                child: Text(
-                  link['quality'] ?? 'HD',
-                  style: GoogleFonts.inter(
-                    color: Colors.greenAccent,
-                    fontSize: 10,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 8),
-              Text(
-                'Stream',
-                style: GoogleFonts.inter(color: Colors.white38, fontSize: 12),
-              ),
-            ],
-          ),
-          trailing: const Icon(Icons.chevron_right, color: Colors.greenAccent),
+      child: Card(
+        margin: const EdgeInsets.symmetric(vertical: 6),
+        elevation: 4,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        child: InkWell(
           onTap: () {
             final url = link['url'] ?? '';
             if (url.isEmpty || !url.startsWith('http')) {
@@ -704,6 +707,119 @@ class _DetailsScreenState extends State<DetailsScreen> {
               ),
             );
           },
+          borderRadius: BorderRadius.circular(16),
+          child: Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: colors,
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Row(
+                children: [
+                  // Play icon circle
+                  Container(
+                    width: 52,
+                    height: 52,
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.2),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.play_arrow_rounded,
+                      size: 32,
+                      color: Colors.white,
+                    ),
+                  ),
+                  const SizedBox(width: 14),
+                  // Link info
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          displayName,
+                          style: GoogleFonts.inter(
+                            color: Colors.white,
+                            fontSize: 15,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        Row(
+                          children: [
+                            // Quality badge
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 7,
+                                vertical: 3,
+                              ),
+                              decoration: BoxDecoration(
+                                color: qualityColor,
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: Text(
+                                quality,
+                                style: GoogleFonts.inter(
+                                  color: Colors.white,
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            // Speed indicator
+                            Icon(speedIcon, size: 13, color: Colors.white70),
+                            const SizedBox(width: 4),
+                            Text(
+                              speedText,
+                              style: GoogleFonts.inter(
+                                color: Colors.white70,
+                                fontSize: 11,
+                              ),
+                            ),
+                          ],
+                        ),
+                        // Recommended badge
+                        if (isRecommended)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 4),
+                            child: Row(
+                              children: [
+                                const Icon(
+                                  Icons.recommend,
+                                  size: 13,
+                                  color: Colors.amberAccent,
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  'Best Quality & Speed',
+                                  style: GoogleFonts.inter(
+                                    color: Colors.amberAccent,
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                  // Chevron
+                  const Icon(
+                    Icons.chevron_right,
+                    color: Colors.white,
+                    size: 26,
+                  ),
+                ],
+              ),
+            ),
+          ),
         ),
       ),
     );

@@ -1,9 +1,10 @@
+import 'dart:async';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:better_player/better_player.dart';
-import 'dart:io';
+import 'package:better_player_enhanced/better_player.dart';
 import '../controllers/video_player_controller.dart';
 
 class VideoPlayerScreen extends StatefulWidget {
@@ -34,6 +35,7 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
   bool _isInitializing = true;
   String? _errorMessage;
   Duration? _lastSavedPosition;
+  Timer? _initTimeout;
 
   @override
   void initState() {
@@ -65,6 +67,17 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
           widget.localFilePath!,
         );
       } else if (widget.videoUrl.isNotEmpty) {
+        // Validate URL before passing to player
+        final uri = Uri.tryParse(widget.videoUrl);
+        if (uri == null || !uri.hasScheme || (!uri.scheme.startsWith('http'))) {
+          setState(() {
+            _errorMessage =
+                'Invalid video URL.\nThis link may be an embedded player that cannot be played directly.';
+            _isInitializing = false;
+          });
+          return;
+        }
+
         dataSource = BetterPlayerDataSource(
           BetterPlayerDataSourceType.network,
           widget.videoUrl,
@@ -159,12 +172,14 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
           eventListener: (BetterPlayerEvent event) {
             if (event.betterPlayerEventType ==
                 BetterPlayerEventType.initialized) {
+              _initTimeout?.cancel();
               setState(() => _isInitializing = false);
             } else if (event.betterPlayerEventType ==
                 BetterPlayerEventType.progress) {
               _onPositionChanged();
             } else if (event.betterPlayerEventType ==
                 BetterPlayerEventType.exception) {
+              _initTimeout?.cancel();
               setState(() {
                 _errorMessage = 'Playback error occurred';
                 _isInitializing = false;
@@ -176,6 +191,17 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
       );
 
       setState(() {});
+
+      // Start initialization timeout — if player doesn't initialize in 15s, show error
+      _initTimeout = Timer(const Duration(seconds: 15), () {
+        if (_isInitializing && mounted) {
+          setState(() {
+            _errorMessage =
+                'Video failed to load within 15 seconds.\nThe stream may be unavailable or the link may have expired.';
+            _isInitializing = false;
+          });
+        }
+      });
     } catch (e) {
       setState(() {
         _errorMessage = 'Failed to play video:\n$e';
@@ -216,6 +242,8 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
 
   @override
   void dispose() {
+    _initTimeout?.cancel();
+
     // Save final position
     if (widget.tmdbId != null && _betterPlayerController != null) {
       final videoPlayerValue =

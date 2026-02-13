@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:hive_flutter/hive_flutter.dart';
@@ -12,6 +13,13 @@ class DownloadController extends GetxController {
   var downloads = <Download>[].obs;
   var isInitialized = false.obs;
 
+  // ── Real-time speed / ETA tracking ──
+  Timer? _refreshTimer;
+  final Map<String, int> _lastProgress = {};
+  final Map<String, DateTime> _lastUpdateTime = {};
+  final Map<String, double> _speeds = {}; // bytes per second
+  final Map<String, String> _etas = {};
+
   @override
   void onInit() {
     super.onInit();
@@ -25,19 +33,100 @@ class DownloadController extends GetxController {
     // Listen for Hive box changes to keep UI reactive
     _service.box.listenable().addListener(_loadDownloads);
     isInitialized.value = true;
+
+    // Start periodic refresh for active downloads
+    _startRefreshTimer();
+  }
+
+  void _startRefreshTimer() {
+    _refreshTimer?.cancel();
+    _refreshTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+      _loadDownloads();
+      _updateSpeedAndETA();
+      // Stop timer if no active downloads
+      if (activeDownloads.isEmpty) {
+        _refreshTimer?.cancel();
+        _refreshTimer = null;
+      }
+    });
+  }
+
+  void _ensureTimerRunning() {
+    if (_refreshTimer == null || !_refreshTimer!.isActive) {
+      _startRefreshTimer();
+    }
   }
 
   void _loadDownloads() {
     downloads.assignAll(_service.getAllDownloads());
   }
 
+  void _updateSpeedAndETA() {
+    final now = DateTime.now();
+    for (final d in downloads) {
+      if (d.taskId == null) continue;
+      if (d.status != DownloadStatus.downloading) continue;
+
+      final taskId = d.taskId!;
+      final prevProgress = _lastProgress[taskId];
+      final prevTime = _lastUpdateTime[taskId];
+
+      if (prevProgress != null &&
+          prevTime != null &&
+          d.progress > prevProgress) {
+        final elapsed = now.difference(prevTime).inMilliseconds / 1000.0;
+        if (elapsed > 0) {
+          // Estimate: assume ~500 MB average file size if unknown
+          const estimatedTotalBytes = 500 * 1024 * 1024;
+          final progressDelta = (d.progress - prevProgress) / 100.0;
+          final bytesDownloaded = progressDelta * estimatedTotalBytes;
+          final speed = bytesDownloaded / elapsed;
+
+          // Smooth the speed with exponential moving average
+          final oldSpeed = _speeds[taskId] ?? speed;
+          _speeds[taskId] = oldSpeed * 0.3 + speed * 0.7;
+
+          // Calculate ETA
+          final remaining = (100 - d.progress) / 100.0 * estimatedTotalBytes;
+          final etaSeconds = _speeds[taskId]! > 0
+              ? remaining / _speeds[taskId]!
+              : 0;
+          _etas[taskId] = _formatETA(etaSeconds.round());
+        }
+      }
+
+      _lastProgress[taskId] = d.progress;
+      _lastUpdateTime[taskId] = now;
+    }
+  }
+
+  String _formatETA(int seconds) {
+    if (seconds <= 0) return '--';
+    if (seconds < 60) return '${seconds}s';
+    if (seconds < 3600) return '${(seconds / 60).round()}m ${seconds % 60}s';
+    return '${(seconds / 3600).round()}h ${((seconds % 3600) / 60).round()}m';
+  }
+
+  /// Get download speed as a human-readable string
+  String getSpeedText(String? taskId) {
+    if (taskId == null) return '--';
+    final speed = _speeds[taskId];
+    if (speed == null || speed <= 0) return '--';
+    if (speed >= 1024 * 1024) {
+      return '${(speed / (1024 * 1024)).toStringAsFixed(1)} MB/s';
+    } else if (speed >= 1024) {
+      return '${(speed / 1024).toStringAsFixed(0)} KB/s';
+    }
+    return '${speed.toStringAsFixed(0)} B/s';
+  }
+
+  /// Get ETA as a human-readable string
+  String getETAText(String? taskId) {
+    if (taskId == null) return '--';
+    return _etas[taskId] ?? '--';
+  }
+
   /// Start download with Stage 2 deep link resolution.
-  ///
-  /// Flow:
-  /// 1. Show "Resolving…" dialog
-  /// 2. POST to backend /api/resolve-download-link
-  /// 3. Backend automates HubDrive steps (click, countdown, extract)
-  /// 4. Enqueue the resolved direct URL with flutter_downloader
   Future<void> startDownload({
     required String url,
     required String filename,
@@ -123,6 +212,7 @@ class DownloadController extends GetxController {
         movieTitle: movieTitle,
       );
       _loadDownloads();
+      _ensureTimerRunning();
 
       Get.snackbar(
         'Download Started',
@@ -159,19 +249,34 @@ class DownloadController extends GetxController {
   Future<void> resumeDownload(Download download) async {
     await _service.resumeDownload(download);
     _loadDownloads();
+    _ensureTimerRunning();
   }
 
   Future<void> cancelDownload(Download download) async {
     await _service.cancelDownload(download);
+    // Clean up tracking for this task
+    if (download.taskId != null) {
+      _lastProgress.remove(download.taskId);
+      _lastUpdateTime.remove(download.taskId);
+      _speeds.remove(download.taskId);
+      _etas.remove(download.taskId);
+    }
     _loadDownloads();
   }
 
   Future<void> retryDownload(Download download) async {
     await _service.retryDownload(download);
     _loadDownloads();
+    _ensureTimerRunning();
   }
 
   Future<void> deleteDownload(Download download) async {
+    if (download.taskId != null) {
+      _lastProgress.remove(download.taskId);
+      _lastUpdateTime.remove(download.taskId);
+      _speeds.remove(download.taskId);
+      _etas.remove(download.taskId);
+    }
     await _service.deleteDownload(download);
     _loadDownloads();
   }
@@ -190,6 +295,7 @@ class DownloadController extends GetxController {
 
   @override
   void onClose() {
+    _refreshTimer?.cancel();
     _service.box.listenable().removeListener(_loadDownloads);
     super.onClose();
   }

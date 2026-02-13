@@ -8,6 +8,7 @@ import '../models/movie.dart';
 import '../widgets/movie_card.dart';
 import '../widgets/filter_sheet.dart';
 import 'details_screen.dart';
+import 'settings_screen.dart';
 
 class SearchScreen extends StatefulWidget {
   const SearchScreen({super.key});
@@ -183,6 +184,18 @@ class _SearchScreenState extends State<SearchScreen> {
                 ),
             ],
           ),
+          // Settings button
+          IconButton(
+            icon: const Icon(Icons.settings_outlined, color: Colors.white54),
+            tooltip: 'Settings',
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const SettingsScreen()),
+              );
+            },
+          ),
+          const SizedBox(width: 4),
         ],
       ),
       body: Stack(

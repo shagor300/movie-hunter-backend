@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:flutter_spinkit/flutter_spinkit.dart';
 import '../../controllers/hdhub4u_controller.dart';
 import '../details_screen.dart';
 
@@ -92,19 +91,62 @@ class HDHub4uTab extends StatelessWidget {
         onRefresh: controller.refresh,
         color: Colors.blueAccent,
         child: Obx(() {
-          // Loading state
+          // Loading state — animated movie icon + pulsing text
           if (controller.isLoading.value && controller.movies.isEmpty) {
             return Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const SpinKitCubeGrid(color: Colors.blueAccent, size: 50),
-                  const SizedBox(height: 24),
+                  TweenAnimationBuilder<double>(
+                    tween: Tween(begin: 0.8, end: 1.0),
+                    duration: const Duration(milliseconds: 800),
+                    curve: Curves.easeInOut,
+                    builder: (_, scale, child) =>
+                        Transform.scale(scale: scale, child: child),
+                    child: Container(
+                      width: 80,
+                      height: 80,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        gradient: RadialGradient(
+                          colors: [
+                            Colors.blueAccent.withValues(alpha: 0.2),
+                            Colors.transparent,
+                          ],
+                          radius: 0.8,
+                        ),
+                      ),
+                      child: const Icon(
+                        Icons.movie_filter,
+                        color: Colors.blueAccent,
+                        size: 40,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
                   Text(
-                    'Loading latest movies...',
+                    'Fetching latest movies…',
+                    style: GoogleFonts.poppins(
+                      color: Colors.white70,
+                      fontSize: 15,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Please wait',
                     style: GoogleFonts.inter(
-                      color: Colors.white60,
-                      fontSize: 14,
+                      color: Colors.white38,
+                      fontSize: 12,
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  const SizedBox(
+                    width: 120,
+                    child: LinearProgressIndicator(
+                      backgroundColor: Colors.white10,
+                      color: Colors.blueAccent,
+                      minHeight: 3,
                     ),
                   ),
                 ],
@@ -112,37 +154,110 @@ class HDHub4uTab extends StatelessWidget {
             );
           }
 
-          // Error state
+          // Error state — context-aware messages
           if (controller.hasError.value && controller.movies.isEmpty) {
+            final error = controller.errorMessage.value.toLowerCase();
+            final bool isNetworkError =
+                error.contains('connection') ||
+                error.contains('socket') ||
+                error.contains('network') ||
+                error.contains('unreachable');
+            final bool isDeploying =
+                error.contains('deploying') ||
+                error.contains('server') ||
+                error.contains('timeout') ||
+                error.contains('502') ||
+                error.contains('503');
+
+            final IconData errorIcon = isNetworkError
+                ? Icons.wifi_off_rounded
+                : isDeploying
+                ? Icons.cloud_off_rounded
+                : Icons.error_outline;
+            final Color errorColor = isNetworkError
+                ? Colors.orangeAccent
+                : isDeploying
+                ? Colors.amber
+                : Colors.redAccent;
+            final String errorTitle = isNetworkError
+                ? 'No Internet Connection'
+                : isDeploying
+                ? 'Server Starting Up'
+                : 'Failed to Load Movies';
+            final String errorHint = isNetworkError
+                ? 'Check your internet connection and try again.'
+                : isDeploying
+                ? 'The backend may still be deploying.\nUsually takes 1-2 minutes.'
+                : 'Something went wrong. Please try again.';
+
             return Center(
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 32),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(
-                      Icons.error_outline,
-                      size: 60,
-                      color: Colors.redAccent.withOpacity(0.7),
+                    Container(
+                      width: 80,
+                      height: 80,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: errorColor.withValues(alpha: 0.1),
+                      ),
+                      child: Icon(errorIcon, size: 40, color: errorColor),
                     ),
                     const SizedBox(height: 20),
                     Text(
-                      'Failed to load movies',
+                      errorTitle,
                       style: GoogleFonts.poppins(
                         color: Colors.white,
                         fontSize: 18,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 10),
                     Text(
-                      controller.errorMessage.value,
+                      errorHint,
                       style: GoogleFonts.inter(
                         color: Colors.white54,
                         fontSize: 13,
                       ),
                       textAlign: TextAlign.center,
                     ),
+                    if (!isNetworkError) ...[
+                      const SizedBox(height: 12),
+                      // Info box
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Colors.blueAccent.withValues(alpha: 0.08),
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(
+                            color: Colors.blueAccent.withValues(alpha: 0.2),
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(
+                              Icons.info_outline,
+                              color: Colors.blueAccent,
+                              size: 18,
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Text(
+                                controller.errorMessage.value,
+                                style: GoogleFonts.inter(
+                                  color: Colors.white38,
+                                  fontSize: 11,
+                                ),
+                                maxLines: 3,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                     const SizedBox(height: 24),
                     ElevatedButton.icon(
                       onPressed: () => controller.refresh(),
@@ -152,8 +267,8 @@ class HDHub4uTab extends StatelessWidget {
                           borderRadius: BorderRadius.circular(12),
                         ),
                         padding: const EdgeInsets.symmetric(
-                          horizontal: 24,
-                          vertical: 12,
+                          horizontal: 28,
+                          vertical: 14,
                         ),
                       ),
                       icon: const Icon(Icons.refresh, size: 18),
@@ -171,9 +286,49 @@ class HDHub4uTab extends StatelessWidget {
           // Empty state
           if (controller.movies.isEmpty) {
             return Center(
-              child: Text(
-                'No movies found',
-                style: GoogleFonts.inter(color: Colors.white54),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Container(
+                    width: 70,
+                    height: 70,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Colors.white.withValues(alpha: 0.05),
+                    ),
+                    child: const Icon(
+                      Icons.movie_outlined,
+                      color: Colors.white38,
+                      size: 34,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'No Movies Yet',
+                    style: GoogleFonts.poppins(
+                      color: Colors.white70,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Check back later for new releases!',
+                    style: GoogleFonts.inter(
+                      color: Colors.white38,
+                      fontSize: 13,
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  TextButton.icon(
+                    onPressed: () => controller.refresh(),
+                    icon: const Icon(Icons.refresh, size: 16),
+                    label: Text(
+                      'Refresh',
+                      style: GoogleFonts.inter(fontWeight: FontWeight.w600),
+                    ),
+                  ),
+                ],
               ),
             );
           }
@@ -228,8 +383,13 @@ class HDHub4uTab extends StatelessWidget {
                       fit: BoxFit.cover,
                       placeholder: (_, __) => Container(
                         color: Colors.grey[900],
-                        child: const Center(
-                          child: SpinKitPulse(color: Colors.white24, size: 30),
+                        child: SizedBox(
+                          width: 24,
+                          height: 24,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white24,
+                          ),
                         ),
                       ),
                       errorWidget: (_, __, ___) => Container(

@@ -9,7 +9,6 @@ import '../models/movie.dart';
 import '../controllers/link_controller.dart';
 import '../controllers/watchlist_controller.dart';
 import '../controllers/download_controller.dart';
-import 'video_player_screen.dart';
 import 'webview_player.dart';
 
 class DetailsScreen extends StatefulWidget {
@@ -657,22 +656,22 @@ class _DetailsScreenState extends State<DetailsScreen> {
           trailing: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              // Stream/Play button
+              // Stream/Play button — opens in external browser
               IconButton(
                 icon: const Icon(
                   Icons.play_circle_outline,
                   color: Colors.greenAccent,
                   size: 22,
                 ),
-                tooltip: 'Stream',
-                onPressed: () {
+                tooltip: 'Open in Browser',
+                onPressed: () async {
                   final url = link['url'] ?? '';
                   if (url.isEmpty || !url.startsWith('http')) {
                     Get.snackbar(
                       'Invalid Link',
-                      'This link cannot be streamed directly.',
+                      'This link cannot be opened.',
                       snackPosition: SnackPosition.BOTTOM,
-                      backgroundColor: Colors.redAccent.withOpacity(0.8),
+                      backgroundColor: Colors.redAccent.withValues(alpha: 0.8),
                       colorText: Colors.white,
                       margin: const EdgeInsets.all(20),
                       duration: const Duration(seconds: 2),
@@ -683,17 +682,144 @@ class _DetailsScreenState extends State<DetailsScreen> {
                     );
                     return;
                   }
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => VideoPlayerScreen(
-                        videoUrl: url,
-                        tmdbId: widget.movie.tmdbId,
-                        movieTitle: widget.movie.title,
-                        posterUrl: widget.movie.fullPosterPath,
+
+                  // Confirmation dialog
+                  final confirmed = await Get.dialog<bool>(
+                    AlertDialog(
+                      backgroundColor: const Color(0xFF1A1A2E),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
                       ),
+                      title: Row(
+                        children: [
+                          const Icon(
+                            Icons.open_in_browser,
+                            color: Colors.greenAccent,
+                            size: 24,
+                          ),
+                          const SizedBox(width: 10),
+                          Text(
+                            'Open Link',
+                            style: GoogleFonts.poppins(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 18,
+                            ),
+                          ),
+                        ],
+                      ),
+                      content: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Open this link in your browser?',
+                            style: GoogleFonts.inter(
+                              color: Colors.white70,
+                              fontSize: 14,
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          Container(
+                            padding: const EdgeInsets.all(10),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: 0.05),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Row(
+                              children: [
+                                const Icon(
+                                  Icons.link,
+                                  color: Colors.blueAccent,
+                                  size: 16,
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    link['name'] ?? 'Source',
+                                    style: GoogleFonts.inter(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Get.back(result: false),
+                          child: Text(
+                            'Cancel',
+                            style: GoogleFonts.inter(color: Colors.white60),
+                          ),
+                        ),
+                        ElevatedButton(
+                          onPressed: () => Get.back(result: true),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.greenAccent,
+                            foregroundColor: Colors.black,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                          ),
+                          child: Text(
+                            'Open',
+                            style: GoogleFonts.inter(
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   );
+
+                  if (confirmed != true) return;
+
+                  try {
+                    final uri = Uri.parse(url);
+                    if (await canLaunchUrl(uri)) {
+                      await launchUrl(
+                        uri,
+                        mode: LaunchMode.externalApplication,
+                      );
+                      Get.snackbar(
+                        '✅ Opening in Browser',
+                        link['name'] ?? 'Link',
+                        snackPosition: SnackPosition.BOTTOM,
+                        backgroundColor: Colors.greenAccent.withValues(
+                          alpha: 0.85,
+                        ),
+                        colorText: Colors.black,
+                        margin: const EdgeInsets.all(20),
+                        duration: const Duration(seconds: 2),
+                      );
+                    } else {
+                      Get.snackbar(
+                        'Cannot Open',
+                        'No browser found to open this link.',
+                        snackPosition: SnackPosition.BOTTOM,
+                        backgroundColor: Colors.redAccent.withValues(
+                          alpha: 0.8,
+                        ),
+                        colorText: Colors.white,
+                        margin: const EdgeInsets.all(20),
+                        duration: const Duration(seconds: 2),
+                      );
+                    }
+                  } catch (e) {
+                    Get.snackbar(
+                      'Failed to Open',
+                      e.toString(),
+                      snackPosition: SnackPosition.BOTTOM,
+                      backgroundColor: Colors.redAccent.withValues(alpha: 0.8),
+                      colorText: Colors.white,
+                      margin: const EdgeInsets.all(20),
+                      duration: const Duration(seconds: 3),
+                    );
+                  }
                 },
               ),
               // Download button

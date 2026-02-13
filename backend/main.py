@@ -46,8 +46,12 @@ async def lifespan(app: FastAPI):
         await scraper_instance.startup()
         # Share the browser with the download resolver
         download_resolver.set_browser(scraper_instance.browser)
-        # Initialize multi-source scrapers (share browser + HDHub4u scraper)
-        multi_source.init_scrapers(scraper_instance.browser, hdhub4u_scraper=scraper_instance)
+        # Initialize multi-source scrapers (share browser + HDHub4u scraper + resolver)
+        multi_source.init_scrapers(
+            scraper_instance.browser,
+            hdhub4u_scraper=scraper_instance,
+            download_resolver=download_resolver
+        )
         logger.info("HDHub4u scraper initialized (shared browser)")
         logger.info("Download link resolver initialized (shared browser)")
         logger.info("Multi-source manager initialized")

@@ -23,7 +23,7 @@ class MultiSourceManager:
         # Will be set by init_scrapers via main.py lifespan
         self._hdhub4u_scraper = None  # Reference to the MovieScraper instance
 
-    def init_scrapers(self, browser, hdhub4u_scraper=None):
+    def init_scrapers(self, browser, hdhub4u_scraper=None, download_resolver=None):
         """Initialize all source scrapers with a shared browser."""
         # Store reference to HDHub4u scraper for combined operations
         self._hdhub4u_scraper = hdhub4u_scraper
@@ -31,7 +31,10 @@ class MultiSourceManager:
         if MovieSources.SKYMOVIESHD_ENABLED:
             self.sky_scraper = SkyMoviesHDScraper(MovieSources.SKYMOVIESHD_BASE_URL)
             self.sky_scraper.set_browser(browser)
-            logger.info("SkyMoviesHD scraper initialized (shared browser)")
+            # Attach download resolver for intermediate host click-through
+            if download_resolver:
+                self.sky_scraper.set_download_resolver(download_resolver)
+            logger.info("SkyMoviesHD scraper initialized (shared browser + resolver)")
 
         self._initialized = True
         MovieSources.print_config()

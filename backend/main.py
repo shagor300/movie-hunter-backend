@@ -46,8 +46,8 @@ async def lifespan(app: FastAPI):
         await scraper_instance.startup()
         # Share the browser with the download resolver
         download_resolver.set_browser(scraper_instance.browser)
-        # Initialize multi-source scrapers (share browser)
-        multi_source.init_scrapers(scraper_instance.browser)
+        # Initialize multi-source scrapers (share browser + HDHub4u scraper)
+        multi_source.init_scrapers(scraper_instance.browser, hdhub4u_scraper=scraper_instance)
         logger.info("HDHub4u scraper initialized (shared browser)")
         logger.info("Download link resolver initialized (shared browser)")
         logger.info("Multi-source manager initialized")
@@ -232,12 +232,12 @@ async def generate_download_links(
     title: str = Query(..., description="Movie title for searching"),
     year: Optional[str] = Query(None, description="Release year (optional)"),
     hdhub4u_url: Optional[str] = Query(None, description="Direct HDHub4u page URL (skips search)"),
-    source: Optional[str] = Query(None, description="Source type: hdhub4u or skymovieshd"),
+    source: Optional[str] = Query(None, description="Source type: hdhub4u, skymovieshd, or all"),
     skymovieshd_url: Optional[str] = Query(None, description="Direct SkyMoviesHD page URL"),
 ):
     """
     Generate download AND streaming links for a movie.
-    Supports multiple sources: HDHub4u (default) and SkyMoviesHD.
+    Searches HDHub4u + SkyMoviesHD in parallel and combines results.
     Returns both 'links' (download) and 'embed_links' (streaming).
     """
     try:
@@ -247,19 +247,20 @@ async def generate_download_links(
 
         embed_links = []
         links = []
+        used_source = 'multi'
 
-        # --- SkyMoviesHD source ---
+        # --- Case 1: SkyMoviesHD direct URL provided ---
         if source == 'skymovieshd' and skymovieshd_url:
-            logger.info(f"Link request (SkyMoviesHD) - Title: '{title}', URL: {skymovieshd_url}")
+            logger.info(f"Link request (SkyMoviesHD direct) - Title: '{title}', URL: {skymovieshd_url}")
             result = await multi_source.extract_links_from_source('skymovieshd', skymovieshd_url)
             links = result.get('links', [])
             embed_links = result.get('embed_links', [])
+            used_source = 'skymovieshd'
 
-        # --- HDHub4u source (default) ---
-        elif hdhub4u_url:
+        # --- Case 2: HDHub4u direct URL provided ---
+        elif source == 'hdhub4u' and hdhub4u_url:
             logger.info(f"Link request (HDHub4u direct) - Title: '{title}', URL: {hdhub4u_url}")
             links = await scraper_instance.extract_links_from_url(hdhub4u_url)
-
             # Also extract embed links from the same page
             try:
                 context, page = await scraper_instance._new_stealth_page()
@@ -271,9 +272,36 @@ async def generate_download_links(
                     await context.close()
             except Exception as e:
                 logger.warning(f"Embed extraction failed (non-critical): {e}")
+            used_source = 'hdhub4u'
+
+        # --- Case 3: HDHub4u URL provided without explicit source ---
+        elif hdhub4u_url:
+            logger.info(f"Link request (HDHub4u direct, no source) - Title: '{title}', URL: {hdhub4u_url}")
+            links = await scraper_instance.extract_links_from_url(hdhub4u_url)
+            try:
+                context, page = await scraper_instance._new_stealth_page()
+                try:
+                    await page.goto(hdhub4u_url, wait_until='domcontentloaded', timeout=20000)
+                    embed_links = await embed_extractor.extract_from_page(page, hdhub4u_url)
+                finally:
+                    await page.close()
+                    await context.close()
+            except Exception as e:
+                logger.warning(f"Embed extraction failed (non-critical): {e}")
+            used_source = 'hdhub4u'
+
+        # --- Case 4: No URL — search ALL sources in parallel ---
         else:
-            logger.info(f"Link request (search) - Title: '{title}', TMDB ID: {tmdb_id}, Year: {year}")
-            links = await scraper_instance.generate_download_links(tmdb_id, title, year)
+            logger.info(
+                f"Link request (MULTI-SOURCE) - Title: '{title}', "
+                f"TMDB ID: {tmdb_id}, Year: {year}"
+            )
+            result = await multi_source.extract_links_all_sources(
+                title=title, year=year, tmdb_id=tmdb_id
+            )
+            links = result.get('links', [])
+            embed_links = result.get('embed_links', [])
+            used_source = 'multi'
 
         return {
             "url": f"tmdb_{tmdb_id}",
@@ -281,9 +309,11 @@ async def generate_download_links(
             "links": links,
             "embed_links": embed_links,
             "total_embed": len(embed_links),
-            "source": source or 'hdhub4u',
+            "source": used_source,
             "cached": False,
         }
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Link generation failed for '{title}': {e}")
         raise HTTPException(status_code=500, detail=str(e))

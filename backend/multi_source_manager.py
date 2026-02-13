@@ -6,6 +6,7 @@ Deduplicates by TMDB ID (keeps highest-priority source).
 import asyncio
 import logging
 from typing import List, Dict, Optional
+from urllib.parse import quote
 
 from config.sources import MovieSources
 from scrapers.skymovieshd_scraper import SkyMoviesHDScraper
@@ -19,9 +20,14 @@ class MultiSourceManager:
     def __init__(self):
         self.sky_scraper: Optional[SkyMoviesHDScraper] = None
         self._initialized = False
+        # Will be set by init_scrapers via main.py lifespan
+        self._hdhub4u_scraper = None  # Reference to the MovieScraper instance
 
-    def init_scrapers(self, browser):
+    def init_scrapers(self, browser, hdhub4u_scraper=None):
         """Initialize all source scrapers with a shared browser."""
+        # Store reference to HDHub4u scraper for combined operations
+        self._hdhub4u_scraper = hdhub4u_scraper
+
         if MovieSources.SKYMOVIESHD_ENABLED:
             self.sky_scraper = SkyMoviesHDScraper(MovieSources.SKYMOVIESHD_BASE_URL)
             self.sky_scraper.set_browser(browser)
@@ -104,4 +110,116 @@ class MultiSourceManager:
             return await self.sky_scraper.extract_links(movie_url)
         else:
             logger.warning(f"Unknown source type: {source_type}")
+            return {'links': [], 'embed_links': []}
+
+    async def extract_links_all_sources(self, title: str, year: str = None,
+                                         tmdb_id: int = 0) -> Dict:
+        """
+        Try to extract links from ALL enabled sources for a given title.
+        Searches SkyMoviesHD + HDHub4u in parallel and combines results.
+        Returns combined { 'links': [...], 'embed_links': [...] }
+        """
+        if not self._initialized:
+            return {'links': [], 'embed_links': []}
+
+        all_links = []
+        all_embeds = []
+        tasks = []
+
+        # --- SkyMoviesHD: search → pick first result → extract links ---
+        if self.sky_scraper:
+            tasks.append(('skymovieshd', self._sky_search_and_extract(title, year)))
+
+        # --- HDHub4u: use the existing MovieScraper ---
+        if self._hdhub4u_scraper and MovieSources.HDHUB4U_ENABLED:
+            tasks.append(('hdhub4u', self._hdhub4u_search_and_extract(title, year, tmdb_id)))
+
+        if not tasks:
+            return {'links': [], 'embed_links': []}
+
+        # Run all extractions in parallel with timeout
+        coroutines = [t[1] for t in tasks]
+        source_names = [t[0] for t in tasks]
+
+        results = await asyncio.gather(*coroutines, return_exceptions=True)
+
+        for source_name, result in zip(source_names, results):
+            if isinstance(result, Exception):
+                logger.error(f"[{source_name}] extraction failed: {result}")
+                continue
+            if isinstance(result, dict):
+                source_links = result.get('links', [])
+                source_embeds = result.get('embed_links', [])
+                # Tag each link with its source
+                for link in source_links:
+                    if 'source_site' not in link:
+                        link['source_site'] = source_name
+                all_links.extend(source_links)
+                all_embeds.extend(source_embeds)
+                logger.info(
+                    f"[{source_name}] contributed {len(source_links)} links, "
+                    f"{len(source_embeds)} embeds"
+                )
+
+        # Deduplicate links by URL
+        seen_urls = set()
+        unique_links = []
+        for link in all_links:
+            url = link.get('url', '').split('?')[0]
+            if url and url not in seen_urls:
+                seen_urls.add(url)
+                unique_links.append(link)
+
+        logger.info(
+            f"Multi-source extraction: {len(all_links)} total → "
+            f"{len(unique_links)} unique links + {len(all_embeds)} embeds"
+        )
+
+        return {'links': unique_links, 'embed_links': all_embeds}
+
+    async def _sky_search_and_extract(self, title: str, year: str = None) -> Dict:
+        """Search SkyMoviesHD for a title, then extract links from first result."""
+        try:
+            query = f"{title} {year}" if year else title
+            results = await asyncio.wait_for(
+                self.sky_scraper.search_movies(query, max_results=3),
+                timeout=MovieSources.SEARCH_TIMEOUT
+            )
+
+            if not results:
+                logger.info(f"[SkyMoviesHD] No results for: {query}")
+                return {'links': [], 'embed_links': []}
+
+            # Use the first (best) match
+            movie_url = results[0].get('url')
+            if not movie_url:
+                return {'links': [], 'embed_links': []}
+
+            logger.info(f"[SkyMoviesHD] Extracting links from: {movie_url}")
+            return await asyncio.wait_for(
+                self.sky_scraper.extract_links(movie_url),
+                timeout=60
+            )
+
+        except asyncio.TimeoutError:
+            logger.error("[SkyMoviesHD] Search+extract timed out")
+            return {'links': [], 'embed_links': []}
+        except Exception as e:
+            logger.error(f"[SkyMoviesHD] Search+extract error: {e}")
+            return {'links': [], 'embed_links': []}
+
+    async def _hdhub4u_search_and_extract(self, title: str, year: str = None,
+                                            tmdb_id: int = 0) -> Dict:
+        """Use the HDHub4u MovieScraper to search and extract links."""
+        try:
+            links = await asyncio.wait_for(
+                self._hdhub4u_scraper.generate_download_links(tmdb_id, title, year),
+                timeout=60
+            )
+            return {'links': links, 'embed_links': []}
+        except asyncio.TimeoutError:
+            logger.error("[HDHub4u] Search+extract timed out")
+            return {'links': [], 'embed_links': []}
+        except Exception as e:
+            logger.error(f"[HDHub4u] Search+extract error: {e}")
             return {'links': [], 'embed_links': []}

@@ -1,6 +1,10 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../controllers/update_controller.dart';
+import '../services/update_service.dart';
+import '../widgets/update_dialog.dart';
 import 'home_screen.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -36,21 +40,45 @@ class _SplashScreenState extends State<SplashScreen>
 
     _controller.forward();
 
-    Timer(const Duration(seconds: 3), () {
-      if (mounted) {
-        Navigator.of(context).pushReplacement(
-          PageRouteBuilder(
-            pageBuilder: (context, animation, secondaryAnimation) =>
-                const HomeScreen(),
-            transitionsBuilder:
-                (context, animation, secondaryAnimation, child) {
-                  return FadeTransition(opacity: animation, child: child);
-                },
-            transitionDuration: const Duration(milliseconds: 800),
-          ),
-        );
-      }
-    });
+    // Run update check and navigation after splash animation
+    _initAndCheckUpdate();
+  }
+
+  Future<void> _initAndCheckUpdate() async {
+    // Wait for splash animation
+    await Future.delayed(const Duration(seconds: 3));
+
+    if (!mounted) return;
+
+    // Check for updates
+    final updateController = Get.find<UpdateController>();
+    await updateController.checkForUpdate();
+
+    if (!mounted) return;
+
+    // Navigate to Home
+    Navigator.of(context).pushReplacement(
+      PageRouteBuilder(
+        pageBuilder: (context, animation, secondaryAnimation) =>
+            const HomeScreen(),
+        transitionsBuilder: (context, animation, secondaryAnimation, child) {
+          return FadeTransition(opacity: animation, child: child);
+        },
+        transitionDuration: const Duration(milliseconds: 800),
+      ),
+    );
+
+    // Show update dialog after navigation completes
+    final info = updateController.updateInfo.value;
+    if (info != null) {
+      final updateService = UpdateService();
+      final currentVersion = await updateService.getCurrentVersionName();
+
+      // Small delay to ensure HomeScreen is fully rendered
+      await Future.delayed(const Duration(milliseconds: 500));
+
+      UpdateDialog.show(info: info, currentVersion: currentVersion);
+    }
   }
 
   @override

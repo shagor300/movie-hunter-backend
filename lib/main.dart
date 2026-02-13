@@ -13,6 +13,7 @@ import 'controllers/download_controller.dart';
 import 'controllers/watchlist_controller.dart';
 import 'controllers/video_player_controller.dart';
 import 'controllers/theme_controller.dart';
+import 'controllers/update_controller.dart';
 import 'screens/splash_screen.dart';
 
 // ⚠️ CRITICAL: Must be top-level for background isolate
@@ -22,6 +23,12 @@ void downloadCallback(String id, int status, int progress) {
     'downloader_send_port',
   );
   send?.send([id, status, progress]);
+
+  // Also forward to update downloader port
+  final SendPort? updateSend = IsolateNameServer.lookupPortByName(
+    'update_downloader_port',
+  );
+  updateSend?.send([id, status, progress]);
 }
 
 void main() async {
@@ -47,6 +54,7 @@ void main() async {
   Get.put(DownloadController(), permanent: true);
   Get.put(VideoPlayerGetxController(), permanent: true);
   Get.put(ThemeController(), permanent: true);
+  Get.put(UpdateController(), permanent: true);
 
   runApp(const MovieHunterApp());
 }

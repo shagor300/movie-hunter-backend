@@ -48,28 +48,23 @@ class _LibraryScreenState extends State<LibraryScreen>
   @override
   Widget build(BuildContext context) {
     final controller = Get.find<WatchlistController>();
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
 
     return Scaffold(
-      backgroundColor: const Color(0xFF0F0F1E),
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
         title: Text(
           'My Library',
-          style: GoogleFonts.poppins(
-            fontWeight: FontWeight.w700,
-            fontSize: 22,
-            color: Colors.white,
-          ),
+          style: GoogleFonts.poppins(fontWeight: FontWeight.w700, fontSize: 22),
         ),
         centerTitle: true,
         bottom: TabBar(
           controller: _tabController,
           isScrollable: true,
-          indicatorColor: Colors.blueAccent,
+          indicatorColor: colorScheme.primary,
           indicatorWeight: 3,
-          labelColor: Colors.blueAccent,
-          unselectedLabelColor: Colors.white38,
+          labelColor: colorScheme.primary,
+          unselectedLabelColor: colorScheme.onSurface.withOpacity(0.38),
           labelStyle: GoogleFonts.inter(
             fontWeight: FontWeight.w600,
             fontSize: 14,
@@ -79,8 +74,8 @@ class _LibraryScreenState extends State<LibraryScreen>
       ),
       body: Obx(() {
         if (!controller.isInitialized.value) {
-          return const Center(
-            child: CircularProgressIndicator(color: Colors.blueAccent),
+          return Center(
+            child: CircularProgressIndicator(color: colorScheme.primary),
           );
         }
 
@@ -114,6 +109,7 @@ class _LibraryScreenState extends State<LibraryScreen>
   }
 
   Widget _buildMovieCard(WatchlistMovie movie, WatchlistController controller) {
+    final colorScheme = Theme.of(context).colorScheme;
     return GestureDetector(
       onTap: () {
         // Convert WatchlistMovie back to Movie for navigation
@@ -136,7 +132,7 @@ class _LibraryScreenState extends State<LibraryScreen>
       onLongPress: () => _showOptionsSheet(movie, controller),
       child: Container(
         decoration: BoxDecoration(
-          color: const Color(0xFF1E1E3A).withOpacity(0.8),
+          color: colorScheme.surface,
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
@@ -249,7 +245,6 @@ class _LibraryScreenState extends State<LibraryScreen>
                   child: Text(
                     movie.title,
                     style: GoogleFonts.inter(
-                      color: Colors.white,
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
                     ),
@@ -266,9 +261,10 @@ class _LibraryScreenState extends State<LibraryScreen>
   }
 
   void _showOptionsSheet(WatchlistMovie movie, WatchlistController controller) {
+    final colorScheme = Theme.of(context).colorScheme;
     showModalBottomSheet(
       context: context,
-      backgroundColor: const Color(0xFF1E1E3A),
+      backgroundColor: colorScheme.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -281,7 +277,7 @@ class _LibraryScreenState extends State<LibraryScreen>
               width: 40,
               height: 4,
               decoration: BoxDecoration(
-                color: Colors.white24,
+                color: colorScheme.onSurface.withOpacity(0.24),
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -289,7 +285,6 @@ class _LibraryScreenState extends State<LibraryScreen>
             Text(
               movie.title,
               style: GoogleFonts.poppins(
-                color: Colors.white,
                 fontSize: 18,
                 fontWeight: FontWeight.w600,
               ),
@@ -299,11 +294,8 @@ class _LibraryScreenState extends State<LibraryScreen>
             const SizedBox(height: 16),
             // Move to category
             ListTile(
-              leading: const Icon(Icons.swap_horiz, color: Colors.blueAccent),
-              title: Text(
-                'Move to...',
-                style: GoogleFonts.inter(color: Colors.white),
-              ),
+              leading: Icon(Icons.swap_horiz, color: colorScheme.primary),
+              title: Text('Move to...', style: GoogleFonts.inter()),
               onTap: () {
                 Navigator.pop(context);
                 _showCategoryPicker(movie, controller);
@@ -317,7 +309,7 @@ class _LibraryScreenState extends State<LibraryScreen>
               ),
               title: Text(
                 movie.favorite ? 'Remove from Favorites' : 'Add to Favorites',
-                style: GoogleFonts.inter(color: Colors.white),
+                style: GoogleFonts.inter(),
               ),
               onTap: () {
                 controller.toggleFavorite(movie.tmdbId);
@@ -349,9 +341,10 @@ class _LibraryScreenState extends State<LibraryScreen>
     WatchlistMovie movie,
     WatchlistController controller,
   ) {
+    final colorScheme = Theme.of(context).colorScheme;
     showModalBottomSheet(
       context: context,
-      backgroundColor: const Color(0xFF1E1E3A),
+      backgroundColor: colorScheme.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -363,7 +356,6 @@ class _LibraryScreenState extends State<LibraryScreen>
             Text(
               'Move to',
               style: GoogleFonts.poppins(
-                color: Colors.white,
                 fontSize: 18,
                 fontWeight: FontWeight.w600,
               ),
@@ -376,19 +368,21 @@ class _LibraryScreenState extends State<LibraryScreen>
               return ListTile(
                 leading: Icon(
                   icon,
-                  color: isSelected ? Colors.blueAccent : Colors.white38,
+                  color: isSelected
+                      ? colorScheme.primary
+                      : colorScheme.onSurface.withOpacity(0.38),
                 ),
                 title: Text(
                   label,
                   style: GoogleFonts.inter(
-                    color: isSelected ? Colors.blueAccent : Colors.white,
+                    color: isSelected ? colorScheme.primary : null,
                     fontWeight: isSelected
                         ? FontWeight.bold
                         : FontWeight.normal,
                   ),
                 ),
                 trailing: isSelected
-                    ? const Icon(Icons.check, color: Colors.blueAccent)
+                    ? Icon(Icons.check, color: colorScheme.primary)
                     : null,
                 onTap: () {
                   controller.updateCategory(movie.tmdbId, cat);
@@ -403,6 +397,7 @@ class _LibraryScreenState extends State<LibraryScreen>
   }
 
   Widget _buildEmptyState(WatchlistCategory category) {
+    final colorScheme = Theme.of(context).colorScheme;
     String message;
     IconData icon;
 
@@ -429,11 +424,14 @@ class _LibraryScreenState extends State<LibraryScreen>
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(icon, size: 80, color: Colors.white.withOpacity(0.1)),
+          Icon(icon, size: 80, color: colorScheme.onSurface.withOpacity(0.1)),
           const SizedBox(height: 16),
           Text(
             message,
-            style: GoogleFonts.inter(color: Colors.white38, fontSize: 16),
+            style: GoogleFonts.inter(
+              color: colorScheme.onSurface.withOpacity(0.38),
+              fontSize: 16,
+            ),
           ),
         ],
       ),

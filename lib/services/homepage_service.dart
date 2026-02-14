@@ -48,7 +48,9 @@ class HomepageService {
         '${ApiService.baseUrl}/browse/latest?incremental=$incremental&max_results=50',
       );
 
-      final response = await http.get(url).timeout(const Duration(seconds: 60));
+      final response = await http
+          .get(url)
+          .timeout(const Duration(seconds: 120));
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body) as Map<String, dynamic>;
@@ -68,6 +70,8 @@ class HomepageService {
       }
     } catch (e) {
       debugPrint('❌ Sync error: $e');
+      // If we have cached data, don't propagate — user can still see movies
+      if (isEmpty) rethrow;
     }
 
     return getLocal();

@@ -5,8 +5,9 @@ import 'package:hive_flutter/hive_flutter.dart';
 import '../models/theme_preferences.dart';
 
 class ThemeController extends GetxController {
-  late Box<ThemePreferences> _box;
+  Box<ThemePreferences>? _box;
   var preferences = ThemePreferences().obs;
+  var isReady = false.obs;
 
   static const accentColors = [
     Colors.redAccent,
@@ -25,17 +26,26 @@ class ThemeController extends GetxController {
   }
 
   Future<void> _init() async {
-    _box = await Hive.openBox<ThemePreferences>('theme_prefs');
-    final stored = _box.get('prefs');
-    if (stored != null) {
-      preferences.value = stored;
-    } else {
-      await _box.put('prefs', preferences.value);
+    try {
+      _box = await Hive.openBox<ThemePreferences>('theme_prefs');
+      final stored = _box!.get('prefs');
+      if (stored != null) {
+        preferences.value = stored;
+      } else {
+        await _box!.put('prefs', preferences.value);
+      }
+      isReady.value = true;
+      debugPrint('✅ ThemeController: Hive box ready');
+    } catch (e) {
+      debugPrint('❌ ThemeController init error: $e');
+      // Still mark as ready so the app can render with defaults
+      isReady.value = true;
     }
   }
 
   Future<void> _save() async {
-    await _box.put('prefs', preferences.value);
+    if (_box == null || !(_box?.isOpen ?? false)) return;
+    await _box!.put('prefs', preferences.value);
     preferences.refresh(); // Force Obx to rebuild
   }
 

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:get/get.dart';
 import '../models/movie.dart';
 import '../models/homepage_movie.dart';
@@ -60,9 +61,19 @@ class HDHub4uController extends GetxController {
         errorMessage.value =
             'No movies returned from server. The backend may still be deploying.';
       }
+    } on TimeoutException {
+      hasError.value = true;
+      errorMessage.value =
+          'Request timed out. The backend may be scraping new movies — try again in a moment.';
     } catch (e) {
       hasError.value = true;
-      errorMessage.value = e.toString();
+      final msg = e.toString().toLowerCase();
+      if (msg.contains('timeout') || msg.contains('timed out')) {
+        errorMessage.value =
+            'Request timed out. The backend may be scraping new movies — try again in a moment.';
+      } else {
+        errorMessage.value = e.toString();
+      }
     } finally {
       isLoading.value = false;
       isSyncing.value = false;

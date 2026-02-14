@@ -23,6 +23,8 @@ class _SplashScreenState extends State<SplashScreen>
   @override
   void initState() {
     super.initState();
+    print('🎬 SplashScreen: initState called');
+
     _controller = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1500),
@@ -46,10 +48,12 @@ class _SplashScreenState extends State<SplashScreen>
 
   Future<void> _proceedToHome() async {
     try {
+      print('🎬 SplashScreen: _proceedToHome started');
+
       // 1. Safety Timeout - App MUST navigate to home within 5 seconds regardless of what happens
       Timer(const Duration(seconds: 5), () {
         if (mounted && Get.currentRoute != '/HomeScreen') {
-          debugPrint('⚠️ Splash safety timeout triggered - forcing navigation');
+          print('⚠️ Splash safety timeout triggered - forcing navigation');
           Get.offAll(() => const HomeScreen());
         }
       });
@@ -65,6 +69,7 @@ class _SplashScreenState extends State<SplashScreen>
 
       // 4. Navigate to Home using GetX (fixes routing issues)
       if (mounted) {
+        print('🎬 SplashScreen: Navigating to HomeScreen');
         Get.offAll(
           () => const HomeScreen(),
           transition: Transition.fade,
@@ -72,7 +77,7 @@ class _SplashScreenState extends State<SplashScreen>
         );
       }
     } catch (e) {
-      debugPrint('❌ Critical error in splash screen navigation: $e');
+      print('❌ Critical error in splash screen navigation: $e');
       // Emergency fallback
       if (mounted) {
         Get.offAll(() => const HomeScreen());
@@ -100,7 +105,7 @@ class _SplashScreenState extends State<SplashScreen>
         }
       }
     } catch (e) {
-      debugPrint('Background update check error: $e');
+      print('Background update check error: $e');
     }
   }
 
@@ -112,6 +117,8 @@ class _SplashScreenState extends State<SplashScreen>
 
   @override
   Widget build(BuildContext context) {
+    print('🎬 SplashScreen: build() called');
+
     return Scaffold(
       backgroundColor: const Color(0xFF121212),
       body: Center(
@@ -132,12 +139,12 @@ class _SplashScreenState extends State<SplashScreen>
                         shape: BoxShape.circle,
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.blueAccent.withOpacity(0.3),
+                            color: Colors.blueAccent.withValues(alpha: 0.3),
                             blurRadius: 30,
                             spreadRadius: 5,
                           ),
                           BoxShadow(
-                            color: Colors.purpleAccent.withOpacity(0.2),
+                            color: Colors.purpleAccent.withValues(alpha: 0.2),
                             blurRadius: 50,
                             spreadRadius: 10,
                           ),

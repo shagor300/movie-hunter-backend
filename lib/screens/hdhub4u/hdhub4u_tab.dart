@@ -11,12 +11,11 @@ class HDHub4uTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final controller = Get.put(HDHub4uController());
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
 
     return Scaffold(
-      backgroundColor: const Color(0xFF0F0F1E),
       appBar: AppBar(
-        backgroundColor: const Color(0xFF0F0F1E),
-        elevation: 0,
         title: Row(
           children: [
             Text(
@@ -55,14 +54,14 @@ class HDHub4uTab extends StatelessWidget {
           // Subtle sync indicator (background incremental sync)
           Obx(() {
             if (controller.isSyncing.value && controller.movies.isNotEmpty) {
-              return const Padding(
-                padding: EdgeInsets.only(right: 8),
+              return Padding(
+                padding: const EdgeInsets.only(right: 8),
                 child: SizedBox(
                   width: 18,
                   height: 18,
                   child: CircularProgressIndicator(
                     strokeWidth: 2,
-                    valueColor: AlwaysStoppedAnimation(Colors.blueAccent),
+                    valueColor: AlwaysStoppedAnimation(colorScheme.primary),
                   ),
                 ),
               );
@@ -89,7 +88,7 @@ class HDHub4uTab extends StatelessWidget {
       ),
       body: RefreshIndicator(
         onRefresh: controller.refresh,
-        color: Colors.blueAccent,
+        color: colorScheme.primary,
         child: Obx(() {
           // Loading state — animated movie icon + pulsing text
           if (controller.isLoading.value && controller.movies.isEmpty) {
@@ -110,15 +109,15 @@ class HDHub4uTab extends StatelessWidget {
                         shape: BoxShape.circle,
                         gradient: RadialGradient(
                           colors: [
-                            Colors.blueAccent.withValues(alpha: 0.2),
+                            colorScheme.primary.withValues(alpha: 0.2),
                             Colors.transparent,
                           ],
                           radius: 0.8,
                         ),
                       ),
-                      child: const Icon(
+                      child: Icon(
                         Icons.movie_filter,
-                        color: Colors.blueAccent,
+                        color: colorScheme.primary,
                         size: 40,
                       ),
                     ),
@@ -127,7 +126,7 @@ class HDHub4uTab extends StatelessWidget {
                   Text(
                     'Fetching latest movies…',
                     style: GoogleFonts.poppins(
-                      color: Colors.white70,
+                      color: colorScheme.onSurface.withOpacity(0.7),
                       fontSize: 15,
                       fontWeight: FontWeight.w500,
                     ),
@@ -136,16 +135,16 @@ class HDHub4uTab extends StatelessWidget {
                   Text(
                     'Please wait',
                     style: GoogleFonts.inter(
-                      color: Colors.white38,
+                      color: colorScheme.onSurface.withOpacity(0.38),
                       fontSize: 12,
                     ),
                   ),
                   const SizedBox(height: 24),
-                  const SizedBox(
+                  SizedBox(
                     width: 120,
                     child: LinearProgressIndicator(
-                      backgroundColor: Colors.white10,
-                      color: Colors.blueAccent,
+                      backgroundColor: colorScheme.onSurface.withOpacity(0.1),
+                      color: colorScheme.primary,
                       minHeight: 3,
                     ),
                   ),
@@ -209,7 +208,7 @@ class HDHub4uTab extends StatelessWidget {
                     Text(
                       errorTitle,
                       style: GoogleFonts.poppins(
-                        color: Colors.white,
+                        color: colorScheme.onSurface,
                         fontSize: 18,
                         fontWeight: FontWeight.w600,
                       ),
@@ -218,7 +217,7 @@ class HDHub4uTab extends StatelessWidget {
                     Text(
                       errorHint,
                       style: GoogleFonts.inter(
-                        color: Colors.white54,
+                        color: colorScheme.onSurface.withOpacity(0.54),
                         fontSize: 13,
                       ),
                       textAlign: TextAlign.center,
@@ -229,17 +228,17 @@ class HDHub4uTab extends StatelessWidget {
                       Container(
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
-                          color: Colors.blueAccent.withValues(alpha: 0.08),
+                          color: colorScheme.primary.withValues(alpha: 0.08),
                           borderRadius: BorderRadius.circular(10),
                           border: Border.all(
-                            color: Colors.blueAccent.withValues(alpha: 0.2),
+                            color: colorScheme.primary.withValues(alpha: 0.2),
                           ),
                         ),
                         child: Row(
                           children: [
-                            const Icon(
+                            Icon(
                               Icons.info_outline,
-                              color: Colors.blueAccent,
+                              color: colorScheme.primary,
                               size: 18,
                             ),
                             const SizedBox(width: 10),
@@ -247,7 +246,9 @@ class HDHub4uTab extends StatelessWidget {
                               child: Text(
                                 controller.errorMessage.value,
                                 style: GoogleFonts.inter(
-                                  color: Colors.white38,
+                                  color: colorScheme.onSurface.withOpacity(
+                                    0.38,
+                                  ),
                                   fontSize: 11,
                                 ),
                                 maxLines: 3,
@@ -262,7 +263,7 @@ class HDHub4uTab extends StatelessWidget {
                     ElevatedButton.icon(
                       onPressed: () => controller.refresh(),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.blueAccent,
+                        backgroundColor: colorScheme.primary,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
@@ -294,11 +295,11 @@ class HDHub4uTab extends StatelessWidget {
                     height: 70,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: Colors.white.withValues(alpha: 0.05),
+                      color: colorScheme.onSurface.withValues(alpha: 0.05),
                     ),
-                    child: const Icon(
+                    child: Icon(
                       Icons.movie_outlined,
-                      color: Colors.white38,
+                      color: colorScheme.onSurface.withOpacity(0.38),
                       size: 34,
                     ),
                   ),
@@ -306,7 +307,7 @@ class HDHub4uTab extends StatelessWidget {
                   Text(
                     'No Movies Yet',
                     style: GoogleFonts.poppins(
-                      color: Colors.white70,
+                      color: colorScheme.onSurface.withOpacity(0.7),
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
                     ),
@@ -315,7 +316,7 @@ class HDHub4uTab extends StatelessWidget {
                   Text(
                     'Check back later for new releases!',
                     style: GoogleFonts.inter(
-                      color: Colors.white38,
+                      color: colorScheme.onSurface.withOpacity(0.38),
                       fontSize: 13,
                     ),
                   ),
@@ -345,7 +346,7 @@ class HDHub4uTab extends StatelessWidget {
             itemCount: controller.movies.length,
             itemBuilder: (context, index) {
               final movie = controller.movies[index];
-              return _buildMovieCard(context, movie);
+              return _buildMovieCard(context, movie, colorScheme);
             },
           );
         }),
@@ -353,7 +354,7 @@ class HDHub4uTab extends StatelessWidget {
     );
   }
 
-  Widget _buildMovieCard(BuildContext context, movie) {
+  Widget _buildMovieCard(BuildContext context, movie, ColorScheme colorScheme) {
     return GestureDetector(
       onTap: () {
         Navigator.push(
@@ -364,8 +365,8 @@ class HDHub4uTab extends StatelessWidget {
       child: Container(
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(14),
-          color: Colors.white.withOpacity(0.05),
-          border: Border.all(color: Colors.white10),
+          color: colorScheme.onSurface.withOpacity(0.05),
+          border: Border.all(color: colorScheme.onSurface.withOpacity(0.1)),
         ),
         clipBehavior: Clip.antiAlias,
         child: Column(
@@ -388,16 +389,16 @@ class HDHub4uTab extends StatelessWidget {
                           height: 24,
                           child: CircularProgressIndicator(
                             strokeWidth: 2,
-                            color: Colors.white24,
+                            color: colorScheme.onSurface.withOpacity(0.24),
                           ),
                         ),
                       ),
                       errorWidget: (_, __, ___) => Container(
                         color: Colors.grey[900],
-                        child: const Icon(
+                        child: Icon(
                           Icons.movie,
                           size: 50,
-                          color: Colors.white24,
+                          color: colorScheme.onSurface.withOpacity(0.24),
                         ),
                       ),
                     ),
@@ -486,7 +487,7 @@ class HDHub4uTab extends StatelessWidget {
                     style: GoogleFonts.inter(
                       fontSize: 13,
                       fontWeight: FontWeight.bold,
-                      color: Colors.white,
+                      color: colorScheme.onSurface,
                     ),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
@@ -497,7 +498,7 @@ class HDHub4uTab extends StatelessWidget {
                       movie.year,
                       style: GoogleFonts.inter(
                         fontSize: 11,
-                        color: Colors.white38,
+                        color: colorScheme.onSurface.withOpacity(0.38),
                       ),
                     ),
                 ],

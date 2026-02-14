@@ -73,6 +73,28 @@ class _SearchScreenState extends State<SearchScreen> {
     });
   }
 
+  // TMDB genre name → ID mapping for client-side filtering
+  static const Map<String, int> _genreNameToId = {
+    'Action': 28,
+    'Adventure': 12,
+    'Animation': 16,
+    'Comedy': 35,
+    'Crime': 80,
+    'Documentary': 99,
+    'Drama': 18,
+    'Family': 10751,
+    'Fantasy': 14,
+    'History': 36,
+    'Horror': 27,
+    'Music': 10402,
+    'Mystery': 9648,
+    'Romance': 10749,
+    'Science Fiction': 878,
+    'Thriller': 53,
+    'War': 10752,
+    'Western': 37,
+  };
+
   Future<void> _onSearch(String query) async {
     if (query.isEmpty) {
       _fetchTrending();
@@ -96,6 +118,36 @@ class _SearchScreenState extends State<SearchScreen> {
     }
     if (_selectedYear != null) {
       movies = movies.where((m) => m.year == _selectedYear).toList();
+    }
+
+    // Genre filter: check if any selected genre's TMDB ID is in the movie's genreIds
+    if (_selectedGenres.isNotEmpty) {
+      final selectedIds = _selectedGenres
+          .map((name) => _genreNameToId[name])
+          .whereType<int>()
+          .toSet();
+      movies = movies
+          .where((m) => m.genreIds.any((id) => selectedIds.contains(id)))
+          .toList();
+    }
+
+    // Language filter
+    if (_selectedLanguage != null) {
+      if (_selectedLanguage == 'Hindi') {
+        movies = movies.where((m) => m.originalLanguage == 'hi').toList();
+      } else if (_selectedLanguage == 'English') {
+        movies = movies.where((m) => m.originalLanguage == 'en').toList();
+      } else if (_selectedLanguage == 'Dual Audio') {
+        // Dual audio is often indicated in the title
+        movies = movies
+            .where(
+              (m) =>
+                  m.title.toLowerCase().contains('dual audio') ||
+                  m.originalLanguage == 'hi' ||
+                  m.originalLanguage == 'en',
+            )
+            .toList();
+      }
     }
 
     setState(() {
@@ -145,19 +197,19 @@ class _SearchScreenState extends State<SearchScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
+
     return Scaffold(
-      backgroundColor: const Color(0xFF0F0F1E),
       extendBodyBehindAppBar: true,
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
         title: Text(
           'MOVIEHUNTER',
           style: GoogleFonts.poppins(
             fontWeight: FontWeight.w900,
             letterSpacing: 2.0,
             fontSize: 22,
-            color: Colors.white,
           ),
         ),
         centerTitle: true,
@@ -166,7 +218,7 @@ class _SearchScreenState extends State<SearchScreen> {
           Stack(
             children: [
               IconButton(
-                icon: const Icon(Icons.tune, color: Colors.blueAccent),
+                icon: Icon(Icons.tune, color: colorScheme.primary),
                 onPressed: _showFilterSheet,
               ),
               if (_hasActiveFilters)
@@ -186,7 +238,10 @@ class _SearchScreenState extends State<SearchScreen> {
           ),
           // Settings button
           IconButton(
-            icon: const Icon(Icons.settings_outlined, color: Colors.white54),
+            icon: Icon(
+              Icons.settings_outlined,
+              color: isDark ? Colors.white54 : Colors.black38,
+            ),
             tooltip: 'Settings',
             onPressed: () {
               Navigator.push(
@@ -209,7 +264,7 @@ class _SearchScreenState extends State<SearchScreen> {
               height: 300,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: Colors.blueAccent.withOpacity(0.15),
+                color: colorScheme.primary.withOpacity(0.15),
               ),
               child: BackdropFilter(
                 filter: ImageFilter.blur(sigmaX: 100, sigmaY: 100),
@@ -232,27 +287,29 @@ class _SearchScreenState extends State<SearchScreen> {
                     filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
                     child: Container(
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.05),
+                        color: colorScheme.onSurface.withOpacity(0.05),
                         borderRadius: BorderRadius.circular(20),
                         border: Border.all(
-                          color: Colors.white.withOpacity(0.1),
+                          color: colorScheme.onSurface.withOpacity(0.1),
                           width: 1.5,
                         ),
                       ),
                       child: TextField(
                         controller: _searchController,
-                        style: GoogleFonts.inter(color: Colors.white),
+                        style: GoogleFonts.inter(color: colorScheme.onSurface),
                         decoration: InputDecoration(
                           hintText: 'Search movies, sources...',
-                          hintStyle: GoogleFonts.inter(color: Colors.white38),
-                          prefixIcon: const Icon(
+                          hintStyle: GoogleFonts.inter(
+                            color: colorScheme.onSurface.withOpacity(0.38),
+                          ),
+                          prefixIcon: Icon(
                             Icons.search,
-                            color: Colors.blueAccent,
+                            color: colorScheme.primary,
                           ),
                           suffixIcon: IconButton(
-                            icon: const Icon(
+                            icon: Icon(
                               Icons.clear,
-                              color: Colors.white30,
+                              color: colorScheme.onSurface.withOpacity(0.3),
                             ),
                             onPressed: () {
                               _searchController.clear();
@@ -291,9 +348,11 @@ class _SearchScreenState extends State<SearchScreen> {
               if (_showRecent && _recentSearches.isNotEmpty)
                 _buildRecentSearches()
               else if (_isLoading)
-                const Expanded(
+                Expanded(
                   child: Center(
-                    child: CircularProgressIndicator(color: Colors.blueAccent),
+                    child: CircularProgressIndicator(
+                      color: colorScheme.primary,
+                    ),
                   ),
                 )
               else
@@ -326,6 +385,7 @@ class _SearchScreenState extends State<SearchScreen> {
   }
 
   Widget _buildActiveFilters() {
+    final colorScheme = Theme.of(context).colorScheme;
     return Container(
       height: 45,
       padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -338,11 +398,14 @@ class _SearchScreenState extends State<SearchScreen> {
               child: Chip(
                 label: Text(
                   genre,
-                  style: GoogleFonts.inter(color: Colors.white, fontSize: 12),
+                  style: GoogleFonts.inter(
+                    color: colorScheme.onSurface,
+                    fontSize: 12,
+                  ),
                 ),
-                backgroundColor: Colors.blueAccent.withOpacity(0.2),
-                deleteIconColor: Colors.white54,
-                side: BorderSide(color: Colors.blueAccent.withOpacity(0.3)),
+                backgroundColor: colorScheme.primary.withOpacity(0.2),
+                deleteIconColor: colorScheme.onSurface.withOpacity(0.54),
+                side: BorderSide(color: colorScheme.primary.withOpacity(0.3)),
                 onDeleted: () {
                   setState(() => _selectedGenres.remove(genre));
                   if (_searchController.text.isNotEmpty) {
@@ -358,10 +421,13 @@ class _SearchScreenState extends State<SearchScreen> {
               child: Chip(
                 label: Text(
                   _selectedYear!,
-                  style: GoogleFonts.inter(color: Colors.white, fontSize: 12),
+                  style: GoogleFonts.inter(
+                    color: colorScheme.onSurface,
+                    fontSize: 12,
+                  ),
                 ),
                 backgroundColor: Colors.purpleAccent.withOpacity(0.2),
-                deleteIconColor: Colors.white54,
+                deleteIconColor: colorScheme.onSurface.withOpacity(0.54),
                 side: BorderSide(color: Colors.purpleAccent.withOpacity(0.3)),
                 onDeleted: () {
                   setState(() => _selectedYear = null);
@@ -377,10 +443,13 @@ class _SearchScreenState extends State<SearchScreen> {
               child: Chip(
                 label: Text(
                   '${_minRating.toInt()}+ ⭐',
-                  style: GoogleFonts.inter(color: Colors.white, fontSize: 12),
+                  style: GoogleFonts.inter(
+                    color: colorScheme.onSurface,
+                    fontSize: 12,
+                  ),
                 ),
                 backgroundColor: Colors.amber.withOpacity(0.2),
-                deleteIconColor: Colors.white54,
+                deleteIconColor: colorScheme.onSurface.withOpacity(0.54),
                 side: BorderSide(color: Colors.amber.withOpacity(0.3)),
                 onDeleted: () {
                   setState(() => _minRating = 0);
@@ -394,10 +463,13 @@ class _SearchScreenState extends State<SearchScreen> {
             Chip(
               label: Text(
                 _selectedLanguage!,
-                style: GoogleFonts.inter(color: Colors.white, fontSize: 12),
+                style: GoogleFonts.inter(
+                  color: colorScheme.onSurface,
+                  fontSize: 12,
+                ),
               ),
               backgroundColor: Colors.greenAccent.withOpacity(0.2),
-              deleteIconColor: Colors.white54,
+              deleteIconColor: colorScheme.onSurface.withOpacity(0.54),
               side: BorderSide(color: Colors.greenAccent.withOpacity(0.3)),
               onDeleted: () {
                 setState(() => _selectedLanguage = null);
@@ -412,6 +484,7 @@ class _SearchScreenState extends State<SearchScreen> {
   }
 
   Widget _buildRecentSearches() {
+    final colorScheme = Theme.of(context).colorScheme;
     return Expanded(
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -425,7 +498,7 @@ class _SearchScreenState extends State<SearchScreen> {
                 Text(
                   'Recent Searches',
                   style: GoogleFonts.poppins(
-                    color: Colors.white70,
+                    color: colorScheme.onSurface.withOpacity(0.7),
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
                   ),
@@ -435,7 +508,7 @@ class _SearchScreenState extends State<SearchScreen> {
                   child: Text(
                     'Clear',
                     style: GoogleFonts.inter(
-                      color: Colors.blueAccent,
+                      color: colorScheme.primary,
                       fontSize: 13,
                     ),
                   ),
@@ -449,14 +522,19 @@ class _SearchScreenState extends State<SearchScreen> {
                 itemBuilder: (context, index) {
                   final search = _recentSearches[index];
                   return ListTile(
-                    leading: const Icon(Icons.history, color: Colors.white24),
+                    leading: Icon(
+                      Icons.history,
+                      color: colorScheme.onSurface.withOpacity(0.24),
+                    ),
                     title: Text(
                       search,
-                      style: GoogleFonts.inter(color: Colors.white70),
+                      style: GoogleFonts.inter(
+                        color: colorScheme.onSurface.withOpacity(0.7),
+                      ),
                     ),
-                    trailing: const Icon(
+                    trailing: Icon(
                       Icons.north_west,
-                      color: Colors.white12,
+                      color: colorScheme.onSurface.withOpacity(0.12),
                       size: 16,
                     ),
                     onTap: () {

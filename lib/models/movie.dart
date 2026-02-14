@@ -24,6 +24,8 @@ class Movie {
   final String? skyMoviesHDUrl;
   final String? skyMoviesHDTitle;
   final String sourceType; // 'hdhub4u' or 'skymovieshd'
+  final List<int> genreIds;
+  final String? originalLanguage;
 
   Movie({
     this.tmdbId,
@@ -38,6 +40,8 @@ class Movie {
     this.skyMoviesHDUrl,
     this.skyMoviesHDTitle,
     this.sourceType = 'hdhub4u',
+    this.genreIds = const [],
+    this.originalLanguage,
   });
 
   factory Movie.fromJson(Map<String, dynamic> json) {
@@ -80,6 +84,12 @@ class Movie {
       skyMoviesHDUrl: json['skymovieshd_url'] ?? json['url'],
       skyMoviesHDTitle: json['skymovieshd_title'] ?? json['original_title'],
       sourceType: json['source_type'] ?? 'hdhub4u',
+      genreIds:
+          (json['genre_ids'] as List?)
+              ?.map((e) => e is int ? e : int.tryParse(e.toString()) ?? 0)
+              .toList() ??
+          [],
+      originalLanguage: json['original_language'],
     );
   }
 

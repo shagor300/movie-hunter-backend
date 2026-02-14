@@ -42,6 +42,86 @@ class DownloadService {
 
     _initialized = true;
     debugPrint('✅ DownloadService initialized with port binding');
+
+    // Sync Hive records with flutter_downloader's internal state on cold-start
+    await _syncWithDownloader();
+  }
+
+  /// Reconcile Hive download records with flutter_downloader's SQLite state.
+  /// This catches any status changes that happened while the app was closed.
+  Future<void> _syncWithDownloader() async {
+    try {
+      final tasks = await FlutterDownloader.loadTasks() ?? [];
+      final taskMap = {for (var t in tasks) t.taskId: t};
+
+      for (final download in _box.values) {
+        if (download.taskId == null) continue;
+
+        final task = taskMap[download.taskId];
+        if (task == null) continue;
+
+        bool changed = false;
+
+        // Sync progress
+        if (task.progress != download.progress) {
+          download.progress = task.progress;
+          changed = true;
+        }
+
+        // Sync status
+        DownloadStatus newStatus;
+        switch (task.status.index) {
+          case 0: // undefined
+            newStatus = download.status; // keep current
+            break;
+          case 1: // enqueued
+            newStatus = DownloadStatus.queued;
+            break;
+          case 2: // running
+            newStatus = DownloadStatus.downloading;
+            break;
+          case 3: // complete
+            newStatus = DownloadStatus.completed;
+            break;
+          case 4: // failed
+            newStatus = DownloadStatus.failed;
+            break;
+          case 5: // canceled
+            newStatus = DownloadStatus.canceled;
+            break;
+          case 6: // paused
+            newStatus = DownloadStatus.paused;
+            break;
+          default:
+            newStatus = download.status;
+        }
+
+        if (newStatus != download.status) {
+          download.status = newStatus;
+          changed = true;
+        }
+
+        // Update savedPath for completed downloads
+        if (newStatus == DownloadStatus.completed) {
+          final correctPath = '${task.savedDir}/${task.filename}';
+          if (download.savedPath != correctPath) {
+            download.savedPath = correctPath;
+            changed = true;
+          }
+          if (download.progress != 100) {
+            download.progress = 100;
+            changed = true;
+          }
+        }
+
+        if (changed) {
+          await download.save();
+        }
+      }
+      debugPrint('✅ Download sync complete: ${tasks.length} tasks reconciled');
+    } catch (e) {
+      debugPrint('⚠️ Error syncing downloads: $e');
+    }
   }
 
   @pragma('vm:entry-point')
@@ -50,7 +130,11 @@ class DownloadService {
     send?.send([id, status, progress]);
   }
 
-  void _updateDownloadFromCallback(String taskId, int status, int progress) {
+  Future<void> _updateDownloadFromCallback(
+    String taskId,
+    int status,
+    int progress,
+  ) async {
     try {
       final download = _box.values.cast<Download?>().firstWhere(
         (d) => d?.taskId == taskId,
@@ -70,6 +154,19 @@ class DownloadService {
           case 3: // complete
             download.status = DownloadStatus.completed;
             download.progress = 100;
+            // Query flutter_downloader for the actual saved path
+            try {
+              final tasks = await FlutterDownloader.loadTasks() ?? [];
+              final task = tasks.firstWhere(
+                (t) => t.taskId == taskId,
+                orElse: () => tasks.first, // fallback
+              );
+              if (task.taskId == taskId) {
+                download.savedPath = '${task.savedDir}/${task.filename}';
+              }
+            } catch (_) {
+              // Keep existing savedPath if query fails
+            }
             break;
           case 4: // failed
             download.status = DownloadStatus.failed;

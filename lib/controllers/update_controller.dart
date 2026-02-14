@@ -36,39 +36,50 @@ class UpdateController extends GetxController {
   // ── Download port handling ─────────────────────────────────────────
 
   void _bindDownloadPort() {
-    IsolateNameServer.registerPortWithName(
-      _port.sendPort,
-      'update_downloader_port',
-    );
+    try {
+      // First try to remove existing port to handle hot restarts safely
+      IsolateNameServer.removePortNameMapping('update_downloader_port');
 
-    _port.listen((dynamic data) {
-      final List<dynamic> args = data;
-      final String id = args[0];
-      final int status = args[1];
-      final int progress = args[2];
+      final success = IsolateNameServer.registerPortWithName(
+        _port.sendPort,
+        'update_downloader_port',
+      );
 
-      if (id == _taskId) {
-        downloadProgress.value = progress;
-
-        if (status == 3) {
-          // DownloadTaskStatus.complete
-          isDownloading.value = false;
-          downloadProgress.value = 100;
-          _installApk();
-        } else if (status == 4) {
-          // DownloadTaskStatus.failed
-          isDownloading.value = false;
-          Get.snackbar(
-            'Download Failed',
-            'Could not download the update. Please try again.',
-            snackPosition: SnackPosition.BOTTOM,
-            backgroundColor: Colors.redAccent.withValues(alpha: 0.85),
-            colorText: Colors.white,
-            margin: const EdgeInsets.all(20),
-          );
-        }
+      if (!success) {
+        debugPrint('⚠️ Failed to register update_downloader_port');
       }
-    });
+
+      _port.listen((dynamic data) {
+        final List<dynamic> args = data;
+        final String id = args[0];
+        final int status = args[1];
+        final int progress = args[2];
+
+        if (id == _taskId) {
+          downloadProgress.value = progress;
+
+          if (status == 3) {
+            // DownloadTaskStatus.complete
+            isDownloading.value = false;
+            downloadProgress.value = 100;
+            _installApk();
+          } else if (status == 4) {
+            // DownloadTaskStatus.failed
+            isDownloading.value = false;
+            Get.snackbar(
+              'Download Failed',
+              'Could not download the update. Please try again.',
+              snackPosition: SnackPosition.BOTTOM,
+              backgroundColor: Colors.redAccent.withValues(alpha: 0.85),
+              colorText: Colors.white,
+              margin: const EdgeInsets.all(20),
+            );
+          }
+        }
+      });
+    } catch (e) {
+      debugPrint('❌ Error binding download port: $e');
+    }
   }
 
   void _unbindDownloadPort() {
@@ -78,13 +89,20 @@ class UpdateController extends GetxController {
   // ── Check for update ──────────────────────────────────────────────
 
   Future<void> checkForUpdate() async {
+    if (isChecking.value) return;
     isChecking.value = true;
     try {
-      final info = await _updateService.checkForUpdate();
+      // Add overall safety timeout
+      final info = await _updateService.checkForUpdate().timeout(
+        const Duration(seconds: 8),
+        onTimeout: () => null,
+      );
+
       if (info != null) {
         updateInfo.value = info;
       }
-    } catch (_) {
+    } catch (e) {
+      debugPrint('Update check error: $e');
       // Silently fail — update check shouldn't block app usage
     } finally {
       isChecking.value = false;

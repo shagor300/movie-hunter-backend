@@ -58,7 +58,11 @@ void main() async {
   Get.put(DownloadController(), permanent: true);
   Get.put(VideoPlayerGetxController(), permanent: true);
   Get.put(ThemeController(), permanent: true);
-  Get.put(UpdateController(), permanent: true);
+  try {
+    Get.put(UpdateController(), permanent: true);
+  } catch (e) {
+    debugPrint('❌ UpdateController initialization failed: $e');
+  }
 
   runApp(const MovieHunterApp());
 }

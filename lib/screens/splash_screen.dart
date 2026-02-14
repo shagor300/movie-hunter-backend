@@ -45,26 +45,38 @@ class _SplashScreenState extends State<SplashScreen>
   }
 
   Future<void> _proceedToHome() async {
-    // Wait for splash animation
-    await Future.delayed(const Duration(seconds: 3));
+    try {
+      // 1. Safety Timeout - App MUST navigate to home within 5 seconds regardless of what happens
+      Timer(const Duration(seconds: 5), () {
+        if (mounted && Get.currentRoute != '/HomeScreen') {
+          debugPrint('⚠️ Splash safety timeout triggered - forcing navigation');
+          Get.offAll(() => const HomeScreen());
+        }
+      });
 
-    if (!mounted) return;
+      // 2. Wait for splash animation (standard duration)
+      await Future.delayed(const Duration(seconds: 3));
 
-    // Start update check in background (don't await)
-    _checkUpdateInBackground();
+      if (!mounted) return;
 
-    // Navigate to Home IMMEDIATELY after animation
-    if (mounted) {
-      Navigator.of(context).pushReplacement(
-        PageRouteBuilder(
-          pageBuilder: (context, animation, secondaryAnimation) =>
-              const HomeScreen(),
-          transitionsBuilder: (context, animation, secondaryAnimation, child) {
-            return FadeTransition(opacity: animation, child: child);
-          },
-          transitionDuration: const Duration(milliseconds: 800),
-        ),
-      );
+      // 3. Start update check in background (non-blocking)
+      // We don't await this so it doesn't hold up navigation
+      unawaited(_checkUpdateInBackground());
+
+      // 4. Navigate to Home using GetX (fixes routing issues)
+      if (mounted) {
+        Get.offAll(
+          () => const HomeScreen(),
+          transition: Transition.fade,
+          duration: const Duration(milliseconds: 800),
+        );
+      }
+    } catch (e) {
+      debugPrint('❌ Critical error in splash screen navigation: $e');
+      // Emergency fallback
+      if (mounted) {
+        Get.offAll(() => const HomeScreen());
+      }
     }
   }
 

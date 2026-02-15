@@ -4,7 +4,7 @@ part 'homepage_movie.g.dart';
 
 /// A movie scraped from the homepage (HDHub4u / SkyMoviesHD),
 /// persisted locally via Hive for offline‑first + incremental sync.
-@HiveType(typeId: 5)
+@HiveType(typeId: 7)
 class HomepageMovie extends HiveObject {
   @HiveField(0)
   final int tmdbId;

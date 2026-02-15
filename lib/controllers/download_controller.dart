@@ -5,6 +5,7 @@ import 'package:hive_flutter/hive_flutter.dart';
 import '../models/download.dart';
 import '../services/download_service.dart';
 import '../services/api_service.dart';
+import '../services/notification_service.dart';
 
 class DownloadController extends GetxController {
   final DownloadService _service = DownloadService();
@@ -19,6 +20,7 @@ class DownloadController extends GetxController {
   final Map<String, DateTime> _lastUpdateTime = {};
   final Map<String, double> _speeds = {}; // bytes per second
   final Map<String, String> _etas = {};
+  final Map<String, DownloadStatus> _prevStatuses = {};
 
   @override
   void onInit() {
@@ -58,7 +60,30 @@ class DownloadController extends GetxController {
   }
 
   void _loadDownloads() {
-    downloads.assignAll(_service.getAllDownloads());
+    final newList = _service.getAllDownloads();
+
+    // Detect status transitions for notifications
+    for (final d in newList) {
+      if (d.taskId == null) continue;
+      final prev = _prevStatuses[d.taskId!];
+      if (prev != null && prev != d.status) {
+        if (d.status == DownloadStatus.completed) {
+          NotificationService.instance.showDownloadComplete(
+            d.movieTitle,
+            d.quality ?? 'HD',
+            'Download complete',
+          );
+        } else if (d.status == DownloadStatus.failed) {
+          NotificationService.instance.showDownloadFailed(
+            d.movieTitle,
+            'Download failed. Tap to retry.',
+          );
+        }
+      }
+      _prevStatuses[d.taskId!] = d.status;
+    }
+
+    downloads.assignAll(newList);
   }
 
   void _updateSpeedAndETA() {
@@ -126,7 +151,65 @@ class DownloadController extends GetxController {
     return _etas[taskId] ?? '--';
   }
 
-  /// Start download with Stage 2 deep link resolution.
+  /// Check if the URL points directly to a downloadable file.
+  bool _isDirectUrl(String url) {
+    final lower = url.toLowerCase();
+    // Direct file extensions
+    final directExtensions = ['.mp4', '.mkv', '.avi', '.mov', '.webm', '.m4v'];
+    for (final ext in directExtensions) {
+      if (lower.contains(ext)) return true;
+    }
+    // Known CDN / direct-download patterns
+    final directPatterns = [
+      'pixeldrain.com/api/file/',
+      'cdn.',
+      'download.',
+      'dl.',
+      'media.',
+      'files.',
+    ];
+    for (final pattern in directPatterns) {
+      if (lower.contains(pattern)) return true;
+    }
+    return false;
+  }
+
+  /// Directly enqueue a download URL without backend resolution.
+  Future<void> _doDirectDownload({
+    required String url,
+    required String movieTitle,
+    int? tmdbId,
+    String? quality,
+  }) async {
+    final properFilename = _createProperFilename(movieTitle, quality);
+    debugPrint('⬇️ Direct download: $url');
+    debugPrint('📄 Filename: $properFilename');
+
+    await _service.startDownload(
+      url: url,
+      filename: properFilename,
+      tmdbId: tmdbId,
+      quality: quality,
+      movieTitle: movieTitle,
+    );
+    _loadDownloads();
+    _ensureTimerRunning();
+
+    Get.snackbar(
+      '✅ Download Started',
+      '$movieTitle${quality != null ? ' ($quality)' : ''}\n$properFilename',
+      snackPosition: SnackPosition.BOTTOM,
+      backgroundColor: Colors.green.withValues(alpha: 0.85),
+      colorText: Colors.white,
+      margin: const EdgeInsets.all(20),
+      duration: const Duration(seconds: 3),
+      icon: const Icon(Icons.download_done, color: Colors.white),
+    );
+  }
+
+  /// Start download with smart strategy:
+  /// 1. If URL looks direct → download immediately (skip resolver)
+  /// 2. Otherwise → try backend resolution → fallback to direct download
   Future<void> startDownload({
     required String url,
     required String filename,
@@ -134,7 +217,19 @@ class DownloadController extends GetxController {
     String? quality,
     required String movieTitle,
   }) async {
-    // Show resolving dialog
+    // ── Strategy 1: Direct URL → skip resolver entirely ──
+    if (_isDirectUrl(url)) {
+      debugPrint('🎯 URL looks direct, skipping resolver');
+      await _doDirectDownload(
+        url: url,
+        movieTitle: movieTitle,
+        tmdbId: tmdbId,
+        quality: quality,
+      );
+      return;
+    }
+
+    // ── Strategy 2: Intermediate URL → try resolver ──
     Get.dialog(
       PopScope(
         canPop: false,
@@ -174,74 +269,159 @@ class DownloadController extends GetxController {
     );
 
     try {
-      // Step 1: Resolve the intermediate URL
       final resolved = await _apiService.resolveDownloadLink(
         url: url,
         quality: quality ?? '1080p',
       );
 
-      // Close loading dialog
       if (Get.isDialogOpen ?? false) Get.back();
 
-      if (resolved['success'] != true) {
+      if (resolved['success'] == true) {
+        final directUrl = resolved['directUrl'] as String;
+        final properFilename = _createProperFilename(movieTitle, quality);
+        debugPrint('✅ Resolved URL: $directUrl');
+        debugPrint('📄 Filename: $properFilename');
+
+        await _service.startDownload(
+          url: directUrl,
+          filename: properFilename,
+          tmdbId: tmdbId,
+          quality: quality,
+          movieTitle: movieTitle,
+        );
+        _loadDownloads();
+        _ensureTimerRunning();
+
         Get.snackbar(
-          'Resolution Failed',
-          resolved['error']?.toString() ?? 'Could not extract download link',
+          '✅ Download Started',
+          '$movieTitle${quality != null ? ' ($quality)' : ''}\n$properFilename',
           snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: Colors.redAccent.withValues(alpha: 0.9),
+          backgroundColor: Colors.green.withValues(alpha: 0.85),
           colorText: Colors.white,
           margin: const EdgeInsets.all(20),
           duration: const Duration(seconds: 3),
-          icon: const Icon(Icons.error_outline, color: Colors.white),
+          icon: const Icon(Icons.download_done, color: Colors.white),
         );
         return;
       }
 
-      // Step 2: Use the resolved direct URL
-      final directUrl = resolved['directUrl'] as String;
-
-      // ── FIX: Force proper filename (Title_Year_Quality.mp4) ──
-      // Don't use server-suggested filename — it's often random gibberish.
-      final properFilename = _createProperFilename(movieTitle, quality);
-
-      debugPrint('✅ Resolved URL: $directUrl');
-      debugPrint('📄 Filename: $properFilename');
-
-      await _service.startDownload(
-        url: directUrl,
-        filename: properFilename,
+      // ── Resolution failed → show options dialog ──
+      final errorMsg =
+          resolved['error']?.toString() ?? 'Could not resolve link';
+      _showDownloadFailedDialog(
+        errorMsg: errorMsg,
+        url: url,
+        movieTitle: movieTitle,
         tmdbId: tmdbId,
         quality: quality,
-        movieTitle: movieTitle,
-      );
-      _loadDownloads();
-      _ensureTimerRunning();
-
-      Get.snackbar(
-        '✅ Download Started',
-        '$movieTitle${quality != null ? ' ($quality)' : ''}\n$properFilename',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.green.withValues(alpha: 0.85),
-        colorText: Colors.white,
-        margin: const EdgeInsets.all(20),
-        duration: const Duration(seconds: 3),
-        icon: const Icon(Icons.download_done, color: Colors.white),
+        filename: filename,
       );
     } catch (e) {
-      // Close dialog if still open
       if (Get.isDialogOpen ?? false) Get.back();
-
       debugPrint('❌ Download error: $e');
-      Get.snackbar(
-        'Download Failed',
-        e.toString(),
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.redAccent.withValues(alpha: 0.9),
-        colorText: Colors.white,
-        margin: const EdgeInsets.all(20),
-        duration: const Duration(seconds: 3),
+
+      _showDownloadFailedDialog(
+        errorMsg: e.toString(),
+        url: url,
+        movieTitle: movieTitle,
+        tmdbId: tmdbId,
+        quality: quality,
+        filename: filename,
       );
     }
+  }
+
+  /// Show a persistent dialog with retry and direct-download options.
+  void _showDownloadFailedDialog({
+    required String errorMsg,
+    required String url,
+    required String movieTitle,
+    int? tmdbId,
+    String? quality,
+    required String filename,
+  }) {
+    Get.dialog(
+      AlertDialog(
+        backgroundColor: const Color(0xFF1A1A2E),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Row(
+          children: [
+            const Icon(Icons.error_outline, color: Colors.redAccent, size: 24),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                'Resolution Failed',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 17,
+                ),
+              ),
+            ),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              errorMsg.length > 120
+                  ? '${errorMsg.substring(0, 120)}…'
+                  : errorMsg,
+              style: const TextStyle(color: Colors.white54, fontSize: 13),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'You can try downloading directly (may not work for all links) or retry resolution.',
+              style: TextStyle(color: Colors.white38, fontSize: 12),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Get.back(),
+            child: const Text(
+              'Cancel',
+              style: TextStyle(color: Colors.white38),
+            ),
+          ),
+          TextButton(
+            onPressed: () {
+              Get.back();
+              startDownload(
+                url: url,
+                filename: filename,
+                tmdbId: tmdbId,
+                quality: quality,
+                movieTitle: movieTitle,
+              );
+            },
+            child: const Text(
+              'Retry',
+              style: TextStyle(color: Colors.orangeAccent),
+            ),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.blueAccent,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+            onPressed: () {
+              Get.back();
+              _doDirectDownload(
+                url: url,
+                movieTitle: movieTitle,
+                tmdbId: tmdbId,
+                quality: quality,
+              );
+            },
+            child: const Text('Try Direct Download'),
+          ),
+        ],
+      ),
+    );
   }
 
   /// Create a clean filename: Movie_Title_Quality.mp4
@@ -308,6 +488,15 @@ class DownloadController extends GetxController {
 
   List<Download> get completedDownloads =>
       downloads.where((d) => d.status == DownloadStatus.completed).toList();
+
+  /// Failed + canceled downloads for the history section.
+  List<Download> get historyDownloads => downloads
+      .where(
+        (d) =>
+            d.status == DownloadStatus.failed ||
+            d.status == DownloadStatus.canceled,
+      )
+      .toList();
 
   @override
   void onClose() {

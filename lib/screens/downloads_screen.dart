@@ -4,6 +4,8 @@ import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../controllers/download_controller.dart';
 import '../models/download.dart';
+import '../widgets/empty_state.dart';
+import '../widgets/skeleton_loader.dart';
 import 'video_player_screen.dart';
 
 class DownloadsScreen extends StatelessWidget {
@@ -22,79 +24,126 @@ class DownloadsScreen extends StatelessWidget {
           style: GoogleFonts.poppins(fontWeight: FontWeight.w700, fontSize: 22),
         ),
         centerTitle: true,
+        actions: [
+          Obx(() {
+            final history = controller.historyDownloads;
+            if (history.isEmpty) return const SizedBox.shrink();
+            return IconButton(
+              icon: const Icon(Icons.delete_sweep_outlined, size: 22),
+              tooltip: 'Clear History',
+              onPressed: () async {
+                final confirmed = await Get.dialog<bool>(
+                  AlertDialog(
+                    backgroundColor: const Color(0xFF1A1A2E),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    title: Text(
+                      'Clear History?',
+                      style: GoogleFonts.poppins(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    content: Text(
+                      'Remove all failed and canceled download entries?',
+                      style: GoogleFonts.inter(
+                        color: Colors.white70,
+                        fontSize: 14,
+                      ),
+                    ),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Get.back(result: false),
+                        child: Text(
+                          'Cancel',
+                          style: GoogleFonts.inter(color: Colors.white60),
+                        ),
+                      ),
+                      ElevatedButton(
+                        onPressed: () => Get.back(result: true),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.redAccent,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                        child: const Text('Clear'),
+                      ),
+                    ],
+                  ),
+                );
+                if (confirmed == true) {
+                  for (final d in List.from(history)) {
+                    await controller.deleteDownload(d);
+                  }
+                }
+              },
+            );
+          }),
+        ],
       ),
       body: Obx(() {
         if (!controller.isInitialized.value) {
-          return Center(
-            child: CircularProgressIndicator(color: colorScheme.primary),
-          );
+          return const SkeletonList(itemCount: 5);
         }
 
         if (controller.downloads.isEmpty) {
-          return _buildEmptyState(colorScheme);
+          return const EmptyState(
+            icon: Icons.download_rounded,
+            title: 'No Downloads Yet',
+            message:
+                'Downloaded movies will appear here.\nBrowse movies and tap download to get started.',
+          );
         }
 
         final active = controller.activeDownloads;
         final completed = controller.completedDownloads;
+        final history = controller.historyDownloads;
 
-        return ListView(
-          padding: const EdgeInsets.all(16),
-          physics: const BouncingScrollPhysics(),
-          children: [
-            if (active.isNotEmpty) ...[
-              _buildSectionHeader(
-                'Active Downloads',
-                active.length,
-                colorScheme,
-              ),
-              const SizedBox(height: 12),
-              ...active.map(
-                (d) => _buildDownloadCard(d, controller, colorScheme),
-              ),
-              const SizedBox(height: 24),
+        return RefreshIndicator(
+          onRefresh: () async {
+            // Downloads are tracked via flutter_downloader callbacks,
+            // so a manual refresh just provides UX feedback.
+            await Future.delayed(const Duration(milliseconds: 500));
+          },
+          color: colorScheme.primary,
+          backgroundColor: colorScheme.surface,
+          child: ListView(
+            padding: const EdgeInsets.all(16),
+            physics: const BouncingScrollPhysics(),
+            children: [
+              if (active.isNotEmpty) ...[
+                _buildSectionHeader(
+                  'Active Downloads',
+                  active.length,
+                  colorScheme,
+                ),
+                const SizedBox(height: 12),
+                ...active.map(
+                  (d) => _buildDownloadCard(d, controller, colorScheme),
+                ),
+                const SizedBox(height: 24),
+              ],
+              if (completed.isNotEmpty) ...[
+                _buildSectionHeader('Completed', completed.length, colorScheme),
+                const SizedBox(height: 12),
+                ...completed.map(
+                  (d) => _buildDownloadCard(d, controller, colorScheme),
+                ),
+                const SizedBox(height: 24),
+              ],
+              if (history.isNotEmpty) ...[
+                _buildSectionHeader('History', history.length, colorScheme),
+                const SizedBox(height: 12),
+                ...history.map(
+                  (d) => _buildDownloadCard(d, controller, colorScheme),
+                ),
+              ],
             ],
-            if (completed.isNotEmpty) ...[
-              _buildSectionHeader('Completed', completed.length, colorScheme),
-              const SizedBox(height: 12),
-              ...completed.map(
-                (d) => _buildDownloadCard(d, controller, colorScheme),
-              ),
-            ],
-          ],
+          ),
         );
       }),
-    );
-  }
-
-  Widget _buildEmptyState(ColorScheme colorScheme) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.download_rounded,
-            size: 100,
-            color: colorScheme.onSurface.withOpacity(0.1),
-          ),
-          const SizedBox(height: 20),
-          Text(
-            'No Downloads Yet',
-            style: GoogleFonts.poppins(
-              color: colorScheme.onSurface.withOpacity(0.38),
-              fontSize: 18,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Download movies from the detail page',
-            style: GoogleFonts.inter(
-              color: colorScheme.onSurface.withOpacity(0.24),
-              fontSize: 14,
-            ),
-          ),
-        ],
-      ),
     );
   }
 

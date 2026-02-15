@@ -8,7 +8,7 @@ part of 'homepage_movie.dart';
 
 class HomepageMovieAdapter extends TypeAdapter<HomepageMovie> {
   @override
-  final int typeId = 5;
+  final int typeId = 7;
 
   @override
   HomepageMovie read(BinaryReader reader) {

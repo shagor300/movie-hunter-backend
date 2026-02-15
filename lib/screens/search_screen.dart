@@ -7,6 +7,8 @@ import '../services/api_service.dart';
 import '../models/movie.dart';
 import '../widgets/movie_card.dart';
 import '../widgets/filter_sheet.dart';
+import '../widgets/empty_state.dart';
+import '../widgets/skeleton_loader.dart';
 import 'details_screen.dart';
 import 'settings_screen.dart';
 
@@ -67,10 +69,48 @@ class _SearchScreenState extends State<SearchScreen> {
     setState(() => _isLoading = true);
     final results = await _tmdbService.getTrendingMovies();
     setState(() {
-      _searchResults = results;
+      _searchResults = _applyFilters(results);
       _isLoading = false;
       _showRecent = false;
     });
+  }
+
+  /// Apply all active filters to a list of movies.
+  List<Movie> _applyFilters(List<Movie> movies) {
+    List<Movie> filtered = List.from(movies);
+
+    if (_minRating > 0) {
+      filtered = filtered.where((m) => m.rating >= _minRating).toList();
+    }
+    if (_selectedYear != null) {
+      filtered = filtered.where((m) => m.year == _selectedYear).toList();
+    }
+    if (_selectedGenres.isNotEmpty) {
+      final selectedIds = _selectedGenres
+          .map((name) => _genreNameToId[name])
+          .whereType<int>()
+          .toSet();
+      filtered = filtered
+          .where((m) => m.genreIds.any((id) => selectedIds.contains(id)))
+          .toList();
+    }
+    if (_selectedLanguage != null) {
+      if (_selectedLanguage == 'Hindi') {
+        filtered = filtered.where((m) => m.originalLanguage == 'hi').toList();
+      } else if (_selectedLanguage == 'English') {
+        filtered = filtered.where((m) => m.originalLanguage == 'en').toList();
+      } else if (_selectedLanguage == 'Dual Audio') {
+        filtered = filtered
+            .where(
+              (m) =>
+                  m.title.toLowerCase().contains('dual audio') ||
+                  m.originalLanguage == 'hi' ||
+                  m.originalLanguage == 'en',
+            )
+            .toList();
+      }
+    }
+    return filtered;
   }
 
   // TMDB genre name → ID mapping for client-side filtering
@@ -111,44 +151,7 @@ class _SearchScreenState extends State<SearchScreen> {
     final rawResults = await apiService.searchMovies(query);
 
     List<Movie> movies = rawResults.map((m) => Movie.fromJson(m)).toList();
-
-    // Apply client-side filters
-    if (_minRating > 0) {
-      movies = movies.where((m) => m.rating >= _minRating).toList();
-    }
-    if (_selectedYear != null) {
-      movies = movies.where((m) => m.year == _selectedYear).toList();
-    }
-
-    // Genre filter: check if any selected genre's TMDB ID is in the movie's genreIds
-    if (_selectedGenres.isNotEmpty) {
-      final selectedIds = _selectedGenres
-          .map((name) => _genreNameToId[name])
-          .whereType<int>()
-          .toSet();
-      movies = movies
-          .where((m) => m.genreIds.any((id) => selectedIds.contains(id)))
-          .toList();
-    }
-
-    // Language filter
-    if (_selectedLanguage != null) {
-      if (_selectedLanguage == 'Hindi') {
-        movies = movies.where((m) => m.originalLanguage == 'hi').toList();
-      } else if (_selectedLanguage == 'English') {
-        movies = movies.where((m) => m.originalLanguage == 'en').toList();
-      } else if (_selectedLanguage == 'Dual Audio') {
-        // Dual audio is often indicated in the title
-        movies = movies
-            .where(
-              (m) =>
-                  m.title.toLowerCase().contains('dual audio') ||
-                  m.originalLanguage == 'hi' ||
-                  m.originalLanguage == 'en',
-            )
-            .toList();
-      }
-    }
+    movies = _applyFilters(movies);
 
     setState(() {
       _searchResults = movies;
@@ -187,6 +190,8 @@ class _SearchScreenState extends State<SearchScreen> {
               Navigator.pop(context);
               if (_searchController.text.isNotEmpty) {
                 _onSearch(_searchController.text);
+              } else {
+                _fetchTrending();
               }
             },
           );
@@ -348,33 +353,43 @@ class _SearchScreenState extends State<SearchScreen> {
               if (_showRecent && _recentSearches.isNotEmpty)
                 _buildRecentSearches()
               else if (_isLoading)
-                Expanded(
-                  child: Center(
-                    child: CircularProgressIndicator(
-                      color: colorScheme.primary,
-                    ),
+                const Expanded(child: SkeletonGrid(itemCount: 6))
+              else if (_searchResults.isEmpty)
+                const Expanded(
+                  child: EmptyState(
+                    icon: Icons.search_off_rounded,
+                    title: 'No Results Found',
+                    message: 'Try different keywords or browse trending movies',
                   ),
                 )
               else
                 Expanded(
-                  child: ListView.builder(
-                    padding: const EdgeInsets.fromLTRB(20, 10, 20, 20),
-                    itemCount: _searchResults.length,
-                    physics: const BouncingScrollPhysics(),
-                    itemBuilder: (context, index) {
-                      final movie = _searchResults[index];
-                      return MovieCard(
-                        movie: movie,
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => DetailsScreen(movie: movie),
-                            ),
-                          );
-                        },
-                      );
-                    },
+                  child: RefreshIndicator(
+                    onRefresh: _fetchTrending,
+                    color: colorScheme.primary,
+                    backgroundColor: colorScheme.surface,
+                    child: ListView.builder(
+                      padding: const EdgeInsets.fromLTRB(20, 10, 20, 20),
+                      itemCount: _searchResults.length,
+                      physics: const AlwaysScrollableScrollPhysics(
+                        parent: BouncingScrollPhysics(),
+                      ),
+                      itemBuilder: (context, index) {
+                        final movie = _searchResults[index];
+                        return MovieCard(
+                          movie: movie,
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) =>
+                                    DetailsScreen(movie: movie),
+                              ),
+                            );
+                          },
+                        );
+                      },
+                    ),
                   ),
                 ),
             ],

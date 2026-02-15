@@ -14,7 +14,14 @@ class HomepageService {
   // ── initialisation ────────────────────────────────────────────────────
 
   Future<void> init() async {
-    _box = await Hive.openBox<HomepageMovie>(_boxName);
+    try {
+      _box = await Hive.openBox<HomepageMovie>(_boxName);
+    } catch (e) {
+      // Box corrupted (e.g. typeId migration) — delete and recreate
+      debugPrint('⚠️ HomepageService: box corrupted, resetting — $e');
+      await Hive.deleteBoxFromDisk(_boxName);
+      _box = await Hive.openBox<HomepageMovie>(_boxName);
+    }
     debugPrint('✅ HomepageService: ${_box!.length} cached movies');
   }
 

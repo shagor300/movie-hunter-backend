@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter/services.dart';
+import 'package:share_plus/share_plus.dart';
 import '../models/movie.dart';
 import '../controllers/link_controller.dart';
 import '../controllers/watchlist_controller.dart';
@@ -118,6 +119,32 @@ class _DetailsScreenState extends State<DetailsScreen> {
                       ],
                     );
                   }),
+                  // Share button
+                  Container(
+                    margin: const EdgeInsets.only(right: 8),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withOpacity(0.4),
+                      shape: BoxShape.circle,
+                    ),
+                    child: IconButton(
+                      icon: const Icon(
+                        Icons.share_outlined,
+                        color: Colors.white,
+                        size: 22,
+                      ),
+                      tooltip: 'Share',
+                      onPressed: () {
+                        final m = widget.movie;
+                        final text =
+                            '🎬 ${m.title}'
+                            '${m.year != "N/A" ? " (${m.year})" : ""}\n'
+                            '${m.rating > 0 ? "⭐ ${m.rating.toStringAsFixed(1)}/10\n" : ""}'
+                            '\n${m.plot.isNotEmpty ? "${m.plot.length > 200 ? "${m.plot.substring(0, 200)}..." : m.plot}\n\n" : ""}'
+                            'Shared via MovieHub';
+                        Share.share(text);
+                      },
+                    ),
+                  ),
                 ],
                 flexibleSpace: FlexibleSpaceBar(
                   background: Stack(

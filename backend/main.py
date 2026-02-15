@@ -203,6 +203,8 @@ async def search_movies(
                 "plot": movie.get('overview', 'No plot available'),
                 "release_date": movie.get('release_date'),
                 "tmdb_id": movie.get('tmdb_id'),
+                "genre_ids": movie.get('genre_ids', []),
+                "original_language": movie.get('original_language'),
             })
 
         return {"query": query, "results": results}

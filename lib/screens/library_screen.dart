@@ -6,6 +6,8 @@ import 'package:shimmer/shimmer.dart';
 import '../controllers/watchlist_controller.dart';
 import '../models/watchlist_movie.dart';
 import '../models/movie.dart';
+import '../widgets/empty_state.dart';
+import '../widgets/skeleton_loader.dart';
 import 'details_screen.dart';
 
 class LibraryScreen extends StatefulWidget {
@@ -74,9 +76,7 @@ class _LibraryScreenState extends State<LibraryScreen>
       ),
       body: Obx(() {
         if (!controller.isInitialized.value) {
-          return Center(
-            child: CircularProgressIndicator(color: colorScheme.primary),
-          );
+          return const SkeletonGrid(itemCount: 6);
         }
 
         return TabBarView(
@@ -85,22 +85,82 @@ class _LibraryScreenState extends State<LibraryScreen>
             final movies = controller.getByCategory(category);
 
             if (movies.isEmpty) {
-              return _buildEmptyState(category);
+              return _buildEmptyState(category, controller);
             }
 
-            return GridView.builder(
-              padding: const EdgeInsets.all(16),
-              physics: const BouncingScrollPhysics(),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2,
-                childAspectRatio: 0.65,
-                crossAxisSpacing: 12,
-                mainAxisSpacing: 12,
-              ),
-              itemCount: movies.length,
-              itemBuilder: (context, index) {
-                return _buildMovieCard(movies[index], controller);
+            return RefreshIndicator(
+              onRefresh: () async {
+                // Watchlist is local — just trigger a UI refresh.
+                await Future.delayed(const Duration(milliseconds: 300));
               },
+              color: colorScheme.primary,
+              backgroundColor: colorScheme.surface,
+              child: GridView.builder(
+                padding: const EdgeInsets.all(16),
+                physics: const AlwaysScrollableScrollPhysics(
+                  parent: BouncingScrollPhysics(),
+                ),
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 2,
+                  childAspectRatio: 0.65,
+                  crossAxisSpacing: 12,
+                  mainAxisSpacing: 12,
+                ),
+                itemCount: movies.length,
+                itemBuilder: (context, index) {
+                  final movie = movies[index];
+                  return Dismissible(
+                    key: ValueKey(movie.tmdbId),
+                    direction: DismissDirection.endToStart,
+                    background: Container(
+                      alignment: Alignment.centerRight,
+                      padding: const EdgeInsets.only(right: 24),
+                      decoration: BoxDecoration(
+                        color: Colors.redAccent.withValues(alpha: 0.2),
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: const Icon(
+                        Icons.delete_outline,
+                        color: Colors.redAccent,
+                        size: 28,
+                      ),
+                    ),
+                    confirmDismiss: (_) async => true,
+                    onDismissed: (_) {
+                      controller.removeFromWatchlist(movie.tmdbId);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('"${movie.title}" removed'),
+                          behavior: SnackBarBehavior.floating,
+                          backgroundColor: const Color(0xFF323232),
+                          margin: const EdgeInsets.all(16),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          action: SnackBarAction(
+                            label: 'Undo',
+                            textColor: colorScheme.primary,
+                            onPressed: () {
+                              controller.addToWatchlist(
+                                Movie(
+                                  tmdbId: movie.tmdbId,
+                                  title: movie.title,
+                                  plot: movie.plot ?? '',
+                                  tmdbPoster: movie.posterUrl ?? '',
+                                  releaseDate: movie.releaseDate ?? 'N/A',
+                                  rating: movie.rating,
+                                  sources: [],
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                      );
+                    },
+                    child: _buildMovieCard(movie, controller),
+                  );
+                },
+              ),
             );
           }).toList(),
         );
@@ -396,46 +456,38 @@ class _LibraryScreenState extends State<LibraryScreen>
     );
   }
 
-  Widget _buildEmptyState(WatchlistCategory category) {
-    final colorScheme = Theme.of(context).colorScheme;
+  Widget _buildEmptyState(
+    WatchlistCategory category,
+    WatchlistController controller,
+  ) {
+    String title;
     String message;
     IconData icon;
 
     switch (category) {
       case WatchlistCategory.watchlist:
-        message = 'No movies in your watchlist';
+        title = 'Watchlist is Empty';
+        message = 'Add movies to watch them later';
         icon = Icons.bookmark_border;
         break;
       case WatchlistCategory.watching:
-        message = 'Not watching anything right now';
+        title = 'Nothing Playing';
+        message = 'Movies you\'re currently watching appear here';
         icon = Icons.play_circle_outline;
         break;
       case WatchlistCategory.completed:
-        message = 'No completed movies yet';
+        title = 'No Completed Movies';
+        message = 'Finished watching a movie? Move it here!';
         icon = Icons.check_circle_outline;
         break;
       case WatchlistCategory.favorites:
-        message = 'No favorites yet';
+        title = 'No Favorites Yet';
+        message = 'Heart a movie to add it to favorites';
         icon = Icons.favorite_border;
         break;
     }
 
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(icon, size: 80, color: colorScheme.onSurface.withOpacity(0.1)),
-          const SizedBox(height: 16),
-          Text(
-            message,
-            style: GoogleFonts.inter(
-              color: colorScheme.onSurface.withOpacity(0.38),
-              fontSize: 16,
-            ),
-          ),
-        ],
-      ),
-    );
+    return EmptyState(icon: icon, title: title, message: message);
   }
 
   String _categoryLabel(WatchlistCategory cat) {

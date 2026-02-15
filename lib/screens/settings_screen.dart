@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../controllers/notification_controller.dart';
 import '../controllers/theme_controller.dart';
 import '../models/theme_preferences.dart';
+import 'notification_settings_screen.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
@@ -274,6 +277,100 @@ class SettingsScreen extends StatelessWidget {
                   ],
                 ),
               ],
+            ),
+
+            const SizedBox(height: 24),
+
+            // ═══════════════════════════════════════════
+            // NOTIFICATIONS
+            // ═══════════════════════════════════════════
+            _SectionHeader(
+              title: 'Notifications',
+              icon: Icons.notifications_outlined,
+            ),
+            const SizedBox(height: 8),
+
+            Builder(
+              builder: (_) {
+                final nc = Get.find<NotificationController>();
+                return Obx(() {
+                  final s = nc.settings.value;
+                  return _SettingsCard(
+                    children: [
+                      Row(
+                        children: [
+                          Container(
+                            width: 36,
+                            height: 36,
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: s.masterEnabled
+                                    ? [
+                                        tc.accentColor,
+                                        tc.accentColor.withValues(alpha: 0.6),
+                                      ]
+                                    : [Colors.white12, Colors.white10],
+                              ),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: Icon(
+                              s.masterEnabled
+                                  ? Icons.notifications_active
+                                  : Icons.notifications_off,
+                              color: Colors.white,
+                              size: 18,
+                            ),
+                          ),
+                          const SizedBox(width: 14),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Notifications',
+                                  style: GoogleFonts.inter(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 14,
+                                  ),
+                                ),
+                                Text(
+                                  s.masterEnabled ? 'Enabled' : 'Disabled',
+                                  style: GoogleFonts.inter(
+                                    color: Colors.white38,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          Switch(
+                            value: s.masterEnabled,
+                            onChanged: (v) {
+                              HapticFeedback.lightImpact();
+                              nc.toggleMaster(v);
+                            },
+                            activeColor: tc.accentColor,
+                          ),
+                        ],
+                      ),
+                      const Divider(color: Colors.white10, height: 24),
+                      _ActionTile(
+                        icon: Icons.tune,
+                        title: 'Notification Preferences',
+                        subtitle: 'Configure individual notification types',
+                        iconColor: tc.accentColor,
+                        onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const NotificationSettingsScreen(),
+                          ),
+                        ),
+                      ),
+                    ],
+                  );
+                });
+              },
             ),
 
             const SizedBox(height: 24),

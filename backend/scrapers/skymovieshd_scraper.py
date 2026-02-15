@@ -433,73 +433,60 @@ class SkyMoviesHDScraper(BaseMovieScraper):
 
     async def _extract_gdrive_from_intermediates(self, intermediate_links: List[Dict]) -> List[Dict]:
         """
-        Visit each intermediate host page and extract download URLs.
-        Uses INCREMENTAL collection — results are saved as they complete,
-        so timeout on one link doesn't discard already-resolved links.
+        Convert intermediate host links into download links.
+
+        FAST PATH: Returns intermediate URLs directly as download links
+        (HubDrive, HubCloud, GoFile, etc.) without Playwright resolution.
+        Resolution happens at download time via /api/resolve-download-link.
+
+        Only Google Drive URLs that are already direct are resolved inline.
         """
-        resolved_links = []  # Shared list — appended to as each completes
-        semaphore = asyncio.Semaphore(2)  # Max 2 concurrent browser pages
+        download_links = []
 
-        # Prioritize known-fast hosts (hubdrive resolves reliably)
-        priority_order = {'hubdrive': 0, 'hubcloud': 1, 'gdflix': 2, 'gofile': 3, 'gdrive': 0}
-        sorted_links = sorted(
-            intermediate_links,
-            key=lambda x: priority_order.get(x.get('host_type', ''), 5)
-        )
+        for link in intermediate_links:
+            url = link.get('url', '')
+            host_type = link.get('host_type', 'unknown')
+            quality = link.get('quality', 'HD')
 
-        # Skip unknown hosts — they waste browser pages
-        actionable_links = [
-            link for link in sorted_links
-            if link.get('host_type') in ('hubdrive', 'hubcloud', 'gdflix', 'gofile', 'gdrive', 'filepress', 'dgdrive')
-        ]
+            if not url:
+                continue
 
-        if not actionable_links:
-            logger.warning(f"[{self.source_name}] ⚠️ No actionable intermediate hosts found")
-            return resolved_links
+            # If it's already a Google Drive URL, return as-is
+            if self._is_gdrive_url(url):
+                download_links.append({
+                    'url': url,
+                    'quality': quality,
+                    'source_host': 'gdrive',
+                    'original_url': url,
+                    'name': f'Google Drive - {quality}',
+                    'type': 'Google Drive',
+                    'source': self.source_name,
+                })
+                logger.info(f"[{self.source_name}] ✅ Direct GDrive: {url[:80]}")
+                continue
 
-        logger.info(
-            f"[{self.source_name}] 🚀 Processing {len(actionable_links)} intermediate links "
-            f"(skipped {len(intermediate_links) - len(actionable_links)} unknown hosts)"
-        )
-
-        async def extract_one(link: Dict, index: int):
-            """Extract from one link and append to shared list immediately."""
-            async with semaphore:
-                try:
-                    result = await asyncio.wait_for(
-                        self._extract_gdrive_from_page(link),
-                        timeout=45  # Fail fast — 45s per link max
-                    )
-                    if result and result.get('url'):
-                        resolved_links.append(result)
-                        logger.info(
-                            f"[{self.source_name}] ✅ [{index+1}/{len(actionable_links)}] "
-                            f"Resolved {link.get('host_type')}: {result['url'][:60]}..."
-                        )
-                    else:
-                        logger.warning(
-                            f"[{self.source_name}] ❌ [{index+1}/{len(actionable_links)}] "
-                            f"No URL from {link.get('host_type')}: {link['url'][:60]}"
-                        )
-                except asyncio.TimeoutError:
-                    logger.error(
-                        f"[{self.source_name}] ⏱️ [{index+1}/{len(actionable_links)}] "
-                        f"Timeout on {link.get('host_type')}: {link['url'][:60]}"
-                    )
-                except Exception as e:
-                    logger.error(
-                        f"[{self.source_name}] 💥 [{index+1}/{len(actionable_links)}] "
-                        f"Error on {link.get('host_type')}: {e}"
-                    )
-
-        # Fire all tasks — each appends to resolved_links independently
-        tasks = [extract_one(link, i) for i, link in enumerate(actionable_links)]
-        await asyncio.gather(*tasks, return_exceptions=True)
+            # For all other hosts — return the intermediate URL directly.
+            # The Flutter app will resolve it at download time.
+            host_label = host_type.replace('_', ' ').title()
+            download_links.append({
+                'url': url,
+                'quality': quality,
+                'source_host': host_type,
+                'original_url': url,
+                'name': f'{host_label} - {quality}',
+                'type': host_label,
+                'source': self.source_name,
+                'needs_resolution': True,  # Flag for the Flutter app
+            })
+            logger.info(
+                f"[{self.source_name}] 📎 Intermediate link ({host_type}): {url[:80]}"
+            )
 
         logger.info(
-            f"[{self.source_name}] 📊 Resolved {len(resolved_links)}/{len(actionable_links)} links"
+            f"[{self.source_name}] 📊 Returning {len(download_links)} download links "
+            f"(fast path — no Playwright resolution)"
         )
-        return resolved_links
+        return download_links
 
     async def _extract_gdrive_from_page(self, intermediate_link: Dict) -> Optional[Dict]:
         """
@@ -696,8 +683,10 @@ class SkyMoviesHDScraper(BaseMovieScraper):
         await asyncio.sleep(3)
 
         countdown_selectors = [
-            '#countdown', '.countdown',
-            'span:has-text("seconds")', 'div:has-text("wait")',
+            '#countdown', '.countdown', '.timer',
+            'span:has-text("seconds")', 'span:has-text("sec")',
+            'div:has-text("wait")', 'div:has-text("please wait")',
+            '#timer', '.count-down',
         ]
         countdown_found = False
         for sel in countdown_selectors:

@@ -6,6 +6,8 @@ import '../controllers/update_controller.dart';
 import '../services/update_service.dart';
 import '../widgets/update_dialog.dart';
 import 'home_screen.dart';
+import 'onboarding_screen.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -67,8 +69,20 @@ class _SplashScreenState extends State<SplashScreen>
       // We don't await this so it doesn't hold up navigation
       unawaited(_checkUpdateInBackground());
 
-      // 4. Navigate to Home using GetX (fixes routing issues)
-      if (mounted) {
+      // 4. Check if it's the first time
+      final prefs = await SharedPreferences.getInstance();
+      final isFirstTime = prefs.getBool('is_first_time') ?? true;
+
+      if (!mounted) return;
+
+      if (isFirstTime) {
+        print('🎬 SplashScreen: Navigating to OnboardingScreen');
+        Get.offAll(
+          () => const OnboardingScreen(),
+          transition: Transition.fade,
+          duration: const Duration(milliseconds: 800),
+        );
+      } else {
         print('🎬 SplashScreen: Navigating to HomeScreen');
         Get.offAll(
           () => const HomeScreen(),

@@ -132,6 +132,8 @@ class TMDBHelper:
             "release_date": movie.get('release_date'),
             "overview": movie.get('overview', 'No overview available'),
             "popularity": movie.get('popularity'),
+            "genre_ids": movie.get('genre_ids', []),
+            "original_language": movie.get('original_language'),
         }
 
     async def get_trending_movies(self) -> List[Dict]:

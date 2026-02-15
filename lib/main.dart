@@ -9,11 +9,15 @@ import 'models/watchlist_movie.dart';
 import 'models/playback_position.dart';
 import 'models/theme_preferences.dart';
 import 'models/homepage_movie.dart';
+import 'models/notification_settings.dart';
 import 'controllers/download_controller.dart';
 import 'controllers/watchlist_controller.dart';
 import 'controllers/video_player_controller.dart';
 import 'controllers/theme_controller.dart';
 import 'controllers/update_controller.dart';
+import 'controllers/notification_controller.dart';
+import 'services/notification_service.dart';
+import 'utils/notification_scheduler.dart';
 import 'screens/splash_screen.dart';
 
 // ⚠️ CRITICAL: Must be top-level for background isolate
@@ -73,6 +77,7 @@ void main() async {
     Hive.registerAdapter(AppThemeModeAdapter());
     Hive.registerAdapter(ThemePreferencesAdapter());
     Hive.registerAdapter(HomepageMovieAdapter());
+    Hive.registerAdapter(NotificationSettingsAdapter());
     print('✅ MAIN: Hive initialized with all adapters');
   } catch (e) {
     print('❌ MAIN: Hive init error: $e');
@@ -122,6 +127,16 @@ void main() async {
     print('✅ MAIN: UpdateController registered');
   } catch (e) {
     print('❌ MAIN: UpdateController failed: $e');
+  }
+
+  // Initialize notification system
+  try {
+    Get.put(NotificationController(), permanent: true);
+    await NotificationService.instance.init();
+    await NotificationScheduler.init();
+    print('✅ MAIN: Notification system initialized');
+  } catch (e) {
+    print('❌ MAIN: Notification init failed: $e');
   }
 
   print('🏃 MAIN: Launching MovieHunterApp');

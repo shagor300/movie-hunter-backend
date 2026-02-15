@@ -24,7 +24,7 @@ class NotificationScheduler {
       dailyTask,
       frequency: const Duration(hours: 24),
       constraints: Constraints(networkType: NetworkType.connected),
-      existingWorkPolicy: ExistingWorkPolicy.replace,
+      existingWorkPolicy: ExistingPeriodicWorkPolicy.replace,
     );
 
     // Weekly task — runs every 7 days
@@ -33,7 +33,7 @@ class NotificationScheduler {
       weeklyTask,
       frequency: const Duration(hours: 168), // 7 days
       constraints: Constraints(networkType: NetworkType.connected),
-      existingWorkPolicy: ExistingWorkPolicy.replace,
+      existingWorkPolicy: ExistingPeriodicWorkPolicy.replace,
     );
 
     debugPrint('✅ NotificationScheduler: background tasks registered');

@@ -1,10 +1,7 @@
-import 'dart:isolate';
-import 'dart:ui';
 import 'package:flutter/material.dart';
-import 'package:flutter_downloader/flutter_downloader.dart';
 import 'package:get/get.dart';
 import 'package:hive_flutter/hive_flutter.dart';
-import 'models/download.dart';
+import 'models/download_item.dart';
 import 'models/watchlist_movie.dart';
 import 'models/playback_position.dart';
 import 'models/theme_preferences.dart';
@@ -20,21 +17,6 @@ import 'services/notification_service.dart';
 import 'services/voice_search_service.dart';
 import 'utils/notification_scheduler.dart';
 import 'screens/splash_screen.dart';
-
-// ⚠️ CRITICAL: Must be top-level for background isolate
-@pragma('vm:entry-point')
-void downloadCallback(String id, int status, int progress) {
-  final SendPort? send = IsolateNameServer.lookupPortByName(
-    'downloader_send_port',
-  );
-  send?.send([id, status, progress]);
-
-  // Also forward to update downloader port
-  final SendPort? updateSend = IsolateNameServer.lookupPortByName(
-    'update_downloader_port',
-  );
-  updateSend?.send([id, status, progress]);
-}
 
 void main() async {
   debugPrint('🚀 MAIN: Starting app');
@@ -70,8 +52,7 @@ void main() async {
   // Initialize Hive
   try {
     await Hive.initFlutter();
-    Hive.registerAdapter(DownloadStatusAdapter());
-    Hive.registerAdapter(DownloadAdapter());
+    Hive.registerAdapter(DownloadItemAdapter());
     Hive.registerAdapter(WatchlistCategoryAdapter());
     Hive.registerAdapter(WatchlistMovieAdapter());
     Hive.registerAdapter(PlaybackPositionAdapter());
@@ -82,15 +63,6 @@ void main() async {
     debugPrint('✅ MAIN: Hive initialized with all adapters');
   } catch (e) {
     debugPrint('❌ MAIN: Hive init error: $e');
-  }
-
-  // Initialize Flutter Downloader (CRITICAL - must be before controllers)
-  try {
-    await FlutterDownloader.initialize(debug: true, ignoreSsl: true);
-    FlutterDownloader.registerCallback(downloadCallback);
-    debugPrint('✅ MAIN: FlutterDownloader initialized');
-  } catch (e) {
-    debugPrint('❌ MAIN: FlutterDownloader init error: $e');
   }
 
   // Register GetX controllers — each is wrapped individually so one failure

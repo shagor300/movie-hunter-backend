@@ -1,26 +1,30 @@
 import 'dart:async';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:hive_flutter/hive_flutter.dart';
-import '../models/download.dart';
-import '../services/download_service.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'package:path_provider/path_provider.dart';
+import '../models/download_item.dart';
+import '../services/parallel_download_engine.dart';
 import '../services/api_service.dart';
 import '../services/notification_service.dart';
 
 class DownloadController extends GetxController {
-  final DownloadService _service = DownloadService();
   final ApiService _apiService = ApiService();
 
-  var downloads = <Download>[].obs;
+  // Active download engines
+  final Map<String, ParallelDownloadEngine> _engines = {};
+
+  // Observable state
+  final downloads = <String, DownloadItem>{}.obs;
+  final speeds = <String, double>{}.obs;
+  final etas = <String, int>{}.obs;
+
   var isInitialized = false.obs;
 
-  // ── Real-time speed / ETA tracking ──
-  Timer? _refreshTimer;
-  final Map<String, int> _lastProgress = {};
-  final Map<String, DateTime> _lastUpdateTime = {};
-  final Map<String, double> _speeds = {}; // bytes per second
-  final Map<String, String> _etas = {};
-  final Map<String, DownloadStatus> _prevStatuses = {};
+  // Notification throttle (avoid updating notifications too frequently)
+  final Map<String, DateTime> _lastNotifUpdate = {};
 
   @override
   void onInit() {
@@ -29,137 +33,34 @@ class DownloadController extends GetxController {
   }
 
   Future<void> _init() async {
-    await _service.init();
-    _loadDownloads();
-
-    // Listen for Hive box changes to keep UI reactive
-    _service.box.listenable().addListener(_loadDownloads);
+    await _loadSavedDownloads();
     isInitialized.value = true;
-
-    // Start periodic refresh for active downloads
-    _startRefreshTimer();
   }
 
-  void _startRefreshTimer() {
-    _refreshTimer?.cancel();
-    _refreshTimer = Timer.periodic(const Duration(seconds: 1), (_) {
-      _loadDownloads();
-      _updateSpeedAndETA();
-      // Stop timer if no active downloads
-      if (activeDownloads.isEmpty) {
-        _refreshTimer?.cancel();
-        _refreshTimer = null;
+  Future<void> _loadSavedDownloads() async {
+    final box = await Hive.openBox<DownloadItem>('downloads_v2');
+    for (final item in box.values) {
+      // Reset "downloading" to "paused" on restart (app was killed mid-download)
+      if (item.status == 'downloading') {
+        item.status = 'paused';
+        await item.save();
       }
-    });
-  }
-
-  void _ensureTimerRunning() {
-    if (_refreshTimer == null || !_refreshTimer!.isActive) {
-      _startRefreshTimer();
+      downloads[item.id] = item;
     }
+    debugPrint('✅ DownloadController: loaded ${downloads.length} downloads');
   }
 
-  void _loadDownloads() {
-    final newList = _service.getAllDownloads();
-
-    // Detect status transitions for notifications
-    for (final d in newList) {
-      if (d.taskId == null) continue;
-      final prev = _prevStatuses[d.taskId!];
-      if (prev != null && prev != d.status) {
-        if (d.status == DownloadStatus.completed) {
-          NotificationService.instance.showDownloadComplete(
-            d.movieTitle,
-            d.quality ?? 'HD',
-            'Download complete',
-          );
-        } else if (d.status == DownloadStatus.failed) {
-          NotificationService.instance.showDownloadFailed(
-            d.movieTitle,
-            'Download failed. Tap to retry.',
-          );
-        }
-      }
-      _prevStatuses[d.taskId!] = d.status;
-    }
-
-    downloads.assignAll(newList);
-  }
-
-  void _updateSpeedAndETA() {
-    final now = DateTime.now();
-    for (final d in downloads) {
-      if (d.taskId == null) continue;
-      if (d.status != DownloadStatus.downloading) continue;
-
-      final taskId = d.taskId!;
-      final prevProgress = _lastProgress[taskId];
-      final prevTime = _lastUpdateTime[taskId];
-
-      if (prevProgress != null &&
-          prevTime != null &&
-          d.progress > prevProgress) {
-        final elapsed = now.difference(prevTime).inMilliseconds / 1000.0;
-        if (elapsed > 0) {
-          // Estimate: assume ~500 MB average file size if unknown
-          const estimatedTotalBytes = 500 * 1024 * 1024;
-          final progressDelta = (d.progress - prevProgress) / 100.0;
-          final bytesDownloaded = progressDelta * estimatedTotalBytes;
-          final speed = bytesDownloaded / elapsed;
-
-          // Smooth the speed with exponential moving average
-          final oldSpeed = _speeds[taskId] ?? speed;
-          _speeds[taskId] = oldSpeed * 0.3 + speed * 0.7;
-
-          // Calculate ETA
-          final remaining = (100 - d.progress) / 100.0 * estimatedTotalBytes;
-          final etaSeconds = _speeds[taskId]! > 0
-              ? remaining / _speeds[taskId]!
-              : 0;
-          _etas[taskId] = _formatETA(etaSeconds.round());
-        }
-      }
-
-      _lastProgress[taskId] = d.progress;
-      _lastUpdateTime[taskId] = now;
-    }
-  }
-
-  String _formatETA(int seconds) {
-    if (seconds <= 0) return '--';
-    if (seconds < 60) return '${seconds}s';
-    if (seconds < 3600) return '${(seconds / 60).round()}m ${seconds % 60}s';
-    return '${(seconds / 3600).round()}h ${((seconds % 3600) / 60).round()}m';
-  }
-
-  /// Get download speed as a human-readable string
-  String getSpeedText(String? taskId) {
-    if (taskId == null) return '--';
-    final speed = _speeds[taskId];
-    if (speed == null || speed <= 0) return '--';
-    if (speed >= 1024 * 1024) {
-      return '${(speed / (1024 * 1024)).toStringAsFixed(1)} MB/s';
-    } else if (speed >= 1024) {
-      return '${(speed / 1024).toStringAsFixed(0)} KB/s';
-    }
-    return '${speed.toStringAsFixed(0)} B/s';
-  }
-
-  /// Get ETA as a human-readable string
-  String getETAText(String? taskId) {
-    if (taskId == null) return '--';
-    return _etas[taskId] ?? '--';
-  }
+  // ═══════════════════════════════════════════════════════════════════
+  // PUBLIC API
+  // ═══════════════════════════════════════════════════════════════════
 
   /// Check if the URL points directly to a downloadable file.
   bool _isDirectUrl(String url) {
     final lower = url.toLowerCase();
-    // Direct file extensions
     final directExtensions = ['.mp4', '.mkv', '.avi', '.mov', '.webm', '.m4v'];
     for (final ext in directExtensions) {
       if (lower.contains(ext)) return true;
     }
-    // Known CDN / direct-download patterns
     final directPatterns = [
       'pixeldrain.com/api/file/',
       'cdn.',
@@ -174,42 +75,20 @@ class DownloadController extends GetxController {
     return false;
   }
 
-  /// Directly enqueue a download URL without backend resolution.
-  Future<void> _doDirectDownload({
-    required String url,
-    required String movieTitle,
-    int? tmdbId,
-    String? quality,
-  }) async {
-    final properFilename = _createProperFilename(movieTitle, quality);
-    debugPrint('⬇️ Direct download: $url');
-    debugPrint('📄 Filename: $properFilename');
-
-    await _service.startDownload(
-      url: url,
-      filename: properFilename,
-      tmdbId: tmdbId,
-      quality: quality,
-      movieTitle: movieTitle,
-    );
-    _loadDownloads();
-    _ensureTimerRunning();
-
-    Get.snackbar(
-      '✅ Download Started',
-      '$movieTitle${quality != null ? ' ($quality)' : ''}\n$properFilename',
-      snackPosition: SnackPosition.BOTTOM,
-      backgroundColor: Colors.green.withValues(alpha: 0.85),
-      colorText: Colors.white,
-      margin: const EdgeInsets.all(20),
-      duration: const Duration(seconds: 3),
-      icon: const Icon(Icons.download_done, color: Colors.white),
-    );
+  /// Clean filename: Movie_Title_Quality.mp4
+  String _createProperFilename(String movieTitle, String? quality) {
+    final sanitized = movieTitle
+        .replaceAll(RegExp(r'[<>:"/\\|?*]'), '')
+        .replaceAll(RegExp(r'\s+'), '_')
+        .replaceAll(RegExp(r'_+'), '_')
+        .trim();
+    final q = quality?.replaceAll(' ', '') ?? 'HD';
+    return '${sanitized}_$q.mp4';
   }
 
   /// Start download with smart strategy:
-  /// 1. If URL looks direct → download immediately (skip resolver)
-  /// 2. Otherwise → try backend resolution → fallback to direct download
+  /// 1. Direct URL → download immediately
+  /// 2. Otherwise → try backend resolution → fallback
   Future<void> startDownload({
     required String url,
     required String filename,
@@ -217,10 +96,10 @@ class DownloadController extends GetxController {
     String? quality,
     required String movieTitle,
   }) async {
-    // ── Strategy 1: Direct URL → skip resolver entirely ──
+    // Strategy 1: Direct URL
     if (_isDirectUrl(url)) {
       debugPrint('🎯 URL looks direct, skipping resolver');
-      await _doDirectDownload(
+      await _doDownload(
         url: url,
         movieTitle: movieTitle,
         tmdbId: tmdbId,
@@ -229,7 +108,7 @@ class DownloadController extends GetxController {
       return;
     }
 
-    // ── Strategy 2: Intermediate URL → try resolver ──
+    // Strategy 2: Try resolver
     Get.dialog(
       PopScope(
         canPop: false,
@@ -278,34 +157,17 @@ class DownloadController extends GetxController {
 
       if (resolved['success'] == true) {
         final directUrl = resolved['directUrl'] as String;
-        final properFilename = _createProperFilename(movieTitle, quality);
         debugPrint('✅ Resolved URL: $directUrl');
-        debugPrint('📄 Filename: $properFilename');
-
-        await _service.startDownload(
+        await _doDownload(
           url: directUrl,
-          filename: properFilename,
+          movieTitle: movieTitle,
           tmdbId: tmdbId,
           quality: quality,
-          movieTitle: movieTitle,
-        );
-        _loadDownloads();
-        _ensureTimerRunning();
-
-        Get.snackbar(
-          '✅ Download Started',
-          '$movieTitle${quality != null ? ' ($quality)' : ''}\n$properFilename',
-          snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: Colors.green.withValues(alpha: 0.85),
-          colorText: Colors.white,
-          margin: const EdgeInsets.all(20),
-          duration: const Duration(seconds: 3),
-          icon: const Icon(Icons.download_done, color: Colors.white),
         );
         return;
       }
 
-      // ── Resolution failed → show options dialog ──
+      // Resolution failed
       final errorMsg =
           resolved['error']?.toString() ?? 'Could not resolve link';
       _showDownloadFailedDialog(
@@ -319,7 +181,6 @@ class DownloadController extends GetxController {
     } catch (e) {
       if (Get.isDialogOpen ?? false) Get.back();
       debugPrint('❌ Download error: $e');
-
       _showDownloadFailedDialog(
         errorMsg: e.toString(),
         url: url,
@@ -331,7 +192,380 @@ class DownloadController extends GetxController {
     }
   }
 
-  /// Show a persistent dialog with retry and direct-download options.
+  /// Core download action using the parallel engine.
+  Future<void> _doDownload({
+    required String url,
+    required String movieTitle,
+    int? tmdbId,
+    String? quality,
+  }) async {
+    if (!await _requestPermission()) return;
+
+    final id = 'dl_${DateTime.now().millisecondsSinceEpoch}';
+    final properFilename = _createProperFilename(movieTitle, quality);
+    final savePath = await _buildSavePath(properFilename);
+
+    // Create download item
+    final item = DownloadItem(
+      id: id,
+      movieTitle: movieTitle,
+      quality: quality ?? 'HD',
+      url: url,
+      filePath: savePath,
+      fileName: properFilename,
+      status: 'downloading',
+      createdAt: DateTime.now(),
+      tmdbId: tmdbId ?? 0,
+    );
+
+    // Save to Hive
+    final box = await Hive.openBox<DownloadItem>('downloads_v2');
+    await box.put(id, item);
+    downloads[id] = item;
+
+    // Show start notification
+    try {
+      NotificationService.instance.showDownloadProgress(
+        notifId: id.hashCode.abs() % 100000,
+        movieTitle: movieTitle,
+        progress: 0,
+        speed: 'Starting...',
+        eta: '--',
+      );
+    } catch (_) {}
+
+    // Start engine
+    _startEngine(id, url, savePath, {});
+
+    Get.snackbar(
+      '⬇️ Download Started',
+      '$movieTitle${quality != null ? ' ($quality)' : ''}\n$properFilename',
+      snackPosition: SnackPosition.BOTTOM,
+      backgroundColor: Colors.green.withValues(alpha: 0.85),
+      colorText: Colors.white,
+      margin: const EdgeInsets.all(20),
+      duration: const Duration(seconds: 3),
+      icon: const Icon(Icons.download_done, color: Colors.white),
+    );
+  }
+
+  void _startEngine(
+    String id,
+    String url,
+    String savePath,
+    Map<String, String> headers,
+  ) {
+    final engine = ParallelDownloadEngine(
+      id: id,
+      url: url,
+      savePath: savePath,
+      headers: headers,
+      maxChunks: 4,
+      onProgress: (downloaded, total, speed, eta) {
+        final item = downloads[id];
+        if (item == null) return;
+
+        item.downloadedBytes = downloaded;
+        item.totalBytes = total;
+        speeds[id] = speed;
+        etas[id] = eta;
+        downloads.refresh();
+
+        // Save progress to Hive periodically (every 5%)
+        if (total > 0 && (downloaded / total * 100).round() % 5 == 0) {
+          item.save();
+        }
+
+        // Update notification (throttle: every 2 seconds)
+        final now = DateTime.now();
+        final lastUpdate = _lastNotifUpdate[id];
+        if (lastUpdate == null || now.difference(lastUpdate).inSeconds >= 2) {
+          _lastNotifUpdate[id] = now;
+          try {
+            NotificationService.instance.showDownloadProgress(
+              notifId: id.hashCode.abs() % 100000,
+              movieTitle: item.movieTitle,
+              progress: total > 0 ? (downloaded / total * 100).round() : 0,
+              speed: _fmtSpeed(speed),
+              eta: _fmtEta(eta),
+            );
+          } catch (_) {}
+        }
+      },
+      onComplete: (filePath) async {
+        final item = downloads[id];
+        if (item == null) return;
+
+        // Verify file
+        final file = File(filePath);
+        final exists = await file.exists();
+        final size = exists ? await file.length() : 0;
+
+        if (!exists || size == 0) {
+          await _setFailed(id, 'File not saved correctly');
+          return;
+        }
+
+        // ✅ SUCCESS
+        item.status = 'completed';
+        item.downloadedBytes = size;
+        item.totalBytes = size;
+        item.completedAt = DateTime.now();
+        await item.save();
+        downloads.refresh();
+        _engines.remove(id);
+
+        // Cancel progress notification
+        try {
+          await NotificationService.instance.cancelNotification(
+            id.hashCode.abs() % 100000,
+          );
+        } catch (_) {}
+
+        // Show completion notification
+        try {
+          NotificationService.instance.showDownloadComplete(
+            item.movieTitle,
+            item.quality,
+            item.fileSizeText,
+          );
+        } catch (_) {}
+
+        Get.snackbar(
+          '✅ Download Complete!',
+          '${item.movieTitle} (${item.quality}) · ${item.fileSizeText}',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.green.withValues(alpha: 0.9),
+          colorText: Colors.white,
+          margin: const EdgeInsets.all(20),
+          duration: const Duration(seconds: 5),
+          icon: const Icon(Icons.check_circle, color: Colors.white),
+        );
+      },
+      onError: (error) async {
+        await _setFailed(id, error);
+      },
+    );
+
+    _engines[id] = engine;
+    engine.start();
+  }
+
+  // ═══════════════════════════════════════════════════════════════════
+  // CONTROLS (compatible public API)
+  // ═══════════════════════════════════════════════════════════════════
+
+  Future<void> pauseDownload(dynamic download) async {
+    final String id;
+    if (download is DownloadItem) {
+      id = download.id;
+    } else {
+      // Legacy support: check for .taskId or .id
+      id = download.id?.toString() ?? '';
+    }
+    _engines[id]?.pause();
+    final item = downloads[id];
+    if (item == null) return;
+    item.status = 'paused';
+    await item.save();
+    downloads.refresh();
+    try {
+      await NotificationService.instance.cancelNotification(
+        id.hashCode.abs() % 100000,
+      );
+    } catch (_) {}
+  }
+
+  Future<void> resumeDownload(dynamic download) async {
+    final String id;
+    if (download is DownloadItem) {
+      id = download.id;
+    } else {
+      id = download.id?.toString() ?? '';
+    }
+    final item = downloads[id];
+    if (item == null) return;
+    item.status = 'downloading';
+    await item.save();
+    downloads.refresh();
+    _startEngine(id, item.url, item.filePath, {});
+  }
+
+  Future<void> cancelDownload(dynamic download) async {
+    final String id;
+    if (download is DownloadItem) {
+      id = download.id;
+    } else {
+      id = download.id?.toString() ?? '';
+    }
+    _engines[id]?.cancel();
+    _engines.remove(id);
+    final item = downloads[id];
+    if (item == null) return;
+    item.status = 'cancelled';
+    await item.save();
+    downloads.refresh();
+    try {
+      await NotificationService.instance.cancelNotification(
+        id.hashCode.abs() % 100000,
+      );
+    } catch (_) {}
+  }
+
+  Future<void> retryDownload(dynamic download) async {
+    final String id;
+    if (download is DownloadItem) {
+      id = download.id;
+    } else {
+      id = download.id?.toString() ?? '';
+    }
+    final item = downloads[id];
+    if (item == null) return;
+    item.status = 'downloading';
+    item.downloadedBytes = 0;
+    await item.save();
+    downloads.refresh();
+    _startEngine(id, item.url, item.filePath, {});
+  }
+
+  Future<void> deleteDownload(dynamic download) async {
+    final String id;
+    if (download is DownloadItem) {
+      id = download.id;
+    } else {
+      id = download.id?.toString() ?? '';
+    }
+    // Cancel if active
+    _engines[id]?.cancel();
+    _engines.remove(id);
+
+    final item = downloads[id];
+    if (item != null) {
+      // Try to delete the file
+      try {
+        final f = File(item.filePath);
+        if (await f.exists()) await f.delete();
+      } catch (_) {}
+    }
+
+    final box = await Hive.openBox<DownloadItem>('downloads_v2');
+    await box.delete(id);
+    downloads.remove(id);
+    speeds.remove(id);
+    etas.remove(id);
+  }
+
+  // ═══════════════════════════════════════════════════════════════════
+  // COMPUTED LISTS (for UI compatibility)
+  // ═══════════════════════════════════════════════════════════════════
+
+  List<DownloadItem> get allDownloads =>
+      downloads.values.toList()
+        ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
+
+  List<DownloadItem> get activeDownloads => allDownloads
+      .where(
+        (d) =>
+            d.status == 'downloading' ||
+            d.status == 'pending' ||
+            d.status == 'paused',
+      )
+      .toList();
+
+  List<DownloadItem> get completedDownloads =>
+      allDownloads.where((d) => d.status == 'completed').toList();
+
+  List<DownloadItem> get historyDownloads => allDownloads
+      .where((d) => d.status == 'failed' || d.status == 'cancelled')
+      .toList();
+
+  // ═══════════════════════════════════════════════════════════════════
+  // HELPERS
+  // ═══════════════════════════════════════════════════════════════════
+
+  Future<void> _setFailed(String id, String error) async {
+    final item = downloads[id];
+    if (item == null) return;
+
+    item.status = 'failed';
+    await item.save();
+    downloads.refresh();
+    _engines.remove(id);
+
+    try {
+      await NotificationService.instance.cancelNotification(
+        id.hashCode.abs() % 100000,
+      );
+    } catch (_) {}
+
+    try {
+      NotificationService.instance.showDownloadFailed(
+        item.movieTitle,
+        'Download failed. Tap to retry.',
+      );
+    } catch (_) {}
+
+    debugPrint('❌ Download failed [$id]: $error');
+  }
+
+  Future<bool> _requestPermission() async {
+    if (!Platform.isAndroid) return true;
+
+    // Android 13+ → notification permission (storage not needed for
+    // app-private directories)
+    final notifStatus = await Permission.notification.request();
+    final storageStatus = await Permission.storage.request();
+
+    if (!notifStatus.isGranted && !storageStatus.isGranted) {
+      Get.snackbar(
+        'Permission Required',
+        'Allow storage/notification to download movies',
+        backgroundColor: Colors.red.withValues(alpha: 0.8),
+        colorText: Colors.white,
+        snackPosition: SnackPosition.BOTTOM,
+      );
+      return false;
+    }
+    return true;
+  }
+
+  Future<String> _buildSavePath(String fileName) async {
+    final dir = Platform.isAndroid
+        ? '/storage/emulated/0/Download/MovieHub'
+        : '${(await getApplicationDocumentsDirectory()).path}/MovieHub';
+
+    await Directory(dir).create(recursive: true);
+    return '$dir/$fileName';
+  }
+
+  /// Get speed as a human-readable string
+  String getSpeedText(String? id) {
+    if (id == null) return '--';
+    return _fmtSpeed(speeds[id] ?? 0);
+  }
+
+  /// Get ETA as a human-readable string
+  String getETAText(String? id) {
+    if (id == null) return '--';
+    return _fmtEta(etas[id] ?? 0);
+  }
+
+  String _fmtSpeed(double bps) {
+    if (bps <= 0) return '--';
+    if (bps < 1024) return '${bps.toStringAsFixed(0)} B/s';
+    if (bps < 1024 * 1024) {
+      return '${(bps / 1024).toStringAsFixed(1)} KB/s';
+    }
+    return '${(bps / (1024 * 1024)).toStringAsFixed(2)} MB/s';
+  }
+
+  String _fmtEta(int seconds) {
+    if (seconds <= 0) return '--';
+    if (seconds < 60) return '${seconds}s';
+    if (seconds < 3600) return '${seconds ~/ 60}m ${seconds % 60}s';
+    return '${seconds ~/ 3600}h ${(seconds % 3600) ~/ 60}m';
+  }
+
   void _showDownloadFailedDialog({
     required String errorMsg,
     required String url,
@@ -372,7 +606,8 @@ class DownloadController extends GetxController {
             ),
             const SizedBox(height: 16),
             Text(
-              'You can try downloading directly (may not work for all links) or retry resolution.',
+              'You can try downloading directly (may not work for all links)'
+              ' or retry resolution.',
               style: TextStyle(color: Colors.white38, fontSize: 12),
             ),
           ],
@@ -410,7 +645,7 @@ class DownloadController extends GetxController {
             ),
             onPressed: () {
               Get.back();
-              _doDirectDownload(
+              _doDownload(
                 url: url,
                 movieTitle: movieTitle,
                 tmdbId: tmdbId,
@@ -424,84 +659,12 @@ class DownloadController extends GetxController {
     );
   }
 
-  /// Create a clean filename: Movie_Title_Quality.mp4
-  String _createProperFilename(String movieTitle, String? quality) {
-    // Sanitize title: replace spaces/special chars with underscores
-    final sanitized = movieTitle
-        .replaceAll(RegExp(r'[<>:"/\\|?*]'), '')
-        .replaceAll(RegExp(r'\s+'), '_')
-        .replaceAll(RegExp(r'_+'), '_')
-        .trim();
-
-    final q = quality?.replaceAll(' ', '') ?? 'HD';
-    return '${sanitized}_$q.mp4';
-  }
-
-  Future<void> pauseDownload(Download download) async {
-    await _service.pauseDownload(download);
-    _loadDownloads();
-  }
-
-  Future<void> resumeDownload(Download download) async {
-    await _service.resumeDownload(download);
-    _loadDownloads();
-    _ensureTimerRunning();
-  }
-
-  Future<void> cancelDownload(Download download) async {
-    await _service.cancelDownload(download);
-    // Clean up tracking for this task
-    if (download.taskId != null) {
-      _lastProgress.remove(download.taskId);
-      _lastUpdateTime.remove(download.taskId);
-      _speeds.remove(download.taskId);
-      _etas.remove(download.taskId);
-    }
-    _loadDownloads();
-  }
-
-  Future<void> retryDownload(Download download) async {
-    await _service.retryDownload(download);
-    _loadDownloads();
-    _ensureTimerRunning();
-  }
-
-  Future<void> deleteDownload(Download download) async {
-    if (download.taskId != null) {
-      _lastProgress.remove(download.taskId);
-      _lastUpdateTime.remove(download.taskId);
-      _speeds.remove(download.taskId);
-      _etas.remove(download.taskId);
-    }
-    await _service.deleteDownload(download);
-    _loadDownloads();
-  }
-
-  List<Download> get activeDownloads => downloads
-      .where(
-        (d) =>
-            d.status == DownloadStatus.downloading ||
-            d.status == DownloadStatus.queued ||
-            d.status == DownloadStatus.paused,
-      )
-      .toList();
-
-  List<Download> get completedDownloads =>
-      downloads.where((d) => d.status == DownloadStatus.completed).toList();
-
-  /// Failed + canceled downloads for the history section.
-  List<Download> get historyDownloads => downloads
-      .where(
-        (d) =>
-            d.status == DownloadStatus.failed ||
-            d.status == DownloadStatus.canceled,
-      )
-      .toList();
-
   @override
   void onClose() {
-    _refreshTimer?.cancel();
-    _service.box.listenable().removeListener(_loadDownloads);
+    // Cancel all active downloads when controller is disposed
+    for (final engine in _engines.values) {
+      engine.cancel();
+    }
     super.onClose();
   }
 }

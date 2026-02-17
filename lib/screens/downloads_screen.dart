@@ -2,11 +2,10 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:open_filex/open_filex.dart';
 import '../controllers/download_controller.dart';
-import '../models/download.dart';
+import '../models/download_item.dart';
 import '../widgets/empty_state.dart';
-import '../widgets/skeleton_loader.dart';
-import 'video_player_screen.dart';
 
 class DownloadsScreen extends StatelessWidget {
   const DownloadsScreen({super.key});
@@ -14,474 +13,515 @@ class DownloadsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final controller = Get.find<DownloadController>();
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
+    final colorScheme = Theme.of(context).colorScheme;
 
     return Scaffold(
+      backgroundColor: colorScheme.surface,
       appBar: AppBar(
-        title: Text(
-          'Downloads',
-          style: GoogleFonts.poppins(fontWeight: FontWeight.w700, fontSize: 22),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        title: Obx(
+          () => Text(
+            'Downloads (${controller.allDownloads.length})',
+            style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 20),
+          ),
         ),
-        centerTitle: true,
         actions: [
-          Obx(() {
-            final history = controller.historyDownloads;
-            if (history.isEmpty) return const SizedBox.shrink();
-            return IconButton(
-              icon: const Icon(Icons.delete_sweep_outlined, size: 22),
-              tooltip: 'Clear History',
-              onPressed: () async {
-                final confirmed = await Get.dialog<bool>(
-                  AlertDialog(
-                    backgroundColor: const Color(0xFF1A1A2E),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    title: Text(
-                      'Clear History?',
-                      style: GoogleFonts.poppins(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    content: Text(
-                      'Remove all failed and canceled download entries?',
-                      style: GoogleFonts.inter(
-                        color: Colors.white70,
-                        fontSize: 14,
-                      ),
-                    ),
-                    actions: [
-                      TextButton(
-                        onPressed: () => Get.back(result: false),
-                        child: Text(
-                          'Cancel',
-                          style: GoogleFonts.inter(color: Colors.white60),
-                        ),
-                      ),
-                      ElevatedButton(
-                        onPressed: () => Get.back(result: true),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.redAccent,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                        ),
-                        child: const Text('Clear'),
-                      ),
-                    ],
-                  ),
-                );
-                if (confirmed == true) {
-                  for (final d in List.from(history)) {
-                    await controller.deleteDownload(d);
-                  }
-                }
-              },
-            );
-          }),
+          IconButton(
+            icon: const Icon(Icons.delete_sweep_outlined),
+            onPressed: () => _clearCompleted(controller),
+            tooltip: 'Clear completed',
+          ),
         ],
       ),
       body: Obx(() {
-        if (!controller.isInitialized.value) {
-          return const SkeletonList(itemCount: 5);
-        }
-
-        if (controller.downloads.isEmpty) {
-          return const EmptyState(
-            icon: Icons.download_rounded,
-            title: 'No Downloads Yet',
-            message:
-                'Downloaded movies will appear here.\nBrowse movies and tap download to get started.',
-          );
-        }
-
         final active = controller.activeDownloads;
         final completed = controller.completedDownloads;
         final history = controller.historyDownloads;
 
-        return RefreshIndicator(
-          onRefresh: () async {
-            // Downloads are tracked via flutter_downloader callbacks,
-            // so a manual refresh just provides UX feedback.
-            await Future.delayed(const Duration(milliseconds: 500));
-          },
-          color: colorScheme.primary,
-          backgroundColor: colorScheme.surface,
-          child: ListView(
-            padding: const EdgeInsets.all(16),
-            physics: const BouncingScrollPhysics(),
-            children: [
-              if (active.isNotEmpty) ...[
-                _buildSectionHeader(
-                  'Active Downloads',
-                  active.length,
-                  colorScheme,
-                ),
-                const SizedBox(height: 12),
-                ...active.map(
-                  (d) => _buildDownloadCard(d, controller, colorScheme),
-                ),
-                const SizedBox(height: 24),
-              ],
-              if (completed.isNotEmpty) ...[
-                _buildSectionHeader('Completed', completed.length, colorScheme),
-                const SizedBox(height: 12),
-                ...completed.map(
-                  (d) => _buildDownloadCard(d, controller, colorScheme),
-                ),
-                const SizedBox(height: 24),
-              ],
-              if (history.isNotEmpty) ...[
-                _buildSectionHeader('History', history.length, colorScheme),
-                const SizedBox(height: 12),
-                ...history.map(
-                  (d) => _buildDownloadCard(d, controller, colorScheme),
-                ),
-              ],
+        if (active.isEmpty && completed.isEmpty && history.isEmpty) {
+          return const Center(
+            child: EmptyState(
+              icon: Icons.download_outlined,
+              title: 'No Downloads',
+              message: 'Downloaded movies will appear here',
+            ),
+          );
+        }
+
+        return ListView(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          children: [
+            if (active.isNotEmpty) ...[
+              _buildSectionHeader(
+                'Active Downloads',
+                active.length,
+                colorScheme,
+              ),
+              ...active.map(
+                (d) => _DownloadCard(item: d, controller: controller),
+              ),
+              const SizedBox(height: 16),
             ],
-          ),
+            if (completed.isNotEmpty) ...[
+              _buildSectionHeader('Completed', completed.length, colorScheme),
+              ...completed.map(
+                (d) => _DownloadCard(item: d, controller: controller),
+              ),
+              const SizedBox(height: 16),
+            ],
+            if (history.isNotEmpty) ...[
+              _buildSectionHeader('History', history.length, colorScheme),
+              ...history.map(
+                (d) => _DownloadCard(item: d, controller: controller),
+              ),
+            ],
+            const SizedBox(height: 32),
+          ],
         );
       }),
     );
   }
 
   Widget _buildSectionHeader(String title, int count, ColorScheme colorScheme) {
-    return Row(
-      children: [
-        Text(
-          title,
-          style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.w700),
-        ),
-        const SizedBox(width: 8),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-          decoration: BoxDecoration(
-            color: colorScheme.primary.withValues(alpha: 0.2),
-            borderRadius: BorderRadius.circular(10),
-          ),
-          child: Text(
-            count.toString(),
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10, top: 4),
+      child: Row(
+        children: [
+          Text(
+            title,
             style: GoogleFonts.inter(
-              color: colorScheme.primary,
-              fontSize: 12,
+              fontSize: 16,
               fontWeight: FontWeight.bold,
+              color: colorScheme.onSurface.withValues(alpha: 0.9),
             ),
           ),
-        ),
-      ],
+          const SizedBox(width: 8),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+            decoration: BoxDecoration(
+              color: colorScheme.primary.withValues(alpha: 0.2),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Text(
+              '$count',
+              style: GoogleFonts.inter(
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+                color: colorScheme.primary,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
-  Widget _buildDownloadCard(
-    Download download,
-    DownloadController controller,
-    ColorScheme colorScheme,
-  ) {
-    Color statusColor;
-    IconData statusIcon;
+  void _clearCompleted(DownloadController controller) {
+    final completed = controller.allDownloads
+        .where((d) => d.status == 'completed' || d.status == 'cancelled')
+        .toList();
 
-    switch (download.status) {
-      case DownloadStatus.downloading:
-        statusColor = Colors.blueAccent;
-        statusIcon = Icons.downloading;
-        break;
-      case DownloadStatus.paused:
-        statusColor = Colors.orangeAccent;
-        statusIcon = Icons.pause_circle;
-        break;
-      case DownloadStatus.completed:
-        statusColor = Colors.greenAccent;
-        statusIcon = Icons.check_circle;
-        break;
-      case DownloadStatus.failed:
-        statusColor = Colors.redAccent;
-        statusIcon = Icons.error;
-        break;
-      case DownloadStatus.canceled:
-        statusColor = Colors.grey;
-        statusIcon = Icons.cancel;
-        break;
-      case DownloadStatus.queued:
-        statusColor = colorScheme.onSurface.withValues(alpha: 0.54);
-        statusIcon = Icons.hourglass_top;
-        break;
+    for (final item in completed) {
+      controller.deleteDownload(item);
     }
+  }
+}
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      decoration: BoxDecoration(
-        color: colorScheme.onSurface.withValues(alpha: 0.05),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: colorScheme.onSurface.withValues(alpha: 0.08)),
-      ),
+// ═════════════════════════════════════════════════════════════════════
+// DOWNLOAD CARD
+// ═════════════════════════════════════════════════════════════════════
+
+class _DownloadCard extends StatelessWidget {
+  final DownloadItem item;
+  final DownloadController controller;
+
+  const _DownloadCard({required this.item, required this.controller});
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      margin: const EdgeInsets.only(bottom: 10),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+      color: Colors.white.withValues(alpha: 0.06),
+      elevation: 0,
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(14),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Header row: status icon + title + actions
             Row(
               children: [
-                Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: statusColor.withValues(alpha: 0.1),
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(statusIcon, color: statusColor, size: 22),
-                ),
+                _StatusIcon(status: item.status),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        download.movieTitle,
+                        item.movieTitle,
                         style: GoogleFonts.inter(
-                          fontWeight: FontWeight.w600,
-                          fontSize: 15,
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
-                      const SizedBox(height: 4),
+                      const SizedBox(height: 3),
                       Row(
                         children: [
-                          // Quality badge
-                          if (download.quality != null)
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 6,
-                                vertical: 2,
+                          _QualityBadge(quality: item.quality),
+                          const SizedBox(width: 8),
+                          Flexible(
+                            child: Text(
+                              item.fileName,
+                              style: GoogleFonts.inter(
+                                color: Colors.grey[500],
+                                fontSize: 11,
                               ),
-                              margin: const EdgeInsets.only(right: 8),
-                              decoration: BoxDecoration(
-                                color: colorScheme.primary.withValues(
-                                  alpha: 0.2,
-                                ),
-                                borderRadius: BorderRadius.circular(4),
-                                border: Border.all(
-                                  color: colorScheme.primary.withValues(
-                                    alpha: 0.4,
-                                  ),
-                                ),
-                              ),
-                              child: Text(
-                                download.quality!,
-                                style: GoogleFonts.inter(
-                                  color: colorScheme.primary,
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
                             ),
-                          // File size (completed only)
-                          if (download.status == DownloadStatus.completed &&
-                              download.savedPath != null)
-                            Builder(
-                              builder: (_) {
-                                try {
-                                  final file = File(download.savedPath!);
-                                  if (file.existsSync()) {
-                                    final bytes = file.lengthSync();
-                                    final size = bytes > 1024 * 1024 * 1024
-                                        ? '${(bytes / (1024 * 1024 * 1024)).toStringAsFixed(1)} GB'
-                                        : '${(bytes / (1024 * 1024)).toStringAsFixed(0)} MB';
-                                    return Text(
-                                      size,
-                                      style: GoogleFonts.inter(
-                                        color: colorScheme.onSurface
-                                            .withValues(alpha: 0.38),
-                                        fontSize: 11,
-                                      ),
-                                    );
-                                  }
-                                } catch (_) {}
-                                return const SizedBox.shrink();
-                              },
-                            ),
+                          ),
                         ],
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        download.filename,
-                        style: GoogleFonts.inter(
-                          color: colorScheme.onSurface.withValues(alpha: 0.24),
-                          fontSize: 10,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
                       ),
                     ],
                   ),
                 ),
-                _buildActionButtons(download, controller),
+                _ActionButtons(item: item, controller: controller),
               ],
             ),
-            if (download.status == DownloadStatus.downloading ||
-                download.status == DownloadStatus.paused) ...[
-              const SizedBox(height: 12),
-              ClipRRect(
-                borderRadius: BorderRadius.circular(4),
-                child: LinearProgressIndicator(
-                  value: download.progress / 100,
-                  backgroundColor: colorScheme.onSurface.withValues(alpha: 0.1),
-                  color: statusColor,
-                  minHeight: 4,
+
+            // Progress section (active downloads)
+            if (item.status == 'downloading' || item.status == 'paused')
+              _ProgressSection(item: item, controller: controller),
+
+            // Complete info
+            if (item.status == 'completed')
+              Padding(
+                padding: const EdgeInsets.only(top: 8),
+                child: Text(
+                  '✅ ${item.fileSizeText} · Completed',
+                  style: GoogleFonts.inter(
+                    color: Colors.green[400],
+                    fontSize: 12,
+                  ),
                 ),
               ),
-              const SizedBox(height: 6),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  // Speed + ETA
-                  if (download.status == DownloadStatus.downloading)
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.speed,
-                          size: 12,
-                          color: colorScheme.onSurface.withValues(alpha: 0.24),
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          controller.getSpeedText(download.taskId),
-                          style: GoogleFonts.inter(
-                            color: colorScheme.primary,
-                            fontSize: 11,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Icon(
-                          Icons.timer_outlined,
-                          size: 12,
-                          color: colorScheme.onSurface.withValues(alpha: 0.24),
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          controller.getETAText(download.taskId),
-                          style: GoogleFonts.inter(
-                            color: colorScheme.onSurface.withValues(alpha: 0.38),
-                            fontSize: 11,
-                          ),
-                        ),
-                      ],
-                    )
-                  else
-                    const SizedBox.shrink(),
-                  Text(
-                    '${download.progress}%',
-                    style: GoogleFonts.inter(
-                      color: colorScheme.onSurface.withValues(alpha: 0.38),
-                      fontSize: 11,
-                    ),
+
+            // Failed info
+            if (item.status == 'failed')
+              Padding(
+                padding: const EdgeInsets.only(top: 8),
+                child: Text(
+                  '❌ Failed · Tap retry to try again',
+                  style: GoogleFonts.inter(
+                    color: Colors.red[400],
+                    fontSize: 12,
                   ),
-                ],
+                ),
               ),
-            ],
           ],
         ),
       ),
     );
   }
+}
 
-  Widget _buildActionButtons(Download download, DownloadController controller) {
-    switch (download.status) {
-      case DownloadStatus.downloading:
-        return Row(
-          mainAxisSize: MainAxisSize.min,
+// ═════════════════════════════════════════════════════════════════════
+// PROGRESS SECTION — live speed, ETA, percentage
+// ═════════════════════════════════════════════════════════════════════
+
+class _ProgressSection extends StatelessWidget {
+  final DownloadItem item;
+  final DownloadController controller;
+
+  const _ProgressSection({required this.item, required this.controller});
+
+  @override
+  Widget build(BuildContext context) {
+    return Obx(() {
+      final speed = controller.getSpeedText(item.id);
+      final eta = controller.getETAText(item.id);
+      final progress = item.progress;
+      final isPaused = item.status == 'paused';
+
+      return Padding(
+        padding: const EdgeInsets.only(top: 12),
+        child: Column(
           children: [
-            IconButton(
-              icon: const Icon(
-                Icons.pause,
-                color: Colors.orangeAccent,
-                size: 20,
-              ),
-              onPressed: () => controller.pauseDownload(download),
-              padding: EdgeInsets.zero,
-              constraints: const BoxConstraints(),
-            ),
-            const SizedBox(width: 8),
-            IconButton(
-              icon: const Icon(Icons.close, color: Colors.redAccent, size: 20),
-              onPressed: () => controller.cancelDownload(download),
-              padding: EdgeInsets.zero,
-              constraints: const BoxConstraints(),
-            ),
-          ],
-        );
-      case DownloadStatus.paused:
-        return Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            IconButton(
-              icon: const Icon(
-                Icons.play_arrow,
-                color: Colors.blueAccent,
-                size: 20,
-              ),
-              onPressed: () => controller.resumeDownload(download),
-              padding: EdgeInsets.zero,
-              constraints: const BoxConstraints(),
-            ),
-            const SizedBox(width: 8),
-            IconButton(
-              icon: const Icon(Icons.close, color: Colors.redAccent, size: 20),
-              onPressed: () => controller.cancelDownload(download),
-              padding: EdgeInsets.zero,
-              constraints: const BoxConstraints(),
-            ),
-          ],
-        );
-      case DownloadStatus.failed:
-        return IconButton(
-          icon: const Icon(Icons.refresh, color: Colors.orangeAccent, size: 20),
-          onPressed: () => controller.retryDownload(download),
-          padding: EdgeInsets.zero,
-          constraints: const BoxConstraints(),
-        );
-      case DownloadStatus.completed:
-        return Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (download.savedPath != null && download.savedPath!.isNotEmpty)
-              IconButton(
-                icon: const Icon(
-                  Icons.play_circle_fill,
-                  color: Colors.greenAccent,
-                  size: 22,
+            // Progress bar
+            ClipRRect(
+              borderRadius: BorderRadius.circular(4),
+              child: LinearProgressIndicator(
+                value: progress.clamp(0.0, 1.0),
+                minHeight: 5,
+                backgroundColor: Colors.grey[800],
+                valueColor: AlwaysStoppedAnimation(
+                  isPaused ? Colors.orange : const Color(0xFF6C63FF),
                 ),
-                tooltip: 'Play',
-                onPressed: () {
-                  Get.to(
-                    () => VideoPlayerScreen(
-                      videoUrl: '',
-                      localFilePath: download.savedPath,
-                      tmdbId: download.tmdbId,
-                      movieTitle: download.movieTitle,
+              ),
+            ),
+            const SizedBox(height: 6),
+            // Stats row
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  '${item.downloadedText} / ${item.fileSizeText}',
+                  style: GoogleFonts.inter(
+                    color: Colors.grey[500],
+                    fontSize: 11,
+                  ),
+                ),
+                Text(
+                  item.progressText,
+                  style: GoogleFonts.inter(
+                    color: const Color(0xFF6C63FF),
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                if (!isPaused)
+                  Text(
+                    '$speed · $eta',
+                    style: GoogleFonts.inter(
+                      color: Colors.grey[500],
+                      fontSize: 11,
                     ),
-                  );
-                },
-                padding: EdgeInsets.zero,
-                constraints: const BoxConstraints(),
-              ),
-            const SizedBox(width: 8),
+                  )
+                else
+                  Text(
+                    'Paused',
+                    style: GoogleFonts.inter(
+                      color: Colors.orange,
+                      fontSize: 11,
+                    ),
+                  ),
+              ],
+            ),
+          ],
+        ),
+      );
+    });
+  }
+}
+
+// ═════════════════════════════════════════════════════════════════════
+// WIDGETS
+// ═════════════════════════════════════════════════════════════════════
+
+class _StatusIcon extends StatelessWidget {
+  final String status;
+  const _StatusIcon({required this.status});
+
+  @override
+  Widget build(BuildContext context) {
+    Color color;
+    IconData icon;
+
+    switch (status) {
+      case 'downloading':
+        color = const Color(0xFF6C63FF);
+        icon = Icons.download;
+        break;
+      case 'completed':
+        color = Colors.green;
+        icon = Icons.check_circle;
+        break;
+      case 'failed':
+        color = Colors.red;
+        icon = Icons.error;
+        break;
+      case 'paused':
+        color = Colors.orange;
+        icon = Icons.pause_circle;
+        break;
+      default:
+        color = Colors.grey;
+        icon = Icons.hourglass_empty;
+    }
+
+    return Container(
+      width: 40,
+      height: 40,
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.15),
+        shape: BoxShape.circle,
+      ),
+      child: Icon(icon, color: color, size: 22),
+    );
+  }
+}
+
+class _QualityBadge extends StatelessWidget {
+  final String quality;
+  const _QualityBadge({required this.quality});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+      decoration: BoxDecoration(
+        color: const Color(0xFF6C63FF),
+        borderRadius: BorderRadius.circular(4),
+      ),
+      child: Text(
+        quality,
+        style: GoogleFonts.inter(
+          color: Colors.white,
+          fontSize: 10,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+    );
+  }
+}
+
+class _ActionButtons extends StatelessWidget {
+  final DownloadItem item;
+  final DownloadController controller;
+
+  const _ActionButtons({required this.item, required this.controller});
+
+  @override
+  Widget build(BuildContext context) {
+    switch (item.status) {
+      case 'downloading':
+        return Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
             IconButton(
-              icon: Icon(
-                Icons.delete_outline,
-                color: Colors.white.withValues(alpha: 0.24),
-                size: 20,
-              ),
-              onPressed: () => controller.deleteDownload(download),
-              padding: EdgeInsets.zero,
-              constraints: const BoxConstraints(),
+              icon: const Icon(Icons.pause, color: Colors.orange, size: 22),
+              onPressed: () => controller.pauseDownload(item),
+              tooltip: 'Pause',
+            ),
+            IconButton(
+              icon: const Icon(Icons.cancel, color: Colors.red, size: 22),
+              onPressed: () => controller.cancelDownload(item),
+              tooltip: 'Cancel',
             ),
           ],
         );
+
+      case 'paused':
+        return Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            IconButton(
+              icon: const Icon(Icons.play_arrow, color: Colors.green, size: 22),
+              onPressed: () => controller.resumeDownload(item),
+              tooltip: 'Resume',
+            ),
+            IconButton(
+              icon: const Icon(Icons.cancel, color: Colors.red, size: 22),
+              onPressed: () => controller.cancelDownload(item),
+              tooltip: 'Cancel',
+            ),
+          ],
+        );
+
+      case 'completed':
+        return Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            IconButton(
+              icon: const Icon(
+                Icons.play_circle_outline,
+                color: Color(0xFF6C63FF),
+                size: 22,
+              ),
+              onPressed: () async {
+                final file = File(item.filePath);
+                if (await file.exists()) {
+                  await OpenFilex.open(item.filePath);
+                } else {
+                  Get.snackbar(
+                    'File Not Found',
+                    'The downloaded file was moved or deleted',
+                    snackPosition: SnackPosition.BOTTOM,
+                    backgroundColor: Colors.red.withValues(alpha: 0.8),
+                    colorText: Colors.white,
+                    margin: const EdgeInsets.all(20),
+                  );
+                }
+              },
+              tooltip: 'Play',
+            ),
+            IconButton(
+              icon: const Icon(
+                Icons.delete_outline,
+                color: Colors.red,
+                size: 22,
+              ),
+              onPressed: () => _deleteDialog(context),
+              tooltip: 'Delete',
+            ),
+          ],
+        );
+
+      case 'failed':
+        return Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            IconButton(
+              icon: const Icon(Icons.refresh, color: Colors.orange, size: 22),
+              onPressed: () => controller.retryDownload(item),
+              tooltip: 'Retry',
+            ),
+            IconButton(
+              icon: const Icon(
+                Icons.delete_outline,
+                color: Colors.red,
+                size: 22,
+              ),
+              onPressed: () => controller.deleteDownload(item),
+              tooltip: 'Delete',
+            ),
+          ],
+        );
+
       default:
         return const SizedBox.shrink();
     }
+  }
+
+  void _deleteDialog(BuildContext context) {
+    Get.dialog(
+      AlertDialog(
+        backgroundColor: const Color(0xFF1A1A2E),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Text(
+          'Delete Download?',
+          style: GoogleFonts.inter(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        content: Text(
+          'Delete "${item.movieTitle}" from your downloads?',
+          style: GoogleFonts.inter(color: Colors.white70),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Get.back(),
+            child: Text(
+              'Cancel',
+              style: GoogleFonts.inter(color: Colors.white38),
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Get.back();
+              controller.deleteDownload(item);
+            },
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
   }
 }

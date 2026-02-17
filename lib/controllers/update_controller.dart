@@ -1,7 +1,5 @@
-import 'dart:isolate';
-import 'dart:ui';
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_downloader/flutter_downloader.dart';
 import 'package:get/get.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:open_filex/open_filex.dart';
@@ -17,74 +15,8 @@ class UpdateController extends GetxController {
   var downloadProgress = 0.obs;
   var updateInfo = Rxn<AppUpdateInfo>();
 
-  final ReceivePort _port = ReceivePort();
-  String? _taskId;
   String? _savedFilePath;
-
-  @override
-  void onInit() {
-    super.onInit();
-    _bindDownloadPort();
-  }
-
-  @override
-  void onClose() {
-    _unbindDownloadPort();
-    super.onClose();
-  }
-
-  // ── Download port handling ─────────────────────────────────────────
-
-  void _bindDownloadPort() {
-    try {
-      // First try to remove existing port to handle hot restarts safely
-      IsolateNameServer.removePortNameMapping('update_downloader_port');
-
-      final success = IsolateNameServer.registerPortWithName(
-        _port.sendPort,
-        'update_downloader_port',
-      );
-
-      if (!success) {
-        debugPrint('⚠️ Failed to register update_downloader_port');
-      }
-
-      _port.listen((dynamic data) {
-        final List<dynamic> args = data;
-        final String id = args[0];
-        final int status = args[1];
-        final int progress = args[2];
-
-        if (id == _taskId) {
-          downloadProgress.value = progress;
-
-          if (status == 3) {
-            // DownloadTaskStatus.complete
-            isDownloading.value = false;
-            downloadProgress.value = 100;
-            _installApk();
-          } else if (status == 4) {
-            // DownloadTaskStatus.failed
-            isDownloading.value = false;
-            Get.snackbar(
-              'Download Failed',
-              'Could not download the update. Please try again.',
-              snackPosition: SnackPosition.BOTTOM,
-              backgroundColor: Colors.redAccent.withValues(alpha: 0.85),
-              colorText: Colors.white,
-              margin: const EdgeInsets.all(20),
-            );
-          }
-        }
-      });
-    } catch (e) {
-      debugPrint('❌ Error binding download port: $e');
-    }
-  }
-
-  void _unbindDownloadPort() {
-    IsolateNameServer.removePortNameMapping('update_downloader_port');
-  }
+  CancelToken? _cancelToken;
 
   // ── Check for update ──────────────────────────────────────────────
 
@@ -109,7 +41,7 @@ class UpdateController extends GetxController {
     }
   }
 
-  // ── Download APK ──────────────────────────────────────────────────
+  // ── Download APK using Dio ────────────────────────────────────────
 
   Future<void> downloadUpdate() async {
     final info = updateInfo.value;
@@ -135,19 +67,36 @@ class UpdateController extends GetxController {
       }
 
       _savedFilePath = '$savePath/$fileName';
+      _cancelToken = CancelToken();
 
-      _taskId = await FlutterDownloader.enqueue(
-        url: info.updateUrl,
-        savedDir: savePath,
-        fileName: fileName,
-        showNotification: true,
-        openFileFromNotification: true,
+      final dio = Dio();
+      dio.options.connectTimeout = const Duration(seconds: 30);
+      dio.options.receiveTimeout = const Duration(minutes: 10);
+
+      await dio.download(
+        info.updateUrl,
+        _savedFilePath!,
+        cancelToken: _cancelToken,
+        onReceiveProgress: (received, total) {
+          if (total > 0) {
+            downloadProgress.value = (received / total * 100).round();
+          }
+        },
       );
+
+      // Download complete
+      isDownloading.value = false;
+      downloadProgress.value = 100;
+      _installApk();
     } catch (e) {
       isDownloading.value = false;
+      if (e is DioException && e.type == DioExceptionType.cancel) {
+        debugPrint('Update download cancelled');
+        return;
+      }
       Get.snackbar(
-        'Error',
-        'Failed to start download: $e',
+        'Download Failed',
+        'Could not download the update. Please try again.',
         snackPosition: SnackPosition.BOTTOM,
         backgroundColor: Colors.redAccent.withValues(alpha: 0.85),
         colorText: Colors.white,
@@ -182,5 +131,11 @@ class UpdateController extends GetxController {
   /// Dismiss non-forced updates
   void dismissUpdate() {
     updateInfo.value = null;
+  }
+
+  @override
+  void onClose() {
+    _cancelToken?.cancel('Controller disposed');
+    super.onClose();
   }
 }

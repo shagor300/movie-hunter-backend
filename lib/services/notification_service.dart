@@ -215,6 +215,44 @@ class NotificationService {
     );
   }
 
+  /// Show ongoing download progress in the notification shade.
+  Future<void> showDownloadProgress({
+    required int notifId,
+    required String movieTitle,
+    required int progress,
+    required String speed,
+    required String eta,
+  }) async {
+    if (!_initialized) await init();
+
+    final androidDetails = AndroidNotificationDetails(
+      chDownloads,
+      'Downloads',
+      channelDescription: 'Download progress',
+      importance: Importance.low,
+      priority: Priority.low,
+      ongoing: true,
+      showProgress: true,
+      maxProgress: 100,
+      progress: progress,
+      onlyAlertOnce: true,
+      icon: 'ic_notification',
+      color: _accentColor,
+    );
+
+    await _plugin.show(
+      notifId,
+      '⬇️ $movieTitle',
+      '$progress% · $speed · $eta remaining',
+      NotificationDetails(android: androidDetails),
+    );
+  }
+
+  /// Cancel a notification by ID.
+  Future<void> cancelNotification(int id) async {
+    await _plugin.cancel(id);
+  }
+
   /// Storage low warning.
   Future<void> showStorageLow(int freeMB, int requiredMB) async {
     await show(

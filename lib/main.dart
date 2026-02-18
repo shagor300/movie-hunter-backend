@@ -17,6 +17,7 @@ import 'controllers/theme_controller.dart';
 import 'controllers/update_controller.dart';
 import 'controllers/notification_controller.dart';
 import 'services/notification_service.dart';
+import 'services/voice_search_service.dart';
 import 'utils/notification_scheduler.dart';
 import 'screens/splash_screen.dart';
 
@@ -137,6 +138,14 @@ void main() async {
     print('✅ MAIN: Notification system initialized');
   } catch (e) {
     print('❌ MAIN: Notification init failed: $e');
+  }
+
+  // Initialize voice search service
+  try {
+    Get.put(VoiceSearchService(), permanent: true);
+    print('✅ MAIN: VoiceSearchService registered');
+  } catch (e) {
+    print('❌ MAIN: VoiceSearchService failed: $e');
   }
 
   print('🏃 MAIN: Launching MovieHunterApp');

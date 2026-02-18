@@ -134,6 +134,12 @@ def _build_search_sources(title: str) -> List[dict]:
             "site": "SkyMoviesHD",
             "url": f"{MovieSources.SKYMOVIESHD_BASE_URL}/?s={title}"
         })
+    # Add Cinefreak source
+    if MovieSources.CINEFREAK_ENABLED:
+        sources.append({
+            "site": "Cinefreak",
+            "url": f"{MovieSources.CINEFREAK_BASE_URL}/?s={title}"
+        })
     return sources
 
 
@@ -239,8 +245,9 @@ async def generate_download_links(
     title: str = Query(..., description="Movie title for searching"),
     year: Optional[str] = Query(None, description="Release year (optional)"),
     hdhub4u_url: Optional[str] = Query(None, description="Direct HDHub4u page URL (skips search)"),
-    source: Optional[str] = Query(None, description="Source type: hdhub4u, skymovieshd, or all"),
+    source: Optional[str] = Query(None, description="Source type: hdhub4u, skymovieshd, cinefreak, or all"),
     skymovieshd_url: Optional[str] = Query(None, description="Direct SkyMoviesHD page URL"),
+    cinefreak_url: Optional[str] = Query(None, description="Direct Cinefreak page URL"),
 ):
     """
     Generate download AND streaming links for a movie.
@@ -263,6 +270,14 @@ async def generate_download_links(
             links = result.get('links', [])
             embed_links = result.get('embed_links', [])
             used_source = 'skymovieshd'
+
+        # --- Case 1b: Cinefreak direct URL provided ---
+        elif source == 'cinefreak' and cinefreak_url:
+            logger.info(f"Link request (Cinefreak direct) - Title: '{title}', URL: {cinefreak_url}")
+            result = await multi_source.extract_links_from_source('cinefreak', cinefreak_url)
+            links = result.get('links', [])
+            embed_links = result.get('embed_links', [])
+            used_source = 'cinefreak'
 
         # --- Case 2: HDHub4u direct URL provided ---
         elif source == 'hdhub4u' and hdhub4u_url:

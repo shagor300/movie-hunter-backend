@@ -10,6 +10,7 @@ from urllib.parse import quote
 
 from config.sources import MovieSources
 from scrapers.skymovieshd_scraper import SkyMoviesHDScraper
+from scrapers.cinefreak_scraper import CinefreakScraper
 
 logger = logging.getLogger(__name__)
 
@@ -19,6 +20,7 @@ class MultiSourceManager:
 
     def __init__(self):
         self.sky_scraper: Optional[SkyMoviesHDScraper] = None
+        self.cinefreak_scraper: Optional[CinefreakScraper] = None
         self._initialized = False
         # Will be set by init_scrapers via main.py lifespan
         self._hdhub4u_scraper = None  # Reference to the MovieScraper instance
@@ -35,6 +37,11 @@ class MultiSourceManager:
             if download_resolver:
                 self.sky_scraper.set_download_resolver(download_resolver)
             logger.info("SkyMoviesHD scraper initialized (shared browser + resolver)")
+
+        if MovieSources.CINEFREAK_ENABLED:
+            self.cinefreak_scraper = CinefreakScraper(MovieSources.CINEFREAK_BASE_URL)
+            self.cinefreak_scraper.set_browser(browser)
+            logger.info("Cinefreak scraper initialized (shared browser)")
 
         self._initialized = True
         MovieSources.print_config()
@@ -55,6 +62,12 @@ class MultiSourceManager:
         if self.sky_scraper:
             tasks.append(self._search_source(
                 self.sky_scraper, query, max_per_source
+            ))
+
+        # Cinefreak search
+        if self.cinefreak_scraper:
+            tasks.append(self._search_source(
+                self.cinefreak_scraper, query, max_per_source
             ))
 
         if not tasks:
@@ -111,6 +124,8 @@ class MultiSourceManager:
         """Route link extraction to the correct scraper based on source type."""
         if source_type == 'skymovieshd' and self.sky_scraper:
             return await self.sky_scraper.extract_links(movie_url)
+        elif source_type == 'cinefreak' and self.cinefreak_scraper:
+            return await self.cinefreak_scraper.extract_links(movie_url)
         else:
             logger.warning(f"Unknown source type: {source_type}")
             return {'links': [], 'embed_links': []}
@@ -132,6 +147,10 @@ class MultiSourceManager:
         # --- SkyMoviesHD: search → pick first result → extract links ---
         if self.sky_scraper:
             tasks.append(('skymovieshd', self._sky_search_and_extract(title, year)))
+
+        # --- Cinefreak: search → pick first result → extract links ---
+        if self.cinefreak_scraper:
+            tasks.append(('cinefreak', self._cinefreak_search_and_extract(title, year)))
 
         # --- HDHub4u: use the existing MovieScraper ---
         if self._hdhub4u_scraper and MovieSources.HDHUB4U_ENABLED:
@@ -189,6 +208,14 @@ class MultiSourceManager:
                 timeout=MovieSources.SEARCH_TIMEOUT
             )
 
+            # Retry without year if no results (site may not index year)
+            if not results and year:
+                logger.info(f"[SkyMoviesHD] Retrying search without year: {title}")
+                results = await asyncio.wait_for(
+                    self.sky_scraper.search_movies(title, max_results=3),
+                    timeout=MovieSources.SEARCH_TIMEOUT
+                )
+
             if not results:
                 logger.info(f"[SkyMoviesHD] No results for: {query}")
                 return {'links': [], 'embed_links': []}
@@ -225,4 +252,43 @@ class MultiSourceManager:
             return {'links': [], 'embed_links': []}
         except Exception as e:
             logger.error(f"[HDHub4u] Search+extract error: {e}")
+            return {'links': [], 'embed_links': []}
+
+    async def _cinefreak_search_and_extract(self, title: str, year: str = None) -> Dict:
+        """Search Cinefreak for a title, then extract links from first result."""
+        try:
+            query = f"{title} {year}" if year else title
+            results = await asyncio.wait_for(
+                self.cinefreak_scraper.search_movies(query, max_results=3),
+                timeout=MovieSources.SEARCH_TIMEOUT
+            )
+
+            # Retry without year if no results
+            if not results and year:
+                logger.info(f"[Cinefreak] Retrying search without year: {title}")
+                results = await asyncio.wait_for(
+                    self.cinefreak_scraper.search_movies(title, max_results=3),
+                    timeout=MovieSources.SEARCH_TIMEOUT
+                )
+
+            if not results:
+                logger.info(f"[Cinefreak] No results for: {query}")
+                return {'links': [], 'embed_links': []}
+
+            # Use the first (best) match
+            movie_url = results[0].get('url')
+            if not movie_url:
+                return {'links': [], 'embed_links': []}
+
+            logger.info(f"[Cinefreak] Extracting links from: {movie_url}")
+            return await asyncio.wait_for(
+                self.cinefreak_scraper.extract_links(movie_url),
+                timeout=60
+            )
+
+        except asyncio.TimeoutError:
+            logger.error("[Cinefreak] Search+extract timed out")
+            return {'links': [], 'embed_links': []}
+        except Exception as e:
+            logger.error(f"[Cinefreak] Search+extract error: {e}")
             return {'links': [], 'embed_links': []}

@@ -102,17 +102,42 @@ class SkyMoviesHDScraper(BaseMovieScraper):
             logger.info(f"[{self.source_name}] 🔍 Step 1: Searching for: {query}")
 
             search_url = f"{self.base_url}/?s={query.replace(' ', '+')}"
+            content = None
 
-            async with httpx.AsyncClient(
-                headers={"User-Agent": USER_AGENT},
-                timeout=15.0,
-                follow_redirects=True
-            ) as client:
-                resp = await client.get(search_url)
-                if resp.status_code != 200:
-                    logger.error(f"[{self.source_name}] Search HTTP {resp.status_code}")
-                    return movies
-                content = resp.text
+            # --- PRIMARY: Use Playwright (JS-rendered search) ---
+            # SkyMoviesHD search results are rendered via JavaScript,
+            # so plain HTTP requests only return a static fallback page.
+            if self.browser:
+                context = None
+                page = None
+                try:
+                    context, page = await self._new_stealth_page()
+                    await page.goto(search_url, wait_until='domcontentloaded', timeout=20000)
+                    # Wait a moment for JS search results to render
+                    await asyncio.sleep(2)
+                    content = await page.content()
+                    logger.info(f"[{self.source_name}] ✅ Search page loaded via Playwright")
+                except Exception as e:
+                    logger.warning(f"[{self.source_name}] Playwright search failed, falling back to httpx: {e}")
+                    content = None
+                finally:
+                    if page:
+                        await page.close()
+                    if context:
+                        await context.close()
+
+            # --- FALLBACK: httpx (no JS — may return stale/default results) ---
+            if not content:
+                async with httpx.AsyncClient(
+                    headers={"User-Agent": USER_AGENT},
+                    timeout=15.0,
+                    follow_redirects=True
+                ) as client:
+                    resp = await client.get(search_url)
+                    if resp.status_code != 200:
+                        logger.error(f"[{self.source_name}] Search HTTP {resp.status_code}")
+                        return movies
+                    content = resp.text
 
             soup = BeautifulSoup(content, 'html.parser')
             all_links = soup.find_all('a', href=True)

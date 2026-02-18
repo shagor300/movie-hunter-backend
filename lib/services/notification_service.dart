@@ -1,11 +1,14 @@
 import 'dart:math';
-import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/data/latest_all.dart' as tz;
 
 import 'package:get/get.dart';
 
 import '../controllers/notification_controller.dart';
+import '../screens/home_screen.dart';
+import '../screens/downloads_screen.dart';
+import '../screens/settings_screen.dart';
 
 /// Core notification engine — channels, show, schedule, quiet hours.
 class NotificationService {
@@ -30,6 +33,9 @@ class NotificationService {
   int _contentCountToday = 0;
   DateTime _contentCountDate = DateTime.now();
 
+  // ── Brand color ──
+  static const Color _accentColor = Color(0xFF6C63FF);
+
   // ═══════════════════════════════════════════════════════════════════
   // INIT
   // ═══════════════════════════════════════════════════════════════════
@@ -40,10 +46,8 @@ class NotificationService {
     // Initialize timezone data
     tz.initializeTimeZones();
 
-    // Android init settings
-    const androidSettings = AndroidInitializationSettings(
-      '@mipmap/launcher_icon',
-    );
+    // Android init settings — use the white monochrome icon for status bar
+    const androidSettings = AndroidInitializationSettings('ic_notification');
 
     const initSettings = InitializationSettings(android: androidSettings);
 
@@ -164,7 +168,9 @@ class NotificationService {
       importance: _channelImportance(channelId),
       priority: _channelPriority(channelId),
       styleInformation: BigTextStyleInformation(body),
-      icon: '@mipmap/launcher_icon',
+      icon: 'ic_notification',
+      largeIcon: const DrawableResourceAndroidBitmap('launcher_icon'),
+      color: _accentColor,
     );
 
     await _plugin.show(
@@ -277,6 +283,28 @@ class NotificationService {
     );
   }
 
+  /// Watchlist movie available.
+  Future<void> showWatchlistAvailable(String movieName, String quality) async {
+    await show(
+      category: 'watchlistAvailable',
+      channelId: chWatchlist,
+      title: '🎬 Watchlist Update',
+      body: '"$movieName" is now available in $quality',
+      payload: 'watchlist_available',
+    );
+  }
+
+  /// Quality upgrade available.
+  Future<void> showQualityUpgraded(String movieName, String newQuality) async {
+    await show(
+      category: 'qualityUpgraded',
+      channelId: chWatchlist,
+      title: '⬆️ Quality Upgraded',
+      body: '$movieName is now available in $newQuality',
+      payload: 'quality_upgraded',
+    );
+  }
+
   /// Sync complete (silent).
   Future<void> showSyncComplete(int movieCount) async {
     await show(
@@ -299,22 +327,97 @@ class NotificationService {
     );
   }
 
-  /// Test notification for settings screen.
-  Future<void> showTest(String category) async {
+  /// Preview notification for settings screen — shows a realistic sample
+  /// for the given [category] so the user knows what to expect.
+  Future<void> showPreview(String category) async {
+    if (!_initialized) await init();
+
     final id = _generateId();
-    const androidDetails = AndroidNotificationDetails(
-      chSystem,
-      'System',
+    String title;
+    String body;
+    String channelId;
+
+    switch (category) {
+      case 'downloadComplete':
+        title = '🎬 Download Complete';
+        body = 'Inception (1080p) downloaded\n2.5 GB • Ready to watch';
+        channelId = chDownloads;
+        break;
+      case 'downloadFailed':
+        title = '❌ Download Failed';
+        body = 'The Batman\nConnection lost. Tap to retry.';
+        channelId = chDownloads;
+        break;
+      case 'storageLow':
+        title = '⚠️ Storage Space Low';
+        body = 'Only 512 MB free. Need 1.8 GB for download.';
+        channelId = chDownloads;
+        break;
+      case 'appUpdate':
+        title = '🔄 Update Available — v2.1.0';
+        body = 'Bug fixes, improved streaming, new UI features.';
+        channelId = chUpdates;
+        break;
+      case 'newMoviesDaily':
+        title = '🎬 5 new movies added today';
+        body = 'Including: Oppenheimer, Barbie, The Batman';
+        channelId = chContent;
+        break;
+      case 'weeklyTrending':
+        title = '🔥 Trending This Week';
+        body =
+            'Oppenheimer, Barbie, Interstellar, Dune Part Two, Killers of the Flower Moon';
+        channelId = chContent;
+        break;
+      case 'watchlistAvailable':
+        title = '🎬 Watchlist Update';
+        body = '"Avatar: The Way of Water" is now available in 1080p';
+        channelId = chWatchlist;
+        break;
+      case 'qualityUpgraded':
+        title = '⬆️ Quality Upgraded';
+        body = 'The Dark Knight is now available in 4K';
+        channelId = chWatchlist;
+        break;
+      case 'resumeWatching':
+        title = '▶️ Continue Watching';
+        body = 'Resume Interstellar from 1:23:45';
+        channelId = chPlayback;
+        break;
+      case 'syncComplete':
+        title = '✅ Sync Complete';
+        body = '142 movies synced';
+        channelId = chSystem;
+        break;
+      case 'cacheCleared':
+        title = '🗑️ Cache Cleared';
+        body = '1.2 GB freed';
+        channelId = chSystem;
+        break;
+      default:
+        title = '🎬 MovieHub';
+        body = 'Notification preview for "$category"';
+        channelId = chSystem;
+    }
+
+    final androidDetails = AndroidNotificationDetails(
+      channelId,
+      _channelName(channelId),
       importance: Importance.high,
       priority: Priority.high,
-      icon: '@mipmap/launcher_icon',
+      styleInformation: BigTextStyleInformation(body),
+      icon: 'ic_notification',
+      largeIcon: const DrawableResourceAndroidBitmap('launcher_icon'),
+      color: _accentColor,
     );
+
     await _plugin.show(
       id,
-      '🧪 Test Notification',
-      'This is a test for "$category" notifications.',
-      const NotificationDetails(android: androidDetails),
+      title,
+      body,
+      NotificationDetails(android: androidDetails),
     );
+    debugPrint('🔔 Preview notification shown: $title ($category)');
   }
 
   // ═══════════════════════════════════════════════════════════════════
@@ -400,6 +503,30 @@ class NotificationService {
   void _onNotificationTap(NotificationResponse response) {
     final payload = response.payload;
     debugPrint('🔔 Notification tapped: $payload');
-    // TODO: navigate to relevant screen based on payload
+
+    if (payload == null) return;
+
+    switch (payload) {
+      case 'download_complete':
+      case 'download_failed':
+      case 'storage_low':
+        Get.to(() => const DownloadsScreen());
+        break;
+      case 'new_movies':
+      case 'weekly_trending':
+      case 'resume_watching':
+        Get.to(() => const HomeScreen());
+        break;
+      case 'app_update':
+      case 'critical_update':
+        Get.to(() => const SettingsScreen());
+        break;
+      case 'watchlist_available':
+      case 'quality_upgraded':
+        Get.to(() => const HomeScreen());
+        break;
+      default:
+        debugPrint('🔔 Unhandled notification payload: $payload');
+    }
   }
 }

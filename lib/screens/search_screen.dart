@@ -11,6 +11,7 @@ import '../widgets/empty_state.dart';
 import '../widgets/skeleton_loader.dart';
 import 'details_screen.dart';
 import 'settings_screen.dart';
+import 'voice_search/voice_search_screen.dart';
 
 class SearchScreen extends StatefulWidget {
   const SearchScreen({super.key});
@@ -311,15 +312,45 @@ class _SearchScreenState extends State<SearchScreen> {
                             Icons.search,
                             color: colorScheme.primary,
                           ),
-                          suffixIcon: IconButton(
-                            icon: Icon(
-                              Icons.clear,
-                              color: colorScheme.onSurface.withOpacity(0.3),
-                            ),
-                            onPressed: () {
-                              _searchController.clear();
-                              _fetchTrending();
-                            },
+                          suffixIcon: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              // Voice search mic button
+                              IconButton(
+                                icon: Icon(
+                                  Icons.mic,
+                                  color: colorScheme.primary,
+                                ),
+                                tooltip: 'Voice Search',
+                                onPressed: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) => VoiceSearchScreen(
+                                        onSearchResult: (query) {
+                                          _searchController.text = query;
+                                          _onSearch(query);
+                                        },
+                                      ),
+                                    ),
+                                  );
+                                },
+                              ),
+                              // Clear button (only when text is present)
+                              if (_searchController.text.isNotEmpty)
+                                IconButton(
+                                  icon: Icon(
+                                    Icons.clear,
+                                    color: colorScheme.onSurface.withOpacity(
+                                      0.3,
+                                    ),
+                                  ),
+                                  onPressed: () {
+                                    _searchController.clear();
+                                    _fetchTrending();
+                                  },
+                                ),
+                            ],
                           ),
                           border: InputBorder.none,
                           contentPadding: const EdgeInsets.symmetric(

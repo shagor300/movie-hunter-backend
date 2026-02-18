@@ -64,8 +64,9 @@ class NotificationSettingsScreen extends StatelessWidget {
                   enabled: s.masterEnabled,
                   accent: accent,
                   onChanged: (v) => nc.toggle('downloadComplete', v),
-                  onTest: () =>
-                      NotificationService.instance.showTest('downloadComplete'),
+                  onTest: () => NotificationService.instance.showPreview(
+                    'downloadComplete',
+                  ),
                 ),
                 const _Divider(),
                 _CategoryTile(
@@ -76,8 +77,9 @@ class NotificationSettingsScreen extends StatelessWidget {
                   enabled: s.masterEnabled,
                   accent: accent,
                   onChanged: (v) => nc.toggle('downloadFailed', v),
-                  onTest: () =>
-                      NotificationService.instance.showTest('downloadFailed'),
+                  onTest: () => NotificationService.instance.showPreview(
+                    'downloadFailed',
+                  ),
                 ),
                 const _Divider(),
                 _CategoryTile(
@@ -89,7 +91,7 @@ class NotificationSettingsScreen extends StatelessWidget {
                   accent: accent,
                   onChanged: (v) => nc.toggle('storageLow', v),
                   onTest: () =>
-                      NotificationService.instance.showTest('storageLow'),
+                      NotificationService.instance.showPreview('storageLow'),
                 ),
               ],
             ),
@@ -109,7 +111,7 @@ class NotificationSettingsScreen extends StatelessWidget {
                   accent: accent,
                   onChanged: (v) => nc.toggle('appUpdate', v),
                   onTest: () =>
-                      NotificationService.instance.showTest('appUpdate'),
+                      NotificationService.instance.showPreview('appUpdate'),
                 ),
                 const _Divider(),
                 _CategoryTile(
@@ -139,8 +141,9 @@ class NotificationSettingsScreen extends StatelessWidget {
                   enabled: s.masterEnabled,
                   accent: accent,
                   onChanged: (v) => nc.toggle('newMoviesDaily', v),
-                  onTest: () =>
-                      NotificationService.instance.showTest('newMoviesDaily'),
+                  onTest: () => NotificationService.instance.showPreview(
+                    'newMoviesDaily',
+                  ),
                 ),
                 if (s.newMoviesDaily && s.masterEnabled)
                   _TimePicker(
@@ -159,8 +162,9 @@ class NotificationSettingsScreen extends StatelessWidget {
                   enabled: s.masterEnabled,
                   accent: accent,
                   onChanged: (v) => nc.toggle('weeklyTrending', v),
-                  onTest: () =>
-                      NotificationService.instance.showTest('weeklyTrending'),
+                  onTest: () => NotificationService.instance.showPreview(
+                    'weeklyTrending',
+                  ),
                 ),
               ],
             ),
@@ -179,7 +183,7 @@ class NotificationSettingsScreen extends StatelessWidget {
                   enabled: s.masterEnabled,
                   accent: accent,
                   onChanged: (v) => nc.toggle('watchlistAvailable', v),
-                  onTest: () => NotificationService.instance.showTest(
+                  onTest: () => NotificationService.instance.showPreview(
                     'watchlistAvailable',
                   ),
                 ),
@@ -192,8 +196,9 @@ class NotificationSettingsScreen extends StatelessWidget {
                   enabled: s.masterEnabled,
                   accent: accent,
                   onChanged: (v) => nc.toggle('qualityUpgraded', v),
-                  onTest: () =>
-                      NotificationService.instance.showTest('qualityUpgraded'),
+                  onTest: () => NotificationService.instance.showPreview(
+                    'qualityUpgraded',
+                  ),
                 ),
               ],
             ),
@@ -212,8 +217,9 @@ class NotificationSettingsScreen extends StatelessWidget {
                   enabled: s.masterEnabled,
                   accent: accent,
                   onChanged: (v) => nc.toggle('resumeWatching', v),
-                  onTest: () =>
-                      NotificationService.instance.showTest('resumeWatching'),
+                  onTest: () => NotificationService.instance.showPreview(
+                    'resumeWatching',
+                  ),
                 ),
               ],
             ),
@@ -510,9 +516,9 @@ class _CategoryTile extends StatelessWidget {
           ),
           if (onTest != null)
             IconButton(
-              icon: const Icon(Icons.science_outlined, size: 18),
+              icon: const Icon(Icons.preview_outlined, size: 18),
               color: Colors.white24,
-              tooltip: 'Send test',
+              tooltip: 'Preview',
               onPressed: enabled ? onTest : null,
               splashRadius: 18,
             ),

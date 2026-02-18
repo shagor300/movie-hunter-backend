@@ -10,7 +10,9 @@ import '../models/movie.dart';
 import '../controllers/link_controller.dart';
 import '../controllers/watchlist_controller.dart';
 import '../controllers/download_controller.dart';
+import '../services/api_service.dart';
 import 'webview_player.dart';
+import 'video_player_screen.dart';
 
 class DetailsScreen extends StatefulWidget {
   final Movie movie;
@@ -636,6 +638,144 @@ class _DetailsScreenState extends State<DetailsScreen> {
     );
   }
 
+  /// Handle play button press: resolve intermediate URL → open VideoPlayerScreen
+  Future<void> _handlePlayLink(Map<String, String> link) async {
+    final url = link['url'] ?? '';
+    if (url.isEmpty || !url.startsWith('http')) {
+      Get.snackbar(
+        'Invalid Link',
+        'This link cannot be played.',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.redAccent.withValues(alpha: 0.8),
+        colorText: Colors.white,
+        margin: const EdgeInsets.all(20),
+        duration: const Duration(seconds: 2),
+        icon: const Icon(Icons.error_outline, color: Colors.white),
+      );
+      return;
+    }
+
+    // Check if URL is already a direct video link (e.g. cinecloud .mp4/.mkv)
+    final lowerUrl = url.toLowerCase();
+    final isDirectVideo =
+        lowerUrl.endsWith('.mp4') ||
+        lowerUrl.endsWith('.mkv') ||
+        lowerUrl.endsWith('.webm') ||
+        lowerUrl.endsWith('.avi');
+
+    if (isDirectVideo) {
+      // Play directly — no resolution needed
+      _openVideoPlayer(url, link['quality'] ?? 'HD');
+      return;
+    }
+
+    // Show resolving dialog
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => PopScope(
+        canPop: false,
+        child: Center(
+          child: Container(
+            margin: const EdgeInsets.all(40),
+            padding: const EdgeInsets.all(28),
+            decoration: BoxDecoration(
+              color: const Color(0xFF1A1A2E),
+              borderRadius: BorderRadius.circular(20),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.blueAccent.withValues(alpha: 0.3),
+                  blurRadius: 30,
+                  spreadRadius: 2,
+                ),
+              ],
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const SizedBox(
+                  width: 50,
+                  height: 50,
+                  child: CircularProgressIndicator(
+                    color: Colors.greenAccent,
+                    strokeWidth: 3,
+                  ),
+                ),
+                const SizedBox(height: 20),
+                Text(
+                  'Preparing Video...',
+                  style: GoogleFonts.poppins(
+                    color: Colors.white,
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Resolving stream link, please wait',
+                  style: GoogleFonts.inter(color: Colors.white54, fontSize: 13),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+
+    try {
+      final apiService = ApiService();
+      final result = await apiService.resolveDownloadLink(
+        url: url,
+        quality: link['quality'] ?? '1080p',
+      );
+
+      // Close the loading dialog
+      if (mounted) Navigator.of(context).pop();
+
+      if (result['success'] == true && result['directUrl'] != null) {
+        _openVideoPlayer(result['directUrl'], link['quality'] ?? 'HD');
+      } else {
+        final error = result['error'] ?? 'Could not resolve video link';
+        Get.snackbar(
+          'Cannot Play',
+          error,
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.redAccent.withValues(alpha: 0.8),
+          colorText: Colors.white,
+          margin: const EdgeInsets.all(20),
+          duration: const Duration(seconds: 3),
+          icon: const Icon(Icons.error_outline, color: Colors.white),
+        );
+      }
+    } catch (e) {
+      if (mounted) Navigator.of(context).pop();
+      Get.snackbar(
+        'Play Error',
+        e.toString(),
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.redAccent.withValues(alpha: 0.8),
+        colorText: Colors.white,
+        margin: const EdgeInsets.all(20),
+        duration: const Duration(seconds: 3),
+      );
+    }
+  }
+
+  /// Navigate to the in-app video player
+  void _openVideoPlayer(String videoUrl, String quality) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => VideoPlayerScreen(
+          videoUrl: videoUrl,
+          tmdbId: widget.movie.tmdbId,
+          movieTitle: widget.movie.title,
+          posterUrl: widget.movie.fullPosterPath,
+        ),
+      ),
+    );
+  }
+
   Widget _buildLinkItem(Map<String, String> link, int index) {
     return TweenAnimationBuilder(
       duration: Duration(milliseconds: 400 + (index * 100)),
@@ -683,171 +823,15 @@ class _DetailsScreenState extends State<DetailsScreen> {
           trailing: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              // Stream/Play button — opens in external browser
+              // Stream/Play button — resolves link and opens in-app player
               IconButton(
                 icon: const Icon(
                   Icons.play_circle_outline,
                   color: Colors.greenAccent,
                   size: 22,
                 ),
-                tooltip: 'Open in Browser',
-                onPressed: () async {
-                  final url = link['url'] ?? '';
-                  if (url.isEmpty || !url.startsWith('http')) {
-                    Get.snackbar(
-                      'Invalid Link',
-                      'This link cannot be opened.',
-                      snackPosition: SnackPosition.BOTTOM,
-                      backgroundColor: Colors.redAccent.withValues(alpha: 0.8),
-                      colorText: Colors.white,
-                      margin: const EdgeInsets.all(20),
-                      duration: const Duration(seconds: 2),
-                      icon: const Icon(
-                        Icons.error_outline,
-                        color: Colors.white,
-                      ),
-                    );
-                    return;
-                  }
-
-                  // Confirmation dialog
-                  final confirmed = await Get.dialog<bool>(
-                    AlertDialog(
-                      backgroundColor: const Color(0xFF1A1A2E),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      title: Row(
-                        children: [
-                          const Icon(
-                            Icons.open_in_browser,
-                            color: Colors.greenAccent,
-                            size: 24,
-                          ),
-                          const SizedBox(width: 10),
-                          Text(
-                            'Open Link',
-                            style: GoogleFonts.poppins(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 18,
-                            ),
-                          ),
-                        ],
-                      ),
-                      content: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Open this link in your browser?',
-                            style: GoogleFonts.inter(
-                              color: Colors.white70,
-                              fontSize: 14,
-                            ),
-                          ),
-                          const SizedBox(height: 12),
-                          Container(
-                            padding: const EdgeInsets.all(10),
-                            decoration: BoxDecoration(
-                              color: Colors.white.withValues(alpha: 0.05),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Row(
-                              children: [
-                                const Icon(
-                                  Icons.link,
-                                  color: Colors.blueAccent,
-                                  size: 16,
-                                ),
-                                const SizedBox(width: 8),
-                                Expanded(
-                                  child: Text(
-                                    link['name'] ?? 'Source',
-                                    style: GoogleFonts.inter(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                      actions: [
-                        TextButton(
-                          onPressed: () => Get.back(result: false),
-                          child: Text(
-                            'Cancel',
-                            style: GoogleFonts.inter(color: Colors.white60),
-                          ),
-                        ),
-                        ElevatedButton(
-                          onPressed: () => Get.back(result: true),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.greenAccent,
-                            foregroundColor: Colors.black,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                          ),
-                          child: Text(
-                            'Open',
-                            style: GoogleFonts.inter(
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  );
-
-                  if (confirmed != true) return;
-
-                  try {
-                    final uri = Uri.parse(url);
-                    if (await canLaunchUrl(uri)) {
-                      await launchUrl(
-                        uri,
-                        mode: LaunchMode.externalApplication,
-                      );
-                      Get.snackbar(
-                        '✅ Opening in Browser',
-                        link['name'] ?? 'Link',
-                        snackPosition: SnackPosition.BOTTOM,
-                        backgroundColor: Colors.greenAccent.withValues(
-                          alpha: 0.85,
-                        ),
-                        colorText: Colors.black,
-                        margin: const EdgeInsets.all(20),
-                        duration: const Duration(seconds: 2),
-                      );
-                    } else {
-                      Get.snackbar(
-                        'Cannot Open',
-                        'No browser found to open this link.',
-                        snackPosition: SnackPosition.BOTTOM,
-                        backgroundColor: Colors.redAccent.withValues(
-                          alpha: 0.8,
-                        ),
-                        colorText: Colors.white,
-                        margin: const EdgeInsets.all(20),
-                        duration: const Duration(seconds: 2),
-                      );
-                    }
-                  } catch (e) {
-                    Get.snackbar(
-                      'Failed to Open',
-                      e.toString(),
-                      snackPosition: SnackPosition.BOTTOM,
-                      backgroundColor: Colors.redAccent.withValues(alpha: 0.8),
-                      colorText: Colors.white,
-                      margin: const EdgeInsets.all(20),
-                      duration: const Duration(seconds: 3),
-                    );
-                  }
-                },
+                tooltip: 'Play Video',
+                onPressed: () => _handlePlayLink(link),
               ),
               // Download button
               IconButton(

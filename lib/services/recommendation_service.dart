@@ -53,6 +53,32 @@ class RecommendationService {
     }
   }
 
+  /// Discover movies with arbitrary TMDB discover params.
+  /// Supports: with_original_language, with_cast, with_genres,
+  /// primary_release_date, vote_average, vote_count, sort_by, etc.
+  Future<List<Movie>> discoverMovies(Map<String, String> params) async {
+    try {
+      final queryParams = {'api_key': _apiKey, 'page': '1', ...params};
+      // Ensure a sort_by default
+      queryParams.putIfAbsent('sort_by', () => 'popularity.desc');
+
+      final url = Uri.parse(
+        '$_baseUrl/discover/movie',
+      ).replace(queryParameters: queryParams);
+      final response = await http.get(url).timeout(const Duration(seconds: 15));
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        final results = data['results'] as List? ?? [];
+        return results.take(15).map((m) => Movie.fromJson(m)).toList();
+      }
+      return [];
+    } catch (e) {
+      debugPrint('RecommendationService.discoverMovies error: $e');
+      return [];
+    }
+  }
+
   /// Analyze user preferences from their completed/rated movies
   Map<String, dynamic> analyzeUserPreferences() {
     final completed = _watchlistService.getByCategory(

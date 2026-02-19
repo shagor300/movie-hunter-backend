@@ -12,6 +12,7 @@ import '../controllers/watchlist_controller.dart';
 import '../widgets/continue_watching_section.dart';
 import 'details_screen.dart';
 import 'settings_screen.dart';
+import 'for_you/section_detail_screen.dart';
 
 class RecommendationsScreen extends StatefulWidget {
   const RecommendationsScreen({super.key});
@@ -58,11 +59,10 @@ class _RecommendationsScreenState extends State<RecommendationsScreen>
 
     final sections = <_RecommendationSection>[];
 
-    // Trending Now — always first
+    // ── 1. Trending Now — always first ──
     try {
       final trending = await _tmdbService.getTrendingMovies();
       if (trending.isNotEmpty) {
-        // Pick a random trending movie as featured hero
         _featuredMovie = trending[Random().nextInt(min(trending.length, 5))];
         sections.add(
           _RecommendationSection(
@@ -74,7 +74,20 @@ class _RecommendationsScreenState extends State<RecommendationsScreen>
       }
     } catch (_) {}
 
-    // Personalized "Because You Watched" from watchlist completed/favorites
+    // ── 2. New in 2025 ──
+    try {
+      final newReleases = await _fetchDiscoverSection(
+        '🚀 New in 2025',
+        Icons.rocket_launch_outlined,
+        {
+          'primary_release_date.gte': '2025-01-01',
+          'sort_by': 'popularity.desc',
+        },
+      );
+      if (newReleases != null) sections.add(newReleases);
+    } catch (_) {}
+
+    // ── 3. Personalized "Because You Liked" ──
     try {
       final watchlistController = Get.find<WatchlistController>();
       final completed = watchlistController.getByCategory(
@@ -108,7 +121,30 @@ class _RecommendationsScreenState extends State<RecommendationsScreen>
       }
     } catch (_) {}
 
-    // Genre sections — fetch in parallel
+    // ── 4. Language sections (parallel) ──
+    final languageSections = await Future.wait([
+      _fetchDiscoverSection('🎬 Hindi Blockbusters', Icons.movie_creation, {
+        'with_original_language': 'hi',
+        'vote_average.gte': '6.0',
+      }),
+      _fetchDiscoverSection('🎭 Bengali Cinema', Icons.theater_comedy, {
+        'with_original_language': 'bn',
+      }),
+      _fetchDiscoverSection('🌟 South Indian Hits', Icons.star_outline, {
+        'with_original_language': 'ta',
+        'vote_average.gte': '6.5',
+      }),
+      _fetchDiscoverSection('🎥 Hollywood Classics', Icons.local_movies, {
+        'with_original_language': 'en',
+        'vote_count.gte': '5000',
+        'sort_by': 'vote_average.desc',
+      }),
+    ]);
+    for (final s in languageSections) {
+      if (s != null) sections.add(s);
+    }
+
+    // ── 5. Existing genre sections (parallel) ──
     final genreSections = await Future.wait([
       _fetchGenreSection('Top Action', 28, Icons.sports_mma),
       _fetchGenreSection('Drama Masterpieces', 18, Icons.theater_comedy),
@@ -125,9 +161,73 @@ class _RecommendationsScreenState extends State<RecommendationsScreen>
       _fetchGenreSection('Romance', 10749, Icons.favorite),
       _fetchGenreSection('Fantasy Worlds', 14, Icons.castle),
     ]);
+    for (final s in genreSections) {
+      if (s != null) sections.add(s);
+    }
 
-    for (final section in genreSections) {
-      if (section != null) sections.add(section);
+    // ── 6. Mood sections (parallel) ──
+    final moodSections = await Future.wait([
+      _fetchDiscoverSection('💕 Love Stories', Icons.favorite_border, {
+        'with_genres': '10749',
+        'vote_average.gte': '7.0',
+        'sort_by': 'vote_average.desc',
+      }),
+      _fetchDiscoverSection(
+        '👨\u200d👩\u200d👧 Family Watch',
+        Icons.family_restroom,
+        {'with_genres': '10751'},
+      ),
+      _fetchDiscoverSection('🔥 Mass Entertainers', Icons.whatshot, {
+        'with_genres': '28,12',
+        'sort_by': 'revenue.desc',
+      }),
+    ]);
+    for (final s in moodSections) {
+      if (s != null) sections.add(s);
+    }
+
+    // ── 7. Era + Award sections (parallel) ──
+    final eraSections = await Future.wait([
+      _fetchDiscoverSection('🕰️ 90s Nostalgia', Icons.history, {
+        'primary_release_date.gte': '1990-01-01',
+        'primary_release_date.lte': '1999-12-31',
+        'sort_by': 'vote_average.desc',
+        'vote_count.gte': '1000',
+      }),
+      _fetchDiscoverSection('💎 2000s Classics', Icons.diamond, {
+        'primary_release_date.gte': '2000-01-01',
+        'primary_release_date.lte': '2009-12-31',
+        'sort_by': 'vote_average.desc',
+        'vote_count.gte': '1000',
+      }),
+      _fetchDiscoverSection('🏆 Award Winners', Icons.emoji_events, {
+        'sort_by': 'vote_average.desc',
+        'vote_count.gte': '10000',
+        'vote_average.gte': '8.0',
+      }),
+    ]);
+    for (final s in eraSections) {
+      if (s != null) sections.add(s);
+    }
+
+    // ── 8. Star sections (parallel) ──
+    final starSections = await Future.wait([
+      _fetchDiscoverSection('👑 Shah Rukh Khan', Icons.person, {
+        'with_cast': '35742',
+      }),
+      _fetchDiscoverSection('💪 Salman Khan', Icons.person, {
+        'with_cast': '99751',
+      }),
+      _fetchDiscoverSection('⚡ Prabhas Movies', Icons.person, {
+        'with_cast': '1372346',
+      }),
+      _fetchDiscoverSection('🎭 Aamir Khan', Icons.person, {
+        'with_cast': '31263',
+        'sort_by': 'vote_average.desc',
+      }),
+    ]);
+    for (final s in starSections) {
+      if (s != null) sections.add(s);
     }
 
     setState(() {
@@ -149,6 +249,21 @@ class _RecommendationsScreenState extends State<RecommendationsScreen>
       final movies = hiddenGems
           ? await _recService.getHiddenGems()
           : await _recService.discoverByGenre(genreId!);
+      if (movies.isNotEmpty) {
+        return _RecommendationSection(title: title, movies: movies, icon: icon);
+      }
+    } catch (_) {}
+    return null;
+  }
+
+  /// Fetch a section using arbitrary TMDB discover parameters.
+  Future<_RecommendationSection?> _fetchDiscoverSection(
+    String title,
+    IconData icon,
+    Map<String, String> params,
+  ) async {
+    try {
+      final movies = await _recService.discoverMovies(params);
       if (movies.isNotEmpty) {
         return _RecommendationSection(title: title, movies: movies, icon: icon);
       }
@@ -479,7 +594,9 @@ class _RecommendationsScreenState extends State<RecommendationsScreen>
                     itemBuilder: (context, i) {
                       return Shimmer.fromColors(
                         baseColor: colorScheme.surface,
-                        highlightColor: colorScheme.onSurface.withValues(alpha: 0.05),
+                        highlightColor: colorScheme.onSurface.withValues(
+                          alpha: 0.05,
+                        ),
                         child: Container(
                           width: 130,
                           margin: const EdgeInsets.only(right: 12),
@@ -569,38 +686,53 @@ class _RecommendationsScreenState extends State<RecommendationsScreen>
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Section header
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16, 24, 16, 14),
-          child: Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: colorScheme.primary.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Icon(section.icon, color: colorScheme.primary, size: 18),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  section.title,
-                  style: GoogleFonts.poppins(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w700,
-                    color: colorScheme.onSurface,
+        // Section header — tappable → opens full grid view
+        GestureDetector(
+          onTap: () => Get.to(
+            () => SectionDetailScreen(
+              sectionTitle: section.title,
+              movies: section.movies,
+              icon: section.icon,
+            ),
+            transition: Transition.rightToLeft,
+            duration: const Duration(milliseconds: 300),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 24, 16, 14),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: colorScheme.primary.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(10),
                   ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+                  child: Icon(
+                    section.icon,
+                    color: colorScheme.primary,
+                    size: 18,
+                  ),
                 ),
-              ),
-              Icon(
-                Icons.arrow_forward_ios,
-                color: colorScheme.onSurface.withValues(alpha: 0.3),
-                size: 14,
-              ),
-            ],
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    section.title,
+                    style: GoogleFonts.poppins(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w700,
+                      color: colorScheme.onSurface,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                Icon(
+                  Icons.arrow_forward_ios,
+                  color: colorScheme.onSurface.withValues(alpha: 0.3),
+                  size: 14,
+                ),
+              ],
+            ),
           ),
         ),
         // Horizontal movie list
@@ -648,8 +780,8 @@ class _RecommendationsScreenState extends State<RecommendationsScreen>
                             memCacheWidth: 280,
                             placeholder: (_, _) => Shimmer.fromColors(
                               baseColor: colorScheme.surface,
-                              highlightColor: colorScheme.onSurface.withValues(alpha: 
-                                0.05,
+                              highlightColor: colorScheme.onSurface.withValues(
+                                alpha: 0.05,
                               ),
                               child: Container(color: colorScheme.surface),
                             ),
@@ -657,7 +789,9 @@ class _RecommendationsScreenState extends State<RecommendationsScreen>
                               color: colorScheme.surfaceContainerHighest,
                               child: Icon(
                                 Icons.movie,
-                                color: colorScheme.onSurface.withValues(alpha: 0.2),
+                                color: colorScheme.onSurface.withValues(
+                                  alpha: 0.2,
+                                ),
                                 size: 40,
                               ),
                             ),
@@ -666,7 +800,9 @@ class _RecommendationsScreenState extends State<RecommendationsScreen>
                             color: colorScheme.surfaceContainerHighest,
                             child: Icon(
                               Icons.movie,
-                              color: colorScheme.onSurface.withValues(alpha: 0.2),
+                              color: colorScheme.onSurface.withValues(
+                                alpha: 0.2,
+                              ),
                               size: 40,
                             ),
                           ),

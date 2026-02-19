@@ -733,7 +733,16 @@ class _DetailsScreenState extends State<DetailsScreen> {
       if (mounted) Navigator.of(context).pop();
 
       if (result['success'] == true && result['directUrl'] != null) {
-        _openVideoPlayer(result['directUrl'], link['quality'] ?? 'HD');
+        // Extract headers if available
+        Map<String, String>? headers;
+        if (result['headers'] != null && result['headers'] is Map) {
+          headers = Map<String, String>.from(result['headers']);
+        }
+        _openVideoPlayer(
+          result['directUrl'],
+          link['quality'] ?? 'HD',
+          headers: headers,
+        );
       } else {
         final error = result['error'] ?? 'Could not resolve video link';
         Get.snackbar(
@@ -762,12 +771,18 @@ class _DetailsScreenState extends State<DetailsScreen> {
   }
 
   /// Navigate to the in-app video player
-  void _openVideoPlayer(String videoUrl, String quality) {
+  void _openVideoPlayer(
+    String videoUrl,
+    String quality, {
+    Map<String, String>? headers,
+  }) {
     Navigator.push(
       context,
       MaterialPageRoute(
         builder: (_) => VideoPlayerScreen(
           videoUrl: videoUrl,
+          quality: quality,
+          headers: headers,
           tmdbId: widget.movie.tmdbId,
           movieTitle: widget.movie.title,
           posterUrl: widget.movie.fullPosterPath,

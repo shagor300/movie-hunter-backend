@@ -99,6 +99,9 @@ class ApiService {
   ///
   /// The backend automates: navigate → click download → wait for countdown
   /// → extract final URL. This can take 15–60 seconds.
+  ///
+  /// Also returns streaming headers (Cookie, User-Agent, Referer) that the
+  /// video player needs to authenticate with the file host.
   Future<Map<String, dynamic>> resolveDownloadLink({
     required String url,
     String quality = '1080p',
@@ -119,11 +122,26 @@ class ApiService {
         final data = jsonDecode(response.body);
         if (data['status'] == 'success') {
           debugPrint('✅ Resolved to: ${data['direct_url']}');
+
+          // Parse headers from backend response
+          Map<String, String>? streamHeaders;
+          if (data['headers'] != null && data['headers'] is Map) {
+            streamHeaders = Map<String, String>.from(
+              (data['headers'] as Map).map(
+                (k, v) => MapEntry(k.toString(), v.toString()),
+              ),
+            );
+            // Remove empty header values
+            streamHeaders.removeWhere((_, v) => v.isEmpty);
+          }
+
           return {
             'success': true,
             'directUrl': data['direct_url'],
             'filename': data['filename'],
             'filesize': data['filesize'],
+            'headers': streamHeaders,
+            'requiresHeaders': data['requires_headers'] ?? false,
           };
         }
       }

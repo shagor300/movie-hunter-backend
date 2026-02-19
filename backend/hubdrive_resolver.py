@@ -231,6 +231,13 @@ class DownloadLinkResolver:
             filename = self._extract_filename(final_link)
             filesize = await self._extract_filesize(page)
 
+            # Capture authentication data for streaming
+            cookies_list = await context.cookies()
+            cookies_string = '; '.join(
+                f"{c['name']}={c['value']}" for c in cookies_list
+            )
+            actual_ua = await page.evaluate('navigator.userAgent')
+
             logger.info(f"Successfully resolved: {filename}")
             return {
                 "success": True,
@@ -238,6 +245,10 @@ class DownloadLinkResolver:
                 "filename": filename,
                 "filesize": filesize,
                 "original_url": url,
+                "cookies": cookies_string,
+                "user_agent": actual_ua,
+                "referer": url,
+                "requires_headers": True,
             }
 
         except Exception as e:
@@ -304,6 +315,10 @@ class DownloadLinkResolver:
                                         "filename": filename,
                                         "filesize": f"{filesize / (1024*1024*1024):.1f} GB" if filesize else None,
                                         "original_url": url,
+                                        "cookies": f"accountToken={token}" if token else "",
+                                        "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/120.0.0.0",
+                                        "referer": url,
+                                        "requires_headers": True,
                                     }
 
             # Fallback: construct a direct download URL
@@ -313,6 +328,10 @@ class DownloadLinkResolver:
                 "direct_url": fallback_url,
                 "filename": f"gofile_{content_id}",
                 "original_url": url,
+                "cookies": "",
+                "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/120.0.0.0",
+                "referer": url,
+                "requires_headers": True,
             }
 
         except Exception as e:
@@ -330,6 +349,10 @@ class DownloadLinkResolver:
             "direct_url": direct_url,
             "filename": f"file_{file_id}",
             "original_url": url,
+            "cookies": "",
+            "user_agent": "",
+            "referer": url,
+            "requires_headers": False,
         }
 
     # ------------------------------------------------------------------
@@ -347,6 +370,10 @@ class DownloadLinkResolver:
             "direct_url": direct_url,
             "filename": f"gdrive_{file_id}",
             "original_url": url,
+            "cookies": "",
+            "user_agent": "",
+            "referer": "",
+            "requires_headers": False,
         }
 
     # ------------------------------------------------------------------

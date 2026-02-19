@@ -2,8 +2,10 @@ import os
 import asyncio
 import re
 import logging
+from pathlib import Path as FilePath
 from fastapi import FastAPI, HTTPException, Query, Path
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field, HttpUrl
 from typing import Optional, List
 from contextlib import asynccontextmanager
@@ -15,6 +17,8 @@ from embed_link_extractor import EmbedLinkExtractor
 from multi_source_manager import MultiSourceManager
 from config.sources import MovieSources
 from bs4 import BeautifulSoup
+from admin_db import admin_db
+from admin_api import router as admin_router, ensure_default_admin
 
 # Configure logging
 logging.basicConfig(
@@ -56,6 +60,10 @@ async def lifespan(app: FastAPI):
         logger.info("HDHub4u scraper initialized (shared browser)")
         logger.info("Download link resolver initialized (shared browser)")
         logger.info("Multi-source manager initialized")
+        # Initialize admin panel database
+        await admin_db.init_db()
+        await ensure_default_admin()
+        logger.info("Admin panel database initialized")
         logger.info("Application startup complete")
         yield
     finally:
@@ -79,6 +87,17 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Register admin panel router
+app.include_router(admin_router)
+
+# Serve admin dashboard (built React app)
+_admin_dist = FilePath(__file__).parent / "admin-dashboard" / "dist"
+if _admin_dist.is_dir():
+    app.mount("/admin-panel", StaticFiles(directory=str(_admin_dist), html=True), name="admin-panel")
+    logger.info(f"Admin dashboard mounted at /admin-panel from {_admin_dist}")
+else:
+    logger.warning(f"Admin dashboard not built yet. Run 'npm run build' in admin-dashboard/")
 
 
 # --- Pydantic Models ---
@@ -195,6 +214,7 @@ async def search_movies(
     Search movies via TMDB. Returns metadata + deterministic source URLs.
     No inline scraping — keeps response fast (~1s instead of ~10s).
     """
+    results_count = 0
     try:
         logger.info(f"Search request: {query}")
         movies = await tmdb_helper.search_movie(query)
@@ -213,10 +233,20 @@ async def search_movies(
                 "original_language": movie.get('original_language'),
             })
 
+        results_count = len(results)
         return {"query": query, "results": results}
     except Exception as e:
         logger.error(f"Search error: {e}")
         return {"query": query, "results": []}
+    finally:
+        # Track search for admin analytics (fire-and-forget)
+        try:
+            await admin_db.insert(
+                "INSERT INTO search_logs (query, results_count) VALUES (?, ?)",
+                (query, results_count),
+            )
+        except Exception:
+            pass
 
 
 @app.get("/movie/{tmdb_id}", response_model=MovieDetails)
@@ -262,6 +292,21 @@ async def generate_download_links(
         embed_links = []
         links = []
         used_source = 'multi'
+
+        # Check for manual priority links first
+        manual = await admin_db.fetch_all(
+            "SELECT * FROM manual_links WHERE movie_title LIKE ? AND is_active = 1 ORDER BY priority DESC",
+            (f"%{title}%",),
+        )
+        manual_links = [
+            {
+                "text": f"[PRIORITY] {m['source_name']} — {m['movie_title']}",
+                "url": m['source_url'],
+                "source": m['source_name'],
+                "priority": True,
+            }
+            for m in manual
+        ]
 
         # --- Case 1: SkyMoviesHD direct URL provided ---
         if source == 'skymovieshd' and skymovieshd_url:
@@ -327,8 +372,8 @@ async def generate_download_links(
 
         return {
             "url": f"tmdb_{tmdb_id}",
-            "total_links": len(links),
-            "links": links,
+            "total_links": len(manual_links) + len(links),
+            "links": manual_links + links,
             "embed_links": embed_links,
             "total_embed": len(embed_links),
             "source": used_source,
@@ -500,6 +545,12 @@ async def resolve_download_link(request: ResolveDownloadRequest):
                 "filename": result.get("filename"),
                 "filesize": result.get("filesize"),
                 "original_url": str(request.url),
+                "headers": {
+                    "Cookie": result.get("cookies", ""),
+                    "User-Agent": result.get("user_agent", ""),
+                    "Referer": result.get("referer", ""),
+                },
+                "requires_headers": result.get("requires_headers", False),
             }
         else:
             logger.error(f"Resolution failed: {result.get('error')}")

@@ -1,10 +1,14 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:shimmer/shimmer.dart';
 import '../services/tmdb_service.dart';
 import '../services/api_service.dart';
 import '../models/movie.dart';
+import '../controllers/theme_controller.dart';
 import '../widgets/movie_card.dart';
 import '../widgets/filter_sheet.dart';
 import '../widgets/empty_state.dart';
@@ -306,7 +310,9 @@ class _SearchScreenState extends State<SearchScreen> {
                         decoration: InputDecoration(
                           hintText: 'Search movies, sources...',
                           hintStyle: GoogleFonts.inter(
-                            color: colorScheme.onSurface.withValues(alpha: 0.38),
+                            color: colorScheme.onSurface.withValues(
+                              alpha: 0.38,
+                            ),
                           ),
                           prefixIcon: Icon(
                             Icons.search,
@@ -341,8 +347,8 @@ class _SearchScreenState extends State<SearchScreen> {
                                 IconButton(
                                   icon: Icon(
                                     Icons.clear,
-                                    color: colorScheme.onSurface.withValues(alpha: 
-                                      0.3,
+                                    color: colorScheme.onSurface.withValues(
+                                      alpha: 0.3,
                                     ),
                                   ),
                                   onPressed: () {
@@ -399,28 +405,177 @@ class _SearchScreenState extends State<SearchScreen> {
                     onRefresh: _fetchTrending,
                     color: colorScheme.primary,
                     backgroundColor: colorScheme.surface,
-                    child: ListView.builder(
-                      padding: const EdgeInsets.fromLTRB(20, 10, 20, 20),
-                      itemCount: _searchResults.length,
-                      physics: const AlwaysScrollableScrollPhysics(
-                        parent: BouncingScrollPhysics(),
-                      ),
-                      itemBuilder: (context, index) {
-                        final movie = _searchResults[index];
-                        return MovieCard(
-                          movie: movie,
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) =>
-                                    DetailsScreen(movie: movie),
+                    child: Obx(() {
+                      final tc = Get.find<ThemeController>();
+                      final prefs = tc.preferences.value;
+                      if (prefs.useGridLayout) {
+                        // Grid view mode
+                        final radius = prefs.roundedPosters ? 16.0 : 4.0;
+                        return GridView.builder(
+                          padding: const EdgeInsets.fromLTRB(16, 10, 16, 20),
+                          gridDelegate:
+                              SliverGridDelegateWithFixedCrossAxisCount(
+                                crossAxisCount: prefs.gridColumnCount,
+                                childAspectRatio: 0.65,
+                                crossAxisSpacing: 10,
+                                mainAxisSpacing: 10,
+                              ),
+                          physics: const AlwaysScrollableScrollPhysics(
+                            parent: BouncingScrollPhysics(),
+                          ),
+                          itemCount: _searchResults.length,
+                          itemBuilder: (context, index) {
+                            final movie = _searchResults[index];
+                            return GestureDetector(
+                              onTap: () => Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => DetailsScreen(movie: movie),
+                                ),
+                              ),
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(radius),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withValues(
+                                        alpha: 0.3,
+                                      ),
+                                      blurRadius: 8,
+                                      offset: const Offset(0, 4),
+                                    ),
+                                  ],
+                                ),
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(radius),
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Expanded(
+                                        flex: 4,
+                                        child: Stack(
+                                          fit: StackFit.expand,
+                                          children: [
+                                            CachedNetworkImage(
+                                              imageUrl: movie.fullPosterPath,
+                                              fit: BoxFit.cover,
+                                              memCacheWidth: 300,
+                                              placeholder: (c1, u1) =>
+                                                  Shimmer.fromColors(
+                                                    baseColor: const Color(
+                                                      0xFF1E1E3A,
+                                                    ),
+                                                    highlightColor: const Color(
+                                                      0xFF2A2A4A,
+                                                    ),
+                                                    child: Container(
+                                                      color: Colors.black,
+                                                    ),
+                                                  ),
+                                              errorWidget: (c2, u2, e2) =>
+                                                  Container(
+                                                    color: Colors.grey[900],
+                                                    child: const Icon(
+                                                      Icons.movie_outlined,
+                                                      color: Colors.white24,
+                                                      size: 40,
+                                                    ),
+                                                  ),
+                                            ),
+                                            Positioned(
+                                              top: 6,
+                                              left: 6,
+                                              child: Container(
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                      horizontal: 5,
+                                                      vertical: 2,
+                                                    ),
+                                                decoration: BoxDecoration(
+                                                  color: Colors.black
+                                                      .withValues(alpha: 0.7),
+                                                  borderRadius:
+                                                      BorderRadius.circular(6),
+                                                ),
+                                                child: Row(
+                                                  mainAxisSize:
+                                                      MainAxisSize.min,
+                                                  children: [
+                                                    const Icon(
+                                                      Icons.star,
+                                                      color: Colors.amber,
+                                                      size: 11,
+                                                    ),
+                                                    const SizedBox(width: 2),
+                                                    Text(
+                                                      movie.rating
+                                                          .toStringAsFixed(1),
+                                                      style: GoogleFonts.inter(
+                                                        color: Colors.white,
+                                                        fontSize: 10,
+                                                        fontWeight:
+                                                            FontWeight.bold,
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      Expanded(
+                                        flex: 1,
+                                        child: Container(
+                                          color: colorScheme.surface,
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 8,
+                                            vertical: 4,
+                                          ),
+                                          child: Text(
+                                            movie.title,
+                                            style: GoogleFonts.inter(
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                            maxLines: 2,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
                               ),
                             );
                           },
                         );
-                      },
-                    ),
+                      }
+                      // List view mode (default MovieCard)
+                      return ListView.builder(
+                        padding: const EdgeInsets.fromLTRB(20, 10, 20, 20),
+                        itemCount: _searchResults.length,
+                        physics: const AlwaysScrollableScrollPhysics(
+                          parent: BouncingScrollPhysics(),
+                        ),
+                        itemBuilder: (context, index) {
+                          final movie = _searchResults[index];
+                          return MovieCard(
+                            movie: movie,
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) =>
+                                      DetailsScreen(movie: movie),
+                                ),
+                              );
+                            },
+                          );
+                        },
+                      );
+                    }),
                   ),
                 ),
             ],
@@ -451,7 +606,9 @@ class _SearchScreenState extends State<SearchScreen> {
                 ),
                 backgroundColor: colorScheme.primary.withValues(alpha: 0.2),
                 deleteIconColor: colorScheme.onSurface.withValues(alpha: 0.54),
-                side: BorderSide(color: colorScheme.primary.withValues(alpha: 0.3)),
+                side: BorderSide(
+                  color: colorScheme.primary.withValues(alpha: 0.3),
+                ),
                 onDeleted: () {
                   setState(() => _selectedGenres.remove(genre));
                   if (_searchController.text.isNotEmpty) {
@@ -474,7 +631,9 @@ class _SearchScreenState extends State<SearchScreen> {
                 ),
                 backgroundColor: Colors.purpleAccent.withValues(alpha: 0.2),
                 deleteIconColor: colorScheme.onSurface.withValues(alpha: 0.54),
-                side: BorderSide(color: Colors.purpleAccent.withValues(alpha: 0.3)),
+                side: BorderSide(
+                  color: Colors.purpleAccent.withValues(alpha: 0.3),
+                ),
                 onDeleted: () {
                   setState(() => _selectedYear = null);
                   if (_searchController.text.isNotEmpty) {
@@ -516,7 +675,9 @@ class _SearchScreenState extends State<SearchScreen> {
               ),
               backgroundColor: Colors.greenAccent.withValues(alpha: 0.2),
               deleteIconColor: colorScheme.onSurface.withValues(alpha: 0.54),
-              side: BorderSide(color: Colors.greenAccent.withValues(alpha: 0.3)),
+              side: BorderSide(
+                color: Colors.greenAccent.withValues(alpha: 0.3),
+              ),
               onDeleted: () {
                 setState(() => _selectedLanguage = null);
                 if (_searchController.text.isNotEmpty) {

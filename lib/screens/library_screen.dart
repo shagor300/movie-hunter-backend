@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:shimmer/shimmer.dart';
 import '../controllers/watchlist_controller.dart';
+import '../controllers/theme_controller.dart';
 import '../models/watchlist_movie.dart';
 import '../models/movie.dart';
 import '../widgets/empty_state.dart';
@@ -95,72 +96,76 @@ class _LibraryScreenState extends State<LibraryScreen>
               },
               color: colorScheme.primary,
               backgroundColor: colorScheme.surface,
-              child: GridView.builder(
-                padding: const EdgeInsets.all(16),
-                physics: const AlwaysScrollableScrollPhysics(
-                  parent: BouncingScrollPhysics(),
-                ),
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2,
-                  childAspectRatio: 0.65,
-                  crossAxisSpacing: 12,
-                  mainAxisSpacing: 12,
-                ),
-                itemCount: movies.length,
-                itemBuilder: (context, index) {
-                  final movie = movies[index];
-                  return Dismissible(
-                    key: ValueKey(movie.tmdbId),
-                    direction: DismissDirection.endToStart,
-                    background: Container(
-                      alignment: Alignment.centerRight,
-                      padding: const EdgeInsets.only(right: 24),
-                      decoration: BoxDecoration(
-                        color: Colors.redAccent.withValues(alpha: 0.2),
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      child: const Icon(
-                        Icons.delete_outline,
-                        color: Colors.redAccent,
-                        size: 28,
-                      ),
-                    ),
-                    confirmDismiss: (_) async => true,
-                    onDismissed: (_) {
-                      controller.removeFromWatchlist(movie.tmdbId);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text('"${movie.title}" removed'),
-                          behavior: SnackBarBehavior.floating,
-                          backgroundColor: const Color(0xFF323232),
-                          margin: const EdgeInsets.all(16),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          action: SnackBarAction(
-                            label: 'Undo',
-                            textColor: colorScheme.primary,
-                            onPressed: () {
-                              controller.addToWatchlist(
-                                Movie(
-                                  tmdbId: movie.tmdbId,
-                                  title: movie.title,
-                                  plot: movie.plot ?? '',
-                                  tmdbPoster: movie.posterUrl ?? '',
-                                  releaseDate: movie.releaseDate ?? 'N/A',
-                                  rating: movie.rating,
-                                  sources: [],
-                                ),
-                              );
-                            },
-                          ),
+              child: Obx(() {
+                final tc = Get.find<ThemeController>();
+                final cols = tc.preferences.value.gridColumnCount;
+                return GridView.builder(
+                  padding: const EdgeInsets.all(16),
+                  physics: const AlwaysScrollableScrollPhysics(
+                    parent: BouncingScrollPhysics(),
+                  ),
+                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: cols,
+                    childAspectRatio: 0.65,
+                    crossAxisSpacing: 12,
+                    mainAxisSpacing: 12,
+                  ),
+                  itemCount: movies.length,
+                  itemBuilder: (context, index) {
+                    final movie = movies[index];
+                    return Dismissible(
+                      key: ValueKey(movie.tmdbId),
+                      direction: DismissDirection.endToStart,
+                      background: Container(
+                        alignment: Alignment.centerRight,
+                        padding: const EdgeInsets.only(right: 24),
+                        decoration: BoxDecoration(
+                          color: Colors.redAccent.withValues(alpha: 0.2),
+                          borderRadius: BorderRadius.circular(16),
                         ),
-                      );
-                    },
-                    child: _buildMovieCard(movie, controller),
-                  );
-                },
-              ),
+                        child: const Icon(
+                          Icons.delete_outline,
+                          color: Colors.redAccent,
+                          size: 28,
+                        ),
+                      ),
+                      confirmDismiss: (_) async => true,
+                      onDismissed: (_) {
+                        controller.removeFromWatchlist(movie.tmdbId);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('"${movie.title}" removed'),
+                            behavior: SnackBarBehavior.floating,
+                            backgroundColor: const Color(0xFF323232),
+                            margin: const EdgeInsets.all(16),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            action: SnackBarAction(
+                              label: 'Undo',
+                              textColor: colorScheme.primary,
+                              onPressed: () {
+                                controller.addToWatchlist(
+                                  Movie(
+                                    tmdbId: movie.tmdbId,
+                                    title: movie.title,
+                                    plot: movie.plot ?? '',
+                                    tmdbPoster: movie.posterUrl ?? '',
+                                    releaseDate: movie.releaseDate ?? 'N/A',
+                                    rating: movie.rating,
+                                    sources: [],
+                                  ),
+                                );
+                              },
+                            ),
+                          ),
+                        );
+                      },
+                      child: _buildMovieCard(movie, controller),
+                    );
+                  },
+                );
+              }),
             );
           }).toList(),
         );
@@ -193,7 +198,11 @@ class _LibraryScreenState extends State<LibraryScreen>
       child: Container(
         decoration: BoxDecoration(
           color: colorScheme.surface,
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(
+            Get.find<ThemeController>().preferences.value.roundedPosters
+                ? 16
+                : 4,
+          ),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withValues(alpha: 0.3),
@@ -203,7 +212,11 @@ class _LibraryScreenState extends State<LibraryScreen>
           ],
         ),
         child: ClipRRect(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(
+            Get.find<ThemeController>().preferences.value.roundedPosters
+                ? 16
+                : 4,
+          ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [

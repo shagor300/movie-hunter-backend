@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:get/get.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../models/movie.dart';
+import '../controllers/theme_controller.dart';
 
 class MovieCard extends StatelessWidget {
   final Movie movie;
@@ -12,6 +14,9 @@ class MovieCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final rounded =
+        Get.find<ThemeController>().preferences.value.roundedPosters;
+    final radius = rounded ? 20.0 : 4.0;
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -19,7 +24,7 @@ class MovieCard extends StatelessWidget {
         height: 180,
         decoration: BoxDecoration(
           color: const Color(0xFF1E1E3A).withValues(alpha: 0.8),
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(radius),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withValues(alpha: 0.3),
@@ -29,7 +34,7 @@ class MovieCard extends StatelessWidget {
           ],
         ),
         child: ClipRRect(
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(radius),
           child: Row(
             children: [
               // Poster with Rating Badge

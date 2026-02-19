@@ -6,6 +6,8 @@ import 'package:hive_flutter/hive_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../controllers/notification_controller.dart';
 import '../controllers/theme_controller.dart';
+import '../controllers/watchlist_controller.dart';
+import '../controllers/update_controller.dart';
 import '../models/theme_preferences.dart';
 import 'notification_settings_screen.dart';
 
@@ -197,6 +199,22 @@ class SettingsScreen extends StatelessWidget {
                       ),
                     ),
                   ],
+                ),
+                const SizedBox(height: 12),
+                // Live preview
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.05),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Text(
+                    'Preview: The quick brown fox jumps over the lazy dog',
+                    style: GoogleFonts.inter(
+                      color: Colors.white70,
+                      fontSize: prefs.fontSize,
+                    ),
+                  ),
                 ),
               ],
             ),
@@ -396,9 +414,12 @@ class SettingsScreen extends StatelessWidget {
                     onConfirm: () async {
                       final box = await Hive.openBox('homepage_movies');
                       await box.clear();
+                      // Also clear image cache
+                      PaintingBinding.instance.imageCache.clear();
+                      PaintingBinding.instance.imageCache.clearLiveImages();
                       Get.snackbar(
                         '✅ Cache Cleared',
-                        'Movie cache has been cleared',
+                        'Movie & image cache has been cleared',
                         snackPosition: SnackPosition.BOTTOM,
                         backgroundColor: Colors.green.withValues(alpha: 0.85),
                         colorText: Colors.white,
@@ -422,6 +443,10 @@ class SettingsScreen extends StatelessWidget {
                     onConfirm: () async {
                       final box = await Hive.openBox('watchlist');
                       await box.clear();
+                      // Refresh WatchlistController
+                      try {
+                        Get.find<WatchlistController>().allMovies.clear();
+                      } catch (_) {}
                       Get.snackbar(
                         '✅ Watchlist Cleared',
                         'All watchlist items removed',
@@ -508,7 +533,126 @@ class SettingsScreen extends StatelessWidget {
                   title: 'MovieHub',
                   subtitle: 'Version 1.0.0',
                   iconColor: Colors.blueAccent,
-                  onTap: () {},
+                  onTap: () {
+                    showDialog(
+                      context: context,
+                      builder: (_) => AlertDialog(
+                        backgroundColor: const Color(0xFF1A1A2E),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        title: Row(
+                          children: [
+                            Icon(
+                              Icons.movie_filter,
+                              color: tc.accentColor,
+                              size: 24,
+                            ),
+                            const SizedBox(width: 10),
+                            Text(
+                              'MovieHub v1.0.0',
+                              style: GoogleFonts.poppins(
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                                fontSize: 18,
+                              ),
+                            ),
+                          ],
+                        ),
+                        content: SingleChildScrollView(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                "What's New:",
+                                style: GoogleFonts.inter(
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                  fontSize: 14,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              ...[
+                                'Personalized For You tab with 20+ sections',
+                                'Voice search support',
+                                'Grid & list view toggle',
+                                'Customizable themes & accent colors',
+                                'Smart notification system',
+                                'Download manager with progress tracking',
+                                'Watchlist with categories (Watching, Completed, Favorites)',
+                                'Video player with resume support',
+                              ].map(
+                                (item) => Padding(
+                                  padding: const EdgeInsets.only(bottom: 4),
+                                  child: Row(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        '• ',
+                                        style: GoogleFonts.inter(
+                                          color: Colors.white70,
+                                        ),
+                                      ),
+                                      Expanded(
+                                        child: Text(
+                                          item,
+                                          style: GoogleFonts.inter(
+                                            color: Colors.white70,
+                                            fontSize: 13,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 16),
+                              SizedBox(
+                                width: double.infinity,
+                                child: ElevatedButton.icon(
+                                  onPressed: () {
+                                    Navigator.pop(context);
+                                    try {
+                                      Get.find<UpdateController>()
+                                          .checkForUpdate();
+                                    } catch (_) {}
+                                  },
+                                  icon: const Icon(
+                                    Icons.system_update,
+                                    size: 18,
+                                  ),
+                                  label: Text(
+                                    'Check for Updates',
+                                    style: GoogleFonts.inter(
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: tc.accentColor,
+                                    foregroundColor: Colors.white,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(context),
+                            child: Text(
+                              'Close',
+                              style: GoogleFonts.inter(color: Colors.white60),
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
                 ),
                 const Divider(color: Colors.white10, height: 20),
                 _ActionTile(
@@ -534,7 +678,91 @@ class SettingsScreen extends StatelessWidget {
                   title: 'Developer',
                   subtitle: 'Shagor',
                   iconColor: Colors.purpleAccent,
-                  onTap: () {},
+                  onTap: () {
+                    showDialog(
+                      context: context,
+                      builder: (_) => AlertDialog(
+                        backgroundColor: const Color(0xFF1A1A2E),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        content: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const SizedBox(height: 8),
+                            CircleAvatar(
+                              radius: 40,
+                              backgroundColor: tc.accentColor,
+                              child: Text(
+                                'S',
+                                style: GoogleFonts.poppins(
+                                  fontSize: 32,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+                            Text(
+                              'Shagor',
+                              style: GoogleFonts.poppins(
+                                fontSize: 22,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              'App Developer',
+                              style: GoogleFonts.inter(
+                                fontSize: 14,
+                                color: Colors.white38,
+                              ),
+                            ),
+                            const SizedBox(height: 20),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                IconButton(
+                                  icon: const Icon(
+                                    Icons.email_outlined,
+                                    color: Colors.white70,
+                                  ),
+                                  onPressed: () {
+                                    launchUrl(
+                                      Uri.parse('mailto:shagor300@gmail.com'),
+                                    );
+                                  },
+                                ),
+                                const SizedBox(width: 8),
+                                IconButton(
+                                  icon: const Icon(
+                                    Icons.code,
+                                    color: Colors.white70,
+                                  ),
+                                  onPressed: () {
+                                    launchUrl(
+                                      Uri.parse('https://github.com/shagor300'),
+                                      mode: LaunchMode.externalApplication,
+                                    );
+                                  },
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(context),
+                            child: Text(
+                              'Close',
+                              style: GoogleFonts.inter(color: Colors.white60),
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
                 ),
               ],
             ),

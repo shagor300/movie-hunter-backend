@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:better_player_enhanced/better_player.dart';
+import 'package:wakelock_plus/wakelock_plus.dart';
 import '../controllers/video_player_controller.dart';
 
 class VideoPlayerScreen extends StatefulWidget {
@@ -40,6 +41,8 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
   @override
   void initState() {
     super.initState();
+    // Keep screen on during video
+    WakelockPlus.enable();
     SystemChrome.setPreferredOrientations([
       DeviceOrientation.landscapeLeft,
       DeviceOrientation.landscapeRight,
@@ -56,10 +59,13 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
       if (widget.localFilePath != null && widget.localFilePath!.isNotEmpty) {
         final file = File(widget.localFilePath!);
         if (!await file.exists()) {
-          setState(() {
-            _errorMessage = 'Video file not found at:\n${widget.localFilePath}';
-            _isInitializing = false;
-          });
+          if (mounted) {
+            setState(() {
+              _errorMessage =
+                  'Video file not found at:\n${widget.localFilePath}';
+              _isInitializing = false;
+            });
+          }
           return;
         }
         dataSource = BetterPlayerDataSource(
@@ -70,11 +76,13 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
         // Validate URL before passing to player
         final uri = Uri.tryParse(widget.videoUrl);
         if (uri == null || !uri.hasScheme || (!uri.scheme.startsWith('http'))) {
-          setState(() {
-            _errorMessage =
-                'Invalid video URL.\nThis link may be an embedded player that cannot be played directly.';
-            _isInitializing = false;
-          });
+          if (mounted) {
+            setState(() {
+              _errorMessage =
+                  'Invalid video URL.\nThis link may be an embedded player that cannot be played directly.';
+              _isInitializing = false;
+            });
+          }
           return;
         }
 
@@ -89,10 +97,12 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
           },
         );
       } else {
-        setState(() {
-          _errorMessage = 'No video source provided';
-          _isInitializing = false;
-        });
+        if (mounted) {
+          setState(() {
+            _errorMessage = 'No video source provided';
+            _isInitializing = false;
+          });
+        }
         return;
       }
 
@@ -167,46 +177,59 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
             ),
           ),
 
-          // Buffering configuration
           // Event listener
           eventListener: (BetterPlayerEvent event) {
             if (event.betterPlayerEventType ==
                 BetterPlayerEventType.initialized) {
               _initTimeout?.cancel();
-              setState(() => _isInitializing = false);
+              if (mounted) setState(() => _isInitializing = false);
             } else if (event.betterPlayerEventType ==
                 BetterPlayerEventType.progress) {
               _onPositionChanged();
             } else if (event.betterPlayerEventType ==
                 BetterPlayerEventType.exception) {
               _initTimeout?.cancel();
-              setState(() {
-                _errorMessage = 'Playback error occurred';
-                _isInitializing = false;
-              });
+              if (mounted) {
+                setState(() {
+                  _errorMessage = 'Playback error occurred';
+                  _isInitializing = false;
+                });
+              }
             }
           },
         ),
         betterPlayerDataSource: dataSource,
       );
 
-      setState(() {});
+      if (mounted) setState(() {});
 
-      // Start initialization timeout — if player doesn't initialize in 15s, show error
-      _initTimeout = Timer(const Duration(seconds: 15), () {
+      // Start initialization timeout — if player doesn't initialize in 30s, show error
+      _initTimeout = Timer(const Duration(seconds: 30), () {
         if (_isInitializing && mounted) {
           setState(() {
             _errorMessage =
-                'Video failed to load within 15 seconds.\nThe stream may be unavailable or the link may have expired.';
+                'Video failed to load within 30 seconds.\nThe stream may be unavailable or the link may have expired.';
             _isInitializing = false;
           });
         }
       });
+    } on PlatformException catch (e) {
+      debugPrint('📱 Platform error: ${e.code} - ${e.message}');
+      if (mounted) {
+        setState(() {
+          _errorMessage =
+              'Player error: ${e.message}\nTry downloading instead.';
+          _isInitializing = false;
+        });
+      }
     } catch (e) {
-      setState(() {
-        _errorMessage = 'Failed to play video:\n$e';
-        _isInitializing = false;
-      });
+      debugPrint('❌ Player error: $e');
+      if (mounted) {
+        setState(() {
+          _errorMessage = 'Failed to play video:\n$e';
+          _isInitializing = false;
+        });
+      }
     }
   }
 
@@ -263,6 +286,9 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
     }
 
     _betterPlayerController?.dispose();
+
+    // Disable wakelock
+    WakelockPlus.disable();
 
     SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
@@ -321,15 +347,42 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 24),
-            ElevatedButton(
-              onPressed: () => Navigator.pop(context),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.blueAccent,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                ElevatedButton.icon(
+                  onPressed: () {
+                    // Retry: dispose old controller and re-init
+                    _betterPlayerController?.dispose();
+                    _betterPlayerController = null;
+                    setState(() {
+                      _isInitializing = true;
+                      _errorMessage = null;
+                    });
+                    _initPlayer();
+                  },
+                  icon: const Icon(Icons.refresh),
+                  label: const Text('Retry'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.blueAccent,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
                 ),
-              ),
-              child: const Text('Go Back'),
+                const SizedBox(width: 16),
+                OutlinedButton(
+                  onPressed: () => Navigator.pop(context),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: Colors.white70,
+                    side: const BorderSide(color: Colors.white24),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: const Text('Go Back'),
+                ),
+              ],
             ),
           ],
         ),

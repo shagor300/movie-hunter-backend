@@ -13,10 +13,7 @@ class NotificationScheduler {
 
   /// Register background tasks. Call once from main().
   static Future<void> init() async {
-    await Workmanager().initialize(
-      callbackDispatcher,
-      isInDebugMode: kDebugMode,
-    );
+    await Workmanager().initialize(callbackDispatcher);
 
     // Daily task — runs every 24h
     await Workmanager().registerPeriodicTask(

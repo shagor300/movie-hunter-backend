@@ -102,13 +102,19 @@ class VoiceSearchService extends GetxService {
 
       await _speech.listen(
         onResult: (result) {
+          // Always update displayed text (including partial results)
           recognizedText.value = result.recognizedWords;
           confidenceLevel.value = result.confidence;
 
           debugPrint('🎤 Recognized: ${result.recognizedWords}');
           debugPrint('📊 Confidence: ${result.confidence}');
+          debugPrint('🏁 Final: ${result.finalResult}');
 
-          if (onResult != null && result.recognizedWords.isNotEmpty) {
+          // ONLY trigger search callback on final result
+          // This ensures the full phrase is captured before searching
+          if (onResult != null &&
+              result.finalResult &&
+              result.recognizedWords.isNotEmpty) {
             onResult(result.recognizedWords);
           }
 
@@ -119,9 +125,13 @@ class VoiceSearchService extends GetxService {
         },
         localeId: language ?? selectedLanguage.value,
         listenFor: const Duration(seconds: 30),
-        pauseFor: const Duration(seconds: 3),
-        partialResults: true,
-        cancelOnError: true,
+        pauseFor: const Duration(
+          seconds: 5,
+        ), // Wait 5s after user stops speaking
+        listenOptions: SpeechListenOptions(
+          partialResults: true, // Show text while speaking
+          cancelOnError: false, // Don't cancel on small errors
+        ),
       );
     } catch (e) {
       debugPrint('❌ Listen error: $e');

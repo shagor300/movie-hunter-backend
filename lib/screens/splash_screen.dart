@@ -25,7 +25,7 @@ class _SplashScreenState extends State<SplashScreen>
   @override
   void initState() {
     super.initState();
-    print('🎬 SplashScreen: initState called');
+    debugPrint('🎬 SplashScreen: initState called');
 
     _controller = AnimationController(
       vsync: this,
@@ -50,12 +50,12 @@ class _SplashScreenState extends State<SplashScreen>
 
   Future<void> _proceedToHome() async {
     try {
-      print('🎬 SplashScreen: _proceedToHome started');
+      debugPrint('🎬 SplashScreen: _proceedToHome started');
 
       // 1. Safety Timeout - App MUST navigate to home within 5 seconds regardless of what happens
       Timer(const Duration(seconds: 5), () {
         if (mounted && Get.currentRoute != '/HomeScreen') {
-          print('⚠️ Splash safety timeout triggered - forcing navigation');
+          debugPrint('⚠️ Splash safety timeout triggered - forcing navigation');
           Get.offAll(() => const HomeScreen());
         }
       });
@@ -76,14 +76,14 @@ class _SplashScreenState extends State<SplashScreen>
       if (!mounted) return;
 
       if (isFirstTime) {
-        print('🎬 SplashScreen: Navigating to OnboardingScreen');
+        debugPrint('🎬 SplashScreen: Navigating to OnboardingScreen');
         Get.offAll(
           () => const OnboardingScreen(),
           transition: Transition.fade,
           duration: const Duration(milliseconds: 800),
         );
       } else {
-        print('🎬 SplashScreen: Navigating to HomeScreen');
+        debugPrint('🎬 SplashScreen: Navigating to HomeScreen');
         Get.offAll(
           () => const HomeScreen(),
           transition: Transition.fade,
@@ -91,7 +91,7 @@ class _SplashScreenState extends State<SplashScreen>
         );
       }
     } catch (e) {
-      print('❌ Critical error in splash screen navigation: $e');
+      debugPrint('❌ Critical error in splash screen navigation: $e');
       // Emergency fallback
       if (mounted) {
         Get.offAll(() => const HomeScreen());
@@ -119,7 +119,7 @@ class _SplashScreenState extends State<SplashScreen>
         }
       }
     } catch (e) {
-      print('Background update check error: $e');
+      debugPrint('Background update check error: $e');
     }
   }
 
@@ -131,7 +131,7 @@ class _SplashScreenState extends State<SplashScreen>
 
   @override
   Widget build(BuildContext context) {
-    print('🎬 SplashScreen: build() called');
+    debugPrint('🎬 SplashScreen: build() called');
 
     return Scaffold(
       backgroundColor: const Color(0xFF121212),

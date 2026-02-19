@@ -53,7 +53,7 @@ class _DetailsScreenState extends State<DetailsScreen> {
                 leading: Container(
                   margin: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.4),
+                    color: Colors.black.withValues(alpha: 0.4),
                     shape: BoxShape.circle,
                   ),
                   child: IconButton(
@@ -79,7 +79,7 @@ class _DetailsScreenState extends State<DetailsScreen> {
                         Container(
                           margin: const EdgeInsets.symmetric(horizontal: 4),
                           decoration: BoxDecoration(
-                            color: Colors.black.withOpacity(0.4),
+                            color: Colors.black.withValues(alpha: 0.4),
                             shape: BoxShape.circle,
                           ),
                           child: IconButton(
@@ -102,7 +102,7 @@ class _DetailsScreenState extends State<DetailsScreen> {
                         Container(
                           margin: const EdgeInsets.only(right: 8),
                           decoration: BoxDecoration(
-                            color: Colors.black.withOpacity(0.4),
+                            color: Colors.black.withValues(alpha: 0.4),
                             shape: BoxShape.circle,
                           ),
                           child: IconButton(
@@ -125,7 +125,7 @@ class _DetailsScreenState extends State<DetailsScreen> {
                   Container(
                     margin: const EdgeInsets.only(right: 8),
                     decoration: BoxDecoration(
-                      color: Colors.black.withOpacity(0.4),
+                      color: Colors.black.withValues(alpha: 0.4),
                       shape: BoxShape.circle,
                     ),
                     child: IconButton(
@@ -167,7 +167,7 @@ class _DetailsScreenState extends State<DetailsScreen> {
                             end: Alignment.bottomCenter,
                             colors: [
                               Colors.transparent,
-                              const Color(0xFF0F0F1E).withOpacity(0.5),
+                              const Color(0xFF0F0F1E).withValues(alpha: 0.5),
                               const Color(0xFF0F0F1E),
                             ],
                           ),
@@ -338,9 +338,9 @@ class _DetailsScreenState extends State<DetailsScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.15),
+        color: color.withValues(alpha: 0.15),
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: color.withOpacity(0.3)),
+        border: Border.all(color: color.withValues(alpha: 0.3)),
       ),
       child: Text(
         label,
@@ -364,7 +364,7 @@ class _DetailsScreenState extends State<DetailsScreen> {
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.blueAccent.withOpacity(0.3),
+            color: Colors.blueAccent.withValues(alpha: 0.3),
             blurRadius: 15,
             offset: const Offset(0, 5),
           ),
@@ -792,7 +792,7 @@ class _DetailsScreenState extends State<DetailsScreen> {
       child: Container(
         margin: const EdgeInsets.only(bottom: 12),
         decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.05),
+          color: Colors.white.withValues(alpha: 0.05),
           borderRadius: BorderRadius.circular(16),
           border: Border.all(color: Colors.white10),
         ),
@@ -804,7 +804,7 @@ class _DetailsScreenState extends State<DetailsScreen> {
           leading: Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: Colors.blueAccent.withOpacity(0.1),
+              color: Colors.blueAccent.withValues(alpha: 0.1),
               shape: BoxShape.circle,
             ),
             child: const Icon(Icons.cloud_download, color: Colors.blueAccent),
@@ -864,7 +864,7 @@ class _DetailsScreenState extends State<DetailsScreen> {
                     "Link Copied",
                     "Ready to paste in your browser",
                     snackPosition: SnackPosition.BOTTOM,
-                    backgroundColor: Colors.blueAccent.withOpacity(0.8),
+                    backgroundColor: Colors.blueAccent.withValues(alpha: 0.8),
                     colorText: Colors.white,
                     margin: const EdgeInsets.all(20),
                     duration: const Duration(seconds: 2),

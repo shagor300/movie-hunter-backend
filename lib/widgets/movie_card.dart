@@ -18,11 +18,11 @@ class MovieCard extends StatelessWidget {
         margin: const EdgeInsets.only(bottom: 20),
         height: 180,
         decoration: BoxDecoration(
-          color: const Color(0xFF1E1E3A).withOpacity(0.8),
+          color: const Color(0xFF1E1E3A).withValues(alpha: 0.8),
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.3),
+              color: Colors.black.withValues(alpha: 0.3),
               blurRadius: 10,
               offset: const Offset(0, 5),
             ),
@@ -79,10 +79,10 @@ class MovieCard extends StatelessWidget {
                         vertical: 4,
                       ),
                       decoration: BoxDecoration(
-                        color: Colors.black.withOpacity(0.7),
+                        color: Colors.black.withValues(alpha: 0.7),
                         borderRadius: BorderRadius.circular(10),
                         border: Border.all(
-                          color: Colors.amber.withOpacity(0.5),
+                          color: Colors.amber.withValues(alpha: 0.5),
                           width: 1,
                         ),
                       ),
@@ -157,7 +157,7 @@ class MovieCard extends StatelessWidget {
                               vertical: 4,
                             ),
                             decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.1),
+                              color: Colors.white.withValues(alpha: 0.1),
                               borderRadius: BorderRadius.circular(6),
                             ),
                             child: Text(

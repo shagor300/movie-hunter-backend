@@ -272,8 +272,8 @@ class _RecommendationsScreenState extends State<RecommendationsScreen>
                   ),
                   fit: BoxFit.cover,
                   memCacheWidth: 780,
-                  placeholder: (_, __) => Container(color: colorScheme.surface),
-                  errorWidget: (_, __, ___) =>
+                  placeholder: (_, _) => Container(color: colorScheme.surface),
+                  errorWidget: (_, _, _) =>
                       Container(color: colorScheme.surface),
                 ),
 
@@ -284,9 +284,9 @@ class _RecommendationsScreenState extends State<RecommendationsScreen>
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
                     colors: [
-                      colorScheme.surface.withOpacity(0.3),
-                      colorScheme.surface.withOpacity(0.1),
-                      colorScheme.surface.withOpacity(0.7),
+                      colorScheme.surface.withValues(alpha: 0.3),
+                      colorScheme.surface.withValues(alpha: 0.1),
+                      colorScheme.surface.withValues(alpha: 0.7),
                       colorScheme.surface,
                     ],
                     stops: const [0.0, 0.3, 0.7, 1.0],
@@ -402,7 +402,7 @@ class _RecommendationsScreenState extends State<RecommendationsScreen>
                         const SizedBox(width: 12),
                         Container(
                           decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.15),
+                            color: Colors.white.withValues(alpha: 0.15),
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: IconButton(
@@ -442,7 +442,7 @@ class _RecommendationsScreenState extends State<RecommendationsScreen>
             // Hero shimmer
             return Shimmer.fromColors(
               baseColor: colorScheme.surface,
-              highlightColor: colorScheme.onSurface.withOpacity(0.05),
+              highlightColor: colorScheme.onSurface.withValues(alpha: 0.05),
               child: Container(
                 height: 280,
                 margin: const EdgeInsets.only(bottom: 24),
@@ -460,7 +460,7 @@ class _RecommendationsScreenState extends State<RecommendationsScreen>
               children: [
                 Shimmer.fromColors(
                   baseColor: colorScheme.surface,
-                  highlightColor: colorScheme.onSurface.withOpacity(0.05),
+                  highlightColor: colorScheme.onSurface.withValues(alpha: 0.05),
                   child: Container(
                     width: 180,
                     height: 24,
@@ -479,7 +479,7 @@ class _RecommendationsScreenState extends State<RecommendationsScreen>
                     itemBuilder: (context, i) {
                       return Shimmer.fromColors(
                         baseColor: colorScheme.surface,
-                        highlightColor: colorScheme.onSurface.withOpacity(0.05),
+                        highlightColor: colorScheme.onSurface.withValues(alpha: 0.05),
                         child: Container(
                           width: 130,
                           margin: const EdgeInsets.only(right: 12),
@@ -511,19 +511,19 @@ class _RecommendationsScreenState extends State<RecommendationsScreen>
             padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: colorScheme.primary.withOpacity(0.1),
+              color: colorScheme.primary.withValues(alpha: 0.1),
             ),
             child: Icon(
               _hasError ? Icons.wifi_off_rounded : Icons.movie_filter,
               size: 56,
-              color: colorScheme.primary.withOpacity(0.5),
+              color: colorScheme.primary.withValues(alpha: 0.5),
             ),
           ),
           const SizedBox(height: 20),
           Text(
             _hasError ? 'Something went wrong' : 'No recommendations yet',
             style: GoogleFonts.poppins(
-              color: colorScheme.onSurface.withOpacity(0.7),
+              color: colorScheme.onSurface.withValues(alpha: 0.7),
               fontSize: 18,
               fontWeight: FontWeight.w600,
             ),
@@ -534,7 +534,7 @@ class _RecommendationsScreenState extends State<RecommendationsScreen>
                 ? 'Check your internet connection'
                 : 'Watch some movies first!',
             style: GoogleFonts.inter(
-              color: colorScheme.onSurface.withOpacity(0.4),
+              color: colorScheme.onSurface.withValues(alpha: 0.4),
               fontSize: 14,
             ),
           ),
@@ -577,7 +577,7 @@ class _RecommendationsScreenState extends State<RecommendationsScreen>
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: colorScheme.primary.withOpacity(0.1),
+                  color: colorScheme.primary.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Icon(section.icon, color: colorScheme.primary, size: 18),
@@ -597,7 +597,7 @@ class _RecommendationsScreenState extends State<RecommendationsScreen>
               ),
               Icon(
                 Icons.arrow_forward_ios,
-                color: colorScheme.onSurface.withOpacity(0.3),
+                color: colorScheme.onSurface.withValues(alpha: 0.3),
                 size: 14,
               ),
             ],
@@ -646,18 +646,18 @@ class _RecommendationsScreenState extends State<RecommendationsScreen>
                             fit: BoxFit.cover,
                             width: double.infinity,
                             memCacheWidth: 280,
-                            placeholder: (_, __) => Shimmer.fromColors(
+                            placeholder: (_, _) => Shimmer.fromColors(
                               baseColor: colorScheme.surface,
-                              highlightColor: colorScheme.onSurface.withOpacity(
+                              highlightColor: colorScheme.onSurface.withValues(alpha: 
                                 0.05,
                               ),
                               child: Container(color: colorScheme.surface),
                             ),
-                            errorWidget: (_, __, ___) => Container(
+                            errorWidget: (_, _, _) => Container(
                               color: colorScheme.surfaceContainerHighest,
                               child: Icon(
                                 Icons.movie,
-                                color: colorScheme.onSurface.withOpacity(0.2),
+                                color: colorScheme.onSurface.withValues(alpha: 0.2),
                                 size: 40,
                               ),
                             ),
@@ -666,7 +666,7 @@ class _RecommendationsScreenState extends State<RecommendationsScreen>
                             color: colorScheme.surfaceContainerHighest,
                             child: Icon(
                               Icons.movie,
-                              color: colorScheme.onSurface.withOpacity(0.2),
+                              color: colorScheme.onSurface.withValues(alpha: 0.2),
                               size: 40,
                             ),
                           ),
@@ -681,7 +681,7 @@ class _RecommendationsScreenState extends State<RecommendationsScreen>
                             vertical: 3,
                           ),
                           decoration: BoxDecoration(
-                            color: Colors.black.withOpacity(0.75),
+                            color: Colors.black.withValues(alpha: 0.75),
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Row(
@@ -725,7 +725,7 @@ class _RecommendationsScreenState extends State<RecommendationsScreen>
               movie.year,
               style: GoogleFonts.inter(
                 fontSize: 11,
-                color: colorScheme.onSurface.withOpacity(0.4),
+                color: colorScheme.onSurface.withValues(alpha: 0.4),
               ),
             ),
           ],

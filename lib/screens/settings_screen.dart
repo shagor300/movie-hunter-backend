@@ -350,7 +350,7 @@ class SettingsScreen extends StatelessWidget {
                               HapticFeedback.lightImpact();
                               nc.toggleMaster(v);
                             },
-                            activeColor: tc.accentColor,
+                            activeThumbColor: tc.accentColor,
                           ),
                         ],
                       ),
@@ -771,7 +771,11 @@ class _ToggleTile extends StatelessWidget {
             ],
           ),
         ),
-        Switch(value: value, onChanged: onChanged, activeColor: accentColor),
+        Switch(
+          value: value,
+          onChanged: onChanged,
+          activeThumbColor: accentColor,
+        ),
       ],
     );
   }

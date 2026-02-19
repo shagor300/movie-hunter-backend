@@ -270,7 +270,7 @@ class _SearchScreenState extends State<SearchScreen> {
               height: 300,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: colorScheme.primary.withOpacity(0.15),
+                color: colorScheme.primary.withValues(alpha: 0.15),
               ),
               child: BackdropFilter(
                 filter: ImageFilter.blur(sigmaX: 100, sigmaY: 100),
@@ -293,10 +293,10 @@ class _SearchScreenState extends State<SearchScreen> {
                     filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
                     child: Container(
                       decoration: BoxDecoration(
-                        color: colorScheme.onSurface.withOpacity(0.05),
+                        color: colorScheme.onSurface.withValues(alpha: 0.05),
                         borderRadius: BorderRadius.circular(20),
                         border: Border.all(
-                          color: colorScheme.onSurface.withOpacity(0.1),
+                          color: colorScheme.onSurface.withValues(alpha: 0.1),
                           width: 1.5,
                         ),
                       ),
@@ -306,7 +306,7 @@ class _SearchScreenState extends State<SearchScreen> {
                         decoration: InputDecoration(
                           hintText: 'Search movies, sources...',
                           hintStyle: GoogleFonts.inter(
-                            color: colorScheme.onSurface.withOpacity(0.38),
+                            color: colorScheme.onSurface.withValues(alpha: 0.38),
                           ),
                           prefixIcon: Icon(
                             Icons.search,
@@ -341,7 +341,7 @@ class _SearchScreenState extends State<SearchScreen> {
                                 IconButton(
                                   icon: Icon(
                                     Icons.clear,
-                                    color: colorScheme.onSurface.withOpacity(
+                                    color: colorScheme.onSurface.withValues(alpha: 
                                       0.3,
                                     ),
                                   ),
@@ -449,9 +449,9 @@ class _SearchScreenState extends State<SearchScreen> {
                     fontSize: 12,
                   ),
                 ),
-                backgroundColor: colorScheme.primary.withOpacity(0.2),
-                deleteIconColor: colorScheme.onSurface.withOpacity(0.54),
-                side: BorderSide(color: colorScheme.primary.withOpacity(0.3)),
+                backgroundColor: colorScheme.primary.withValues(alpha: 0.2),
+                deleteIconColor: colorScheme.onSurface.withValues(alpha: 0.54),
+                side: BorderSide(color: colorScheme.primary.withValues(alpha: 0.3)),
                 onDeleted: () {
                   setState(() => _selectedGenres.remove(genre));
                   if (_searchController.text.isNotEmpty) {
@@ -472,9 +472,9 @@ class _SearchScreenState extends State<SearchScreen> {
                     fontSize: 12,
                   ),
                 ),
-                backgroundColor: Colors.purpleAccent.withOpacity(0.2),
-                deleteIconColor: colorScheme.onSurface.withOpacity(0.54),
-                side: BorderSide(color: Colors.purpleAccent.withOpacity(0.3)),
+                backgroundColor: Colors.purpleAccent.withValues(alpha: 0.2),
+                deleteIconColor: colorScheme.onSurface.withValues(alpha: 0.54),
+                side: BorderSide(color: Colors.purpleAccent.withValues(alpha: 0.3)),
                 onDeleted: () {
                   setState(() => _selectedYear = null);
                   if (_searchController.text.isNotEmpty) {
@@ -494,9 +494,9 @@ class _SearchScreenState extends State<SearchScreen> {
                     fontSize: 12,
                   ),
                 ),
-                backgroundColor: Colors.amber.withOpacity(0.2),
-                deleteIconColor: colorScheme.onSurface.withOpacity(0.54),
-                side: BorderSide(color: Colors.amber.withOpacity(0.3)),
+                backgroundColor: Colors.amber.withValues(alpha: 0.2),
+                deleteIconColor: colorScheme.onSurface.withValues(alpha: 0.54),
+                side: BorderSide(color: Colors.amber.withValues(alpha: 0.3)),
                 onDeleted: () {
                   setState(() => _minRating = 0);
                   if (_searchController.text.isNotEmpty) {
@@ -514,9 +514,9 @@ class _SearchScreenState extends State<SearchScreen> {
                   fontSize: 12,
                 ),
               ),
-              backgroundColor: Colors.greenAccent.withOpacity(0.2),
-              deleteIconColor: colorScheme.onSurface.withOpacity(0.54),
-              side: BorderSide(color: Colors.greenAccent.withOpacity(0.3)),
+              backgroundColor: Colors.greenAccent.withValues(alpha: 0.2),
+              deleteIconColor: colorScheme.onSurface.withValues(alpha: 0.54),
+              side: BorderSide(color: Colors.greenAccent.withValues(alpha: 0.3)),
               onDeleted: () {
                 setState(() => _selectedLanguage = null);
                 if (_searchController.text.isNotEmpty) {
@@ -544,7 +544,7 @@ class _SearchScreenState extends State<SearchScreen> {
                 Text(
                   'Recent Searches',
                   style: GoogleFonts.poppins(
-                    color: colorScheme.onSurface.withOpacity(0.7),
+                    color: colorScheme.onSurface.withValues(alpha: 0.7),
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
                   ),
@@ -570,17 +570,17 @@ class _SearchScreenState extends State<SearchScreen> {
                   return ListTile(
                     leading: Icon(
                       Icons.history,
-                      color: colorScheme.onSurface.withOpacity(0.24),
+                      color: colorScheme.onSurface.withValues(alpha: 0.24),
                     ),
                     title: Text(
                       search,
                       style: GoogleFonts.inter(
-                        color: colorScheme.onSurface.withOpacity(0.7),
+                        color: colorScheme.onSurface.withValues(alpha: 0.7),
                       ),
                     ),
                     trailing: Icon(
                       Icons.north_west,
-                      color: colorScheme.onSurface.withOpacity(0.12),
+                      color: colorScheme.onSurface.withValues(alpha: 0.12),
                       size: 16,
                     ),
                     onTap: () {

@@ -81,6 +81,7 @@ class HDHub4uController extends GetxController {
   }
 
   /// Pull-to-refresh / manual refresh.
+  @override
   Future<void> refresh() async => syncMovies();
 
   /// Force full sync (clears cache first).

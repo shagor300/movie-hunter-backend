@@ -158,7 +158,7 @@ class DownloadsScreen extends StatelessWidget {
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
           decoration: BoxDecoration(
-            color: colorScheme.primary.withOpacity(0.2),
+            color: colorScheme.primary.withValues(alpha: 0.2),
             borderRadius: BorderRadius.circular(10),
           ),
           child: Text(
@@ -204,7 +204,7 @@ class DownloadsScreen extends StatelessWidget {
         statusIcon = Icons.cancel;
         break;
       case DownloadStatus.queued:
-        statusColor = colorScheme.onSurface.withOpacity(0.54);
+        statusColor = colorScheme.onSurface.withValues(alpha: 0.54);
         statusIcon = Icons.hourglass_top;
         break;
     }
@@ -212,9 +212,9 @@ class DownloadsScreen extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        color: colorScheme.onSurface.withOpacity(0.05),
+        color: colorScheme.onSurface.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: colorScheme.onSurface.withOpacity(0.08)),
+        border: Border.all(color: colorScheme.onSurface.withValues(alpha: 0.08)),
       ),
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -226,7 +226,7 @@ class DownloadsScreen extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: statusColor.withOpacity(0.1),
+                    color: statusColor.withValues(alpha: 0.1),
                     shape: BoxShape.circle,
                   ),
                   child: Icon(statusIcon, color: statusColor, size: 22),
@@ -292,7 +292,7 @@ class DownloadsScreen extends StatelessWidget {
                                       size,
                                       style: GoogleFonts.inter(
                                         color: colorScheme.onSurface
-                                            .withOpacity(0.38),
+                                            .withValues(alpha: 0.38),
                                         fontSize: 11,
                                       ),
                                     );
@@ -307,7 +307,7 @@ class DownloadsScreen extends StatelessWidget {
                       Text(
                         download.filename,
                         style: GoogleFonts.inter(
-                          color: colorScheme.onSurface.withOpacity(0.24),
+                          color: colorScheme.onSurface.withValues(alpha: 0.24),
                           fontSize: 10,
                         ),
                         maxLines: 1,
@@ -326,7 +326,7 @@ class DownloadsScreen extends StatelessWidget {
                 borderRadius: BorderRadius.circular(4),
                 child: LinearProgressIndicator(
                   value: download.progress / 100,
-                  backgroundColor: colorScheme.onSurface.withOpacity(0.1),
+                  backgroundColor: colorScheme.onSurface.withValues(alpha: 0.1),
                   color: statusColor,
                   minHeight: 4,
                 ),
@@ -342,7 +342,7 @@ class DownloadsScreen extends StatelessWidget {
                         Icon(
                           Icons.speed,
                           size: 12,
-                          color: colorScheme.onSurface.withOpacity(0.24),
+                          color: colorScheme.onSurface.withValues(alpha: 0.24),
                         ),
                         const SizedBox(width: 4),
                         Text(
@@ -357,13 +357,13 @@ class DownloadsScreen extends StatelessWidget {
                         Icon(
                           Icons.timer_outlined,
                           size: 12,
-                          color: colorScheme.onSurface.withOpacity(0.24),
+                          color: colorScheme.onSurface.withValues(alpha: 0.24),
                         ),
                         const SizedBox(width: 4),
                         Text(
                           controller.getETAText(download.taskId),
                           style: GoogleFonts.inter(
-                            color: colorScheme.onSurface.withOpacity(0.38),
+                            color: colorScheme.onSurface.withValues(alpha: 0.38),
                             fontSize: 11,
                           ),
                         ),
@@ -374,7 +374,7 @@ class DownloadsScreen extends StatelessWidget {
                   Text(
                     '${download.progress}%',
                     style: GoogleFonts.inter(
-                      color: colorScheme.onSurface.withOpacity(0.38),
+                      color: colorScheme.onSurface.withValues(alpha: 0.38),
                       fontSize: 11,
                     ),
                   ),
@@ -471,7 +471,7 @@ class DownloadsScreen extends StatelessWidget {
             IconButton(
               icon: Icon(
                 Icons.delete_outline,
-                color: Colors.white.withOpacity(0.24),
+                color: Colors.white.withValues(alpha: 0.24),
                 size: 20,
               ),
               onPressed: () => controller.deleteDownload(download),

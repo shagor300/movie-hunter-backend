@@ -1,5 +1,6 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:avatar_glow/avatar_glow.dart';
@@ -22,6 +23,7 @@ class _VoiceSearchScreenState extends State<VoiceSearchScreen>
   final VoiceSearchService _voiceService = Get.find<VoiceSearchService>();
 
   late AnimationController _waveController;
+  bool _hasSearched = false; // Prevent duplicate searches
 
   @override
   void initState() {
@@ -37,22 +39,49 @@ class _VoiceSearchScreenState extends State<VoiceSearchScreen>
   }
 
   void _startListening() {
+    _hasSearched = false;
+
+    // Play start sound + haptic feedback
+    _playStartSound();
+
     _voiceService.startListening(
       onResult: (text) {
-        if (text.isNotEmpty) {
-          // Wait for speech to finish, then auto-search
-          Future.delayed(const Duration(seconds: 2), () {
-            if (!_voiceService.isListening.value && mounted) {
-              _performSearch(text);
-            }
-          });
+        // This is only called on finalResult now (service-level fix)
+        if (text.isNotEmpty && !_hasSearched && mounted) {
+          _hasSearched = true;
+          _performSearch(text);
         }
       },
     );
   }
 
-  void _performSearch(String query) {
-    Navigator.of(context).pop(); // close voice screen
+  /// Play a system click sound and haptic feedback when mic starts
+  Future<void> _playStartSound() async {
+    await HapticFeedback.mediumImpact();
+    await SystemSound.play(SystemSoundType.click);
+  }
+
+  /// Play a subtle haptic when listening stops
+  Future<void> _playEndSound() async {
+    await HapticFeedback.lightImpact();
+  }
+
+  void _performSearch(String query) async {
+    // Stop listening first
+    await _voiceService.stopListening();
+
+    // Play end sound
+    await _playEndSound();
+
+    // Wait for navigation stack to settle
+    await Future.delayed(const Duration(milliseconds: 300));
+
+    // Safety checks
+    if (!mounted) return;
+    if (query.trim().isEmpty) return;
+
+    // Navigate back and trigger search
+    Navigator.of(context).pop();
     widget.onSearchResult(query);
   }
 
@@ -125,6 +154,7 @@ class _VoiceSearchScreenState extends State<VoiceSearchScreen>
               onTap: () {
                 if (_voiceService.isListening.value) {
                   _voiceService.stopListening();
+                  _playEndSound();
                 } else {
                   _startListening();
                 }
@@ -140,12 +170,12 @@ class _VoiceSearchScreenState extends State<VoiceSearchScreen>
                   decoration: BoxDecoration(
                     color: _voiceService.isListening.value
                         ? colorScheme.primary
-                        : colorScheme.onSurface.withOpacity(0.12),
+                        : colorScheme.onSurface.withValues(alpha: 0.12),
                     shape: BoxShape.circle,
                     boxShadow: _voiceService.isListening.value
                         ? [
                             BoxShadow(
-                              color: colorScheme.primary.withOpacity(0.4),
+                              color: colorScheme.primary.withValues(alpha: 0.4),
                               blurRadius: 30,
                               spreadRadius: 5,
                             ),
@@ -157,7 +187,7 @@ class _VoiceSearchScreenState extends State<VoiceSearchScreen>
                     size: 70,
                     color: _voiceService.isListening.value
                         ? colorScheme.onPrimary
-                        : colorScheme.onSurface.withOpacity(0.5),
+                        : colorScheme.onSurface.withValues(alpha: 0.5),
                   ),
                 ),
               ),
@@ -187,7 +217,7 @@ class _VoiceSearchScreenState extends State<VoiceSearchScreen>
                 style: GoogleFonts.inter(
                   fontSize: 18,
                   color: _voiceService.recognizedText.value.isEmpty
-                      ? colorScheme.onSurface.withOpacity(0.38)
+                      ? colorScheme.onSurface.withValues(alpha: 0.38)
                       : colorScheme.primary,
                 ),
                 textAlign: TextAlign.center,
@@ -216,7 +246,9 @@ class _VoiceSearchScreenState extends State<VoiceSearchScreen>
                     icon: const Icon(Icons.close, size: 20),
                     label: Text('Cancel', style: GoogleFonts.inter()),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: colorScheme.onSurface.withOpacity(0.12),
+                      backgroundColor: colorScheme.onSurface.withValues(
+                        alpha: 0.12,
+                      ),
                       foregroundColor: colorScheme.onSurface,
                       padding: const EdgeInsets.symmetric(
                         horizontal: 24,
@@ -233,6 +265,7 @@ class _VoiceSearchScreenState extends State<VoiceSearchScreen>
                     onPressed: () {
                       if (_voiceService.isListening.value) {
                         _voiceService.stopListening();
+                        _playEndSound();
                       } else {
                         _startListening();
                       }
@@ -269,7 +302,7 @@ class _VoiceSearchScreenState extends State<VoiceSearchScreen>
                   'Confidence: ${(_voiceService.confidenceLevel.value * 100).toStringAsFixed(0)}%',
                   style: GoogleFonts.inter(
                     fontSize: 12,
-                    color: colorScheme.onSurface.withOpacity(0.38),
+                    color: colorScheme.onSurface.withValues(alpha: 0.38),
                   ),
                 ),
               ),
@@ -299,7 +332,7 @@ class _VoiceSearchScreenState extends State<VoiceSearchScreen>
               height: height,
               margin: const EdgeInsets.symmetric(horizontal: 3),
               decoration: BoxDecoration(
-                color: colorScheme.primary.withOpacity(0.8),
+                color: colorScheme.primary.withValues(alpha: 0.8),
                 borderRadius: BorderRadius.circular(2),
               ),
             );

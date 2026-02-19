@@ -60,6 +60,34 @@ EMBED_HOSTS = [
     'streamtape.com', 'doodstream', 'mixdrop',
 ]
 
+# ── SkyMoviesHD Category URLs ──
+# Used as a fallback when direct search returns 0 results.
+SKYMOVIESHD_CATEGORIES = {
+    'bollywood':        '/cat/bollywood/',
+    'south_dubbed':     '/cat/south-indian-hindi-dubbed-movies/',
+    'bengali':          '/cat/bengali-movies/',
+    'pakistani':        '/cat/pakistani-movies/',
+    'hollywood_english': '/cat/hollywood-english-movies/',
+    'hollywood_dubbed': '/cat/hollywood-hindi-dubbed-movies/',
+    'tamil':            '/cat/tamil-movies/',
+    'telugu':           '/cat/telugu-movies/',
+    'punjabi':          '/cat/punjabi-movies/',
+    'bhojpuri':         '/cat/bhojpuri-movies/',
+    'bangladeshi':      '/cat/bangladeshi-movies/',
+    'marathi':          '/cat/marathi-movies/',
+    'kannada':          '/cat/kannada-movies/',
+}
+
+# CSS selectors to find movie links on search/category pages
+MOVIE_LINK_SELECTORS = [
+    'article h2 a',
+    '.post-title a',
+    'h2.entry-title a',
+    '.entry-title a',
+    'div.post h2 a',
+    'h2 a',
+]
+
 
 class SkyMoviesHDScraper(BaseMovieScraper):
     """
@@ -87,147 +115,269 @@ class SkyMoviesHDScraper(BaseMovieScraper):
         return context, page
 
     # =========================================================================
-    # STEP 1: SEARCH
+    # STEP 1: SEARCH (two-method approach)
     # =========================================================================
 
     async def search_movies(self, query: str, max_results: int = 20) -> List[Dict]:
         """
         Search for movies on SkyMoviesHD.
-        The search page returns a flat list of <a> links (no article/div posts).
-        Each link points to /movie/Title-Here.html.
+
+        Method 1: Direct URL search (/?s=query) with proper CSS selectors.
+        Method 2: Category-based browsing (fallback when URL search fails).
+        """
+        logger.info(f"[{self.source_name}] 🔍 Step 1: Searching for: {query}")
+
+        # --- Method 1: URL-based search ---
+        movies = await self._search_by_url(query, max_results)
+        if movies:
+            logger.info(
+                f"[{self.source_name}] ✅ URL search found {len(movies)} results"
+            )
+            return movies
+
+        # --- Method 2: Category-based search (fallback) ---
+        logger.info(
+            f"[{self.source_name}] URL search returned 0, trying category search..."
+        )
+        movies = await self._search_by_category(query, max_results)
+        if movies:
+            logger.info(
+                f"[{self.source_name}] ✅ Category search found {len(movies)} results"
+            )
+            return movies
+
+        logger.info(
+            f"[{self.source_name}] 📊 Search complete: 0 movies found"
+        )
+        return []
+
+    async def _search_by_url(self, query: str, max_results: int = 20) -> List[Dict]:
+        """
+        Method 1: Search via the site's /?s=query endpoint.
+        Uses Playwright for JS rendering + proper CSS selectors.
         """
         movies = []
+        if not self.browser:
+            return movies
 
+        context = None
+        page = None
         try:
-            logger.info(f"[{self.source_name}] 🔍 Step 1: Searching for: {query}")
-
+            context, page = await self._new_stealth_page()
             search_url = f"{self.base_url}/?s={query.replace(' ', '+')}"
-            content = None
+            logger.info(f"[{self.source_name}] Trying URL: {search_url}")
 
-            # --- PRIMARY: Use Playwright (JS-rendered search) ---
-            # SkyMoviesHD search results are rendered via JavaScript,
-            # so plain HTTP requests only return a static fallback page.
-            if self.browser:
-                context = None
-                page = None
+            await page.goto(
+                search_url, wait_until='domcontentloaded', timeout=20000
+            )
+            await asyncio.sleep(2)
+
+            # Extract matching movies from the rendered page
+            movies = await self._extract_movies_from_page(page, query, max_results)
+
+        except Exception as e:
+            logger.warning(f"[{self.source_name}] URL search error: {e}")
+        finally:
+            if page:
+                await page.close()
+            if context:
+                await context.close()
+
+        return movies
+
+    async def _search_by_category(self, query: str, max_results: int = 20) -> List[Dict]:
+        """
+        Method 2: Browse category pages and match movie titles.
+        Searches ALL categories until results are found.
+        """
+        movies = []
+        if not self.browser:
+            return movies
+
+        context = None
+        page = None
+        try:
+            context, page = await self._new_stealth_page()
+
+            for cat_name, cat_path in SKYMOVIESHD_CATEGORIES.items():
+                cat_url = f"{self.base_url}{cat_path}"
+                logger.info(
+                    f"[{self.source_name}] Searching category: {cat_name}"
+                )
+
                 try:
-                    context, page = await self._new_stealth_page()
-                    await page.goto(search_url, wait_until='domcontentloaded', timeout=20000)
-                    # Wait a moment for JS search results to render
-                    await asyncio.sleep(2)
-                    content = await page.content()
-                    logger.info(f"[{self.source_name}] ✅ Search page loaded via Playwright")
+                    await page.goto(
+                        cat_url, wait_until='domcontentloaded', timeout=15000
+                    )
+                    await asyncio.sleep(1.5)
+
+                    found = await self._extract_movies_from_page(
+                        page, query, max_results
+                    )
+                    if found:
+                        logger.info(
+                            f"[{self.source_name}] ✅ Found {len(found)} in {cat_name}"
+                        )
+                        movies.extend(found)
+                        break  # Stop after first category with results
+
                 except Exception as e:
-                    logger.warning(f"[{self.source_name}] Playwright search failed, falling back to httpx: {e}")
-                    content = None
-                finally:
-                    if page:
-                        await page.close()
-                    if context:
-                        await context.close()
-
-            # --- FALLBACK: httpx (no JS — may return stale/default results) ---
-            if not content:
-                async with httpx.AsyncClient(
-                    headers={"User-Agent": USER_AGENT},
-                    timeout=15.0,
-                    follow_redirects=True
-                ) as client:
-                    resp = await client.get(search_url)
-                    if resp.status_code != 200:
-                        logger.error(f"[{self.source_name}] Search HTTP {resp.status_code}")
-                        return movies
-                    content = resp.text
-
-            soup = BeautifulSoup(content, 'html.parser')
-            all_links = soup.find_all('a', href=True)
-
-            # Prepare query words for relevance matching
-            query_words = [w.lower() for w in query.split() if len(w) >= 3 and not w.isdigit()]
-            seen_urls = set()
-
-            for link in all_links:
-                href = link.get('href', '')
-                text = link.get_text(strip=True)
-
-                # Only pick links to movie pages
-                if '/movie/' not in href or not text or len(text) < 5:
-                    continue
-                if '/category/' in href or '/search.php' in href:
-                    continue
-
-                # Deduplicate by URL
-                url_key = href.split('?')[0].rstrip('/')
-                if url_key in seen_urls:
-                    continue
-                seen_urls.add(url_key)
-
-                # RELEVANCE FILTER: At least one query word must appear
-                # in the link text OR the URL path
-                combined = (text + ' ' + href).lower()
-                if not any(word in combined for word in query_words):
                     logger.debug(
-                        f"[{self.source_name}] Skipped (no relevance): {text[:60]}"
+                        f"[{self.source_name}] Category {cat_name} error: {e}"
                     )
                     continue
 
-                raw_title = text
-                movie_url = href
-                if not movie_url.startswith('http'):
-                    movie_url = f"{self.base_url}{movie_url}"
-
-                clean_title, year = self._clean_title(raw_title)
-                quality = self._extract_quality(raw_title)
-
-                if not clean_title or len(clean_title) < 2:
-                    continue
-
-                logger.info(
-                    f"[{self.source_name}] ✅ Found: {clean_title} ({year}) - {quality}"
-                )
-
-                # Match with TMDB
-                tmdb_data = await self._match_with_tmdb(clean_title, year)
-
-                if tmdb_data:
-                    movies.append({
-                        'source': self.source_name,
-                        'source_type': 'skymovieshd',
-                        'title': tmdb_data['title'],
-                        'original_title': raw_title,
-                        'url': movie_url,
-                        'year': year or tmdb_data.get('release_date', '')[:4],
-                        'quality': quality,
-                        'poster': tmdb_data['poster_url'],
-                        'backdrop': tmdb_data.get('backdrop_url'),
-                        'tmdb_id': tmdb_data['tmdb_id'],
-                        'rating': tmdb_data['rating'],
-                        'overview': tmdb_data['overview'],
-                        'release_date': tmdb_data['release_date'],
-                    })
-                else:
-                    movies.append({
-                        'source': self.source_name,
-                        'source_type': 'skymovieshd',
-                        'title': clean_title,
-                        'original_title': raw_title,
-                        'url': movie_url,
-                        'year': year,
-                        'quality': quality,
-                        'poster': None,
-                    })
-
-                if len(movies) >= max_results:
-                    break
-
-            logger.info(
-                f"[{self.source_name}] 📊 Search complete: {len(movies)} movies found"
-            )
-
         except Exception as e:
-            logger.error(f"[{self.source_name}] Search error: {e}")
+            logger.error(f"[{self.source_name}] Category search error: {e}")
+        finally:
+            if page:
+                await page.close()
+            if context:
+                await context.close()
 
         return movies
+
+    async def _extract_movies_from_page(
+        self, page, query: str, max_results: int = 20
+    ) -> List[Dict]:
+        """
+        Extract matching movie links from the current page using CSS selectors.
+        Shared by both URL search and category search.
+        """
+        movies = []
+        seen_urls = set()
+
+        # Prepare query words for matching (ignore short words and years)
+        query_words = [
+            w.lower() for w in query.split()
+            if len(w) >= 2 and not (w.isdigit() and len(w) == 4)
+        ]
+        # Extract year from query if present
+        query_year = None
+        for word in query.split():
+            if word.isdigit() and len(word) == 4:
+                query_year = word
+                break
+
+        # Try each CSS selector until we find movie links
+        for selector in MOVIE_LINK_SELECTORS:
+            try:
+                elements = await page.query_selector_all(selector)
+                if not elements:
+                    continue
+
+                logger.debug(
+                    f"[{self.source_name}] Selector '{selector}': "
+                    f"{len(elements)} elements"
+                )
+
+                for element in elements:
+                    href = await element.get_attribute('href')
+                    text = await element.inner_text()
+
+                    if not href or not text or len(text.strip()) < 5:
+                        continue
+
+                    # Skip navigation / non-movie links
+                    if any(skip in href for skip in [
+                        '/category/', '/cat/', '/search.php', '/page/',
+                        '#', 'javascript:', 'facebook.com', 'twitter.com'
+                    ]):
+                        continue
+
+                    # Deduplicate by URL
+                    url_key = href.split('?')[0].rstrip('/')
+                    if url_key in seen_urls:
+                        continue
+                    seen_urls.add(url_key)
+
+                    # Check if title matches the query
+                    raw_title = text.strip()
+                    if not self._is_title_match(raw_title, query_words, query_year):
+                        continue
+
+                    # Ensure full URL
+                    movie_url = href
+                    if not movie_url.startswith('http'):
+                        movie_url = f"{self.base_url}{movie_url}"
+
+                    clean_title, year = self._clean_title(raw_title)
+                    quality = self._extract_quality(raw_title)
+
+                    if not clean_title or len(clean_title) < 2:
+                        continue
+
+                    logger.info(
+                        f"[{self.source_name}] ✅ Found: {clean_title}"
+                        f" ({year}) - {quality}"
+                    )
+
+                    # Match with TMDB
+                    tmdb_data = await self._match_with_tmdb(clean_title, year)
+
+                    if tmdb_data:
+                        movies.append({
+                            'source': self.source_name,
+                            'source_type': 'skymovieshd',
+                            'title': tmdb_data['title'],
+                            'original_title': raw_title,
+                            'url': movie_url,
+                            'year': year or tmdb_data.get(
+                                'release_date', ''
+                            )[:4],
+                            'quality': quality,
+                            'poster': tmdb_data['poster_url'],
+                            'backdrop': tmdb_data.get('backdrop_url'),
+                            'tmdb_id': tmdb_data['tmdb_id'],
+                            'rating': tmdb_data['rating'],
+                            'overview': tmdb_data['overview'],
+                            'release_date': tmdb_data['release_date'],
+                        })
+                    else:
+                        movies.append({
+                            'source': self.source_name,
+                            'source_type': 'skymovieshd',
+                            'title': clean_title,
+                            'original_title': raw_title,
+                            'url': movie_url,
+                            'year': year,
+                            'quality': quality,
+                            'poster': None,
+                        })
+
+                    if len(movies) >= max_results:
+                        return movies
+
+                # If we found movies with this selector, stop trying others
+                if movies:
+                    return movies
+
+            except Exception as e:
+                logger.debug(
+                    f"[{self.source_name}] Selector '{selector}' error: {e}"
+                )
+                continue
+
+        return movies
+
+    def _is_title_match(
+        self, title: str, query_words: List[str], query_year: str = None
+    ) -> bool:
+        """
+        Check if a page title matches the search query.
+        All query words must appear in the title.
+        """
+        title_lower = title.lower()
+
+        # All query words must be present in the title
+        if not all(word in title_lower for word in query_words):
+            return False
+
+        # If a year was specified, it should appear in the title
+        if query_year and query_year not in title:
+            return False
+
+        return True
 
     # =========================================================================
     # STEPS 2-7: FULL LINK EXTRACTION

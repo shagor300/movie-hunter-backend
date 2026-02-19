@@ -66,7 +66,7 @@ class _LibraryScreenState extends State<LibraryScreen>
           indicatorColor: colorScheme.primary,
           indicatorWeight: 3,
           labelColor: colorScheme.primary,
-          unselectedLabelColor: colorScheme.onSurface.withOpacity(0.38),
+          unselectedLabelColor: colorScheme.onSurface.withValues(alpha: 0.38),
           labelStyle: GoogleFonts.inter(
             fontWeight: FontWeight.w600,
             fontSize: 14,
@@ -196,7 +196,7 @@ class _LibraryScreenState extends State<LibraryScreen>
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.3),
+              color: Colors.black.withValues(alpha: 0.3),
               blurRadius: 8,
               offset: const Offset(0, 4),
             ),
@@ -250,7 +250,7 @@ class _LibraryScreenState extends State<LibraryScreen>
                           vertical: 3,
                         ),
                         decoration: BoxDecoration(
-                          color: Colors.black.withOpacity(0.7),
+                          color: Colors.black.withValues(alpha: 0.7),
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Row(
@@ -282,7 +282,7 @@ class _LibraryScreenState extends State<LibraryScreen>
                         child: Container(
                           padding: const EdgeInsets.all(4),
                           decoration: BoxDecoration(
-                            color: Colors.black.withOpacity(0.7),
+                            color: Colors.black.withValues(alpha: 0.7),
                             shape: BoxShape.circle,
                           ),
                           child: const Icon(
@@ -337,7 +337,7 @@ class _LibraryScreenState extends State<LibraryScreen>
               width: 40,
               height: 4,
               decoration: BoxDecoration(
-                color: colorScheme.onSurface.withOpacity(0.24),
+                color: colorScheme.onSurface.withValues(alpha: 0.24),
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -430,7 +430,7 @@ class _LibraryScreenState extends State<LibraryScreen>
                   icon,
                   color: isSelected
                       ? colorScheme.primary
-                      : colorScheme.onSurface.withOpacity(0.38),
+                      : colorScheme.onSurface.withValues(alpha: 0.38),
                 ),
                 title: Text(
                   label,

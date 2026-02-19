@@ -45,11 +45,11 @@ class ApiService {
     final queryParams = {
       'tmdb_id': tmdbId.toString(),
       'title': title,
-      if (year != null) 'year': year,
-      if (hdhub4uUrl != null) 'hdhub4u_url': hdhub4uUrl,
-      if (source != null) 'source': source,
-      if (skyMoviesHDUrl != null) 'skymovieshd_url': skyMoviesHDUrl,
-    };
+      'year': year,
+      'hdhub4u_url': hdhub4uUrl,
+      'source': source,
+      'skymovieshd_url': skyMoviesHDUrl,
+    }..removeWhere((_, v) => v == null);
     final url = Uri.parse(
       '$baseUrl/links',
     ).replace(queryParameters: queryParams);

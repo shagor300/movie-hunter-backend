@@ -75,7 +75,7 @@ class _HDHub4uTabState extends State<HDHub4uTab> with TickerProviderStateMixin {
                 borderRadius: BorderRadius.circular(6),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.redAccent.withOpacity(0.4),
+                    color: Colors.redAccent.withValues(alpha: 0.4),
                     blurRadius: 8,
                     offset: const Offset(0, 2),
                   ),
@@ -186,13 +186,13 @@ class _HDHub4uTabState extends State<HDHub4uTab> with TickerProviderStateMixin {
                 // Outer glow ring
                 AnimatedBuilder(
                   animation: _pulseAnim,
-                  builder: (_, __) => Container(
+                  builder: (_, _) => Container(
                     width: 120 + (_pulseAnim.value * 20),
                     height: 120 + (_pulseAnim.value * 20),
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       border: Border.all(
-                        color: colorScheme.primary.withOpacity(
+                        color: colorScheme.primary.withValues(alpha: 
                           0.08 + _pulseAnim.value * 0.07,
                         ),
                         width: 1.5,
@@ -204,13 +204,13 @@ class _HDHub4uTabState extends State<HDHub4uTab> with TickerProviderStateMixin {
                 // Second ring (slightly delayed pulse)
                 AnimatedBuilder(
                   animation: _pulseAnim,
-                  builder: (_, __) => Container(
+                  builder: (_, _) => Container(
                     width: 90 + (_pulseAnim.value * 10),
                     height: 90 + (_pulseAnim.value * 10),
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       border: Border.all(
-                        color: colorScheme.primary.withOpacity(
+                        color: colorScheme.primary.withValues(alpha: 
                           0.1 + _pulseAnim.value * 0.1,
                         ),
                         width: 1,
@@ -222,7 +222,7 @@ class _HDHub4uTabState extends State<HDHub4uTab> with TickerProviderStateMixin {
                 // Orbiting dots
                 AnimatedBuilder(
                   animation: _orbitController,
-                  builder: (_, __) => CustomPaint(
+                  builder: (_, _) => CustomPaint(
                     size: const Size(130, 130),
                     painter: _OrbitingDotsPainter(
                       progress: _orbitController.value,
@@ -234,23 +234,23 @@ class _HDHub4uTabState extends State<HDHub4uTab> with TickerProviderStateMixin {
                 // Center icon with glow
                 AnimatedBuilder(
                   animation: _pulseAnim,
-                  builder: (_, __) => Container(
+                  builder: (_, _) => Container(
                     width: 64,
                     height: 64,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       gradient: RadialGradient(
                         colors: [
-                          colorScheme.primary.withOpacity(
+                          colorScheme.primary.withValues(alpha: 
                             0.15 + _pulseAnim.value * 0.1,
                           ),
-                          colorScheme.primary.withOpacity(0.02),
+                          colorScheme.primary.withValues(alpha: 0.02),
                         ],
                         radius: 0.85,
                       ),
                       boxShadow: [
                         BoxShadow(
-                          color: colorScheme.primary.withOpacity(
+                          color: colorScheme.primary.withValues(alpha: 
                             0.15 * _pulseAnim.value,
                           ),
                           blurRadius: 20,
@@ -275,7 +275,7 @@ class _HDHub4uTabState extends State<HDHub4uTab> with TickerProviderStateMixin {
           Text(
             'Fetching Latest Movies',
             style: GoogleFonts.poppins(
-              color: colorScheme.onSurface.withOpacity(0.85),
+              color: colorScheme.onSurface.withValues(alpha: 0.85),
               fontSize: 18,
               fontWeight: FontWeight.w600,
             ),
@@ -291,7 +291,7 @@ class _HDHub4uTabState extends State<HDHub4uTab> with TickerProviderStateMixin {
                 Text(
                   'Scanning sources',
                   style: GoogleFonts.inter(
-                    color: colorScheme.onSurface.withOpacity(0.4),
+                    color: colorScheme.onSurface.withValues(alpha: 0.4),
                     fontSize: 13,
                   ),
                 ),
@@ -308,12 +308,12 @@ class _HDHub4uTabState extends State<HDHub4uTab> with TickerProviderStateMixin {
             width: 200,
             child: AnimatedBuilder(
               animation: _pulseAnim,
-              builder: (_, __) => Container(
+              builder: (_, _) => Container(
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(4),
                   boxShadow: [
                     BoxShadow(
-                      color: colorScheme.primary.withOpacity(
+                      color: colorScheme.primary.withValues(alpha: 
                         0.2 * _pulseAnim.value,
                       ),
                       blurRadius: 8,
@@ -323,7 +323,7 @@ class _HDHub4uTabState extends State<HDHub4uTab> with TickerProviderStateMixin {
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(4),
                   child: LinearProgressIndicator(
-                    backgroundColor: colorScheme.onSurface.withOpacity(0.06),
+                    backgroundColor: colorScheme.onSurface.withValues(alpha: 0.06),
                     color: colorScheme.primary,
                     minHeight: 4,
                   ),
@@ -339,7 +339,7 @@ class _HDHub4uTabState extends State<HDHub4uTab> with TickerProviderStateMixin {
             margin: const EdgeInsets.symmetric(horizontal: 48),
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
             decoration: BoxDecoration(
-              color: colorScheme.primary.withOpacity(0.06),
+              color: colorScheme.primary.withValues(alpha: 0.06),
               borderRadius: BorderRadius.circular(10),
             ),
             child: Row(
@@ -347,7 +347,7 @@ class _HDHub4uTabState extends State<HDHub4uTab> with TickerProviderStateMixin {
               children: [
                 Icon(
                   Icons.tips_and_updates_outlined,
-                  color: colorScheme.primary.withOpacity(0.6),
+                  color: colorScheme.primary.withValues(alpha: 0.6),
                   size: 16,
                 ),
                 const SizedBox(width: 8),
@@ -355,7 +355,7 @@ class _HDHub4uTabState extends State<HDHub4uTab> with TickerProviderStateMixin {
                   child: Text(
                     'First load may take a moment',
                     style: GoogleFonts.inter(
-                      color: colorScheme.onSurface.withOpacity(0.4),
+                      color: colorScheme.onSurface.withValues(alpha: 0.4),
                       fontSize: 11,
                     ),
                   ),
@@ -374,7 +374,7 @@ class _HDHub4uTabState extends State<HDHub4uTab> with TickerProviderStateMixin {
     return List.generate(3, (i) {
       return AnimatedBuilder(
         animation: _waveController,
-        builder: (_, __) {
+        builder: (_, _) {
           // Stagger each dot
           final offset = ((_waveController.value + (i * 0.33)) % 1.0);
           final opacity = 0.2 + (sin(offset * pi * 2) * 0.4 + 0.4) * 0.6;
@@ -387,7 +387,7 @@ class _HDHub4uTabState extends State<HDHub4uTab> with TickerProviderStateMixin {
               child: Text(
                 '.',
                 style: GoogleFonts.inter(
-                  color: colorScheme.onSurface.withOpacity(opacity),
+                  color: colorScheme.onSurface.withValues(alpha: opacity),
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
                 ),
@@ -452,7 +452,7 @@ class _HDHub4uTabState extends State<HDHub4uTab> with TickerProviderStateMixin {
               height: 80,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: errorColor.withOpacity(0.1),
+                color: errorColor.withValues(alpha: 0.1),
               ),
               child: Icon(errorIcon, size: 40, color: errorColor),
             ),
@@ -469,7 +469,7 @@ class _HDHub4uTabState extends State<HDHub4uTab> with TickerProviderStateMixin {
             Text(
               errorHint,
               style: GoogleFonts.inter(
-                color: colorScheme.onSurface.withOpacity(0.54),
+                color: colorScheme.onSurface.withValues(alpha: 0.54),
                 fontSize: 13,
               ),
               textAlign: TextAlign.center,
@@ -479,10 +479,10 @@ class _HDHub4uTabState extends State<HDHub4uTab> with TickerProviderStateMixin {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: colorScheme.primary.withOpacity(0.08),
+                  color: colorScheme.primary.withValues(alpha: 0.08),
                   borderRadius: BorderRadius.circular(10),
                   border: Border.all(
-                    color: colorScheme.primary.withOpacity(0.2),
+                    color: colorScheme.primary.withValues(alpha: 0.2),
                   ),
                 ),
                 child: Row(
@@ -497,7 +497,7 @@ class _HDHub4uTabState extends State<HDHub4uTab> with TickerProviderStateMixin {
                       child: Text(
                         controller.errorMessage.value,
                         style: GoogleFonts.inter(
-                          color: colorScheme.onSurface.withOpacity(0.38),
+                          color: colorScheme.onSurface.withValues(alpha: 0.38),
                           fontSize: 11,
                         ),
                         maxLines: 3,
@@ -550,11 +550,11 @@ class _HDHub4uTabState extends State<HDHub4uTab> with TickerProviderStateMixin {
             height: 70,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: colorScheme.onSurface.withOpacity(0.05),
+              color: colorScheme.onSurface.withValues(alpha: 0.05),
             ),
             child: Icon(
               Icons.movie_outlined,
-              color: colorScheme.onSurface.withOpacity(0.38),
+              color: colorScheme.onSurface.withValues(alpha: 0.38),
               size: 34,
             ),
           ),
@@ -562,7 +562,7 @@ class _HDHub4uTabState extends State<HDHub4uTab> with TickerProviderStateMixin {
           Text(
             'No Movies Yet',
             style: GoogleFonts.poppins(
-              color: colorScheme.onSurface.withOpacity(0.7),
+              color: colorScheme.onSurface.withValues(alpha: 0.7),
               fontSize: 16,
               fontWeight: FontWeight.w600,
             ),
@@ -571,7 +571,7 @@ class _HDHub4uTabState extends State<HDHub4uTab> with TickerProviderStateMixin {
           Text(
             'Check back later for new releases!',
             style: GoogleFonts.inter(
-              color: colorScheme.onSurface.withOpacity(0.38),
+              color: colorScheme.onSurface.withValues(alpha: 0.38),
               fontSize: 13,
             ),
           ),
@@ -604,8 +604,8 @@ class _HDHub4uTabState extends State<HDHub4uTab> with TickerProviderStateMixin {
       child: Container(
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(14),
-          color: colorScheme.onSurface.withOpacity(0.05),
-          border: Border.all(color: colorScheme.onSurface.withOpacity(0.1)),
+          color: colorScheme.onSurface.withValues(alpha: 0.05),
+          border: Border.all(color: colorScheme.onSurface.withValues(alpha: 0.1)),
         ),
         clipBehavior: Clip.antiAlias,
         child: Column(
@@ -621,23 +621,23 @@ class _HDHub4uTabState extends State<HDHub4uTab> with TickerProviderStateMixin {
                     child: CachedNetworkImage(
                       imageUrl: movie.fullPosterPath,
                       fit: BoxFit.cover,
-                      placeholder: (_, __) => Container(
+                      placeholder: (_, _) => Container(
                         color: Colors.grey[900],
                         child: SizedBox(
                           width: 24,
                           height: 24,
                           child: CircularProgressIndicator(
                             strokeWidth: 2,
-                            color: colorScheme.onSurface.withOpacity(0.24),
+                            color: colorScheme.onSurface.withValues(alpha: 0.24),
                           ),
                         ),
                       ),
-                      errorWidget: (_, __, ___) => Container(
+                      errorWidget: (_, _, _) => Container(
                         color: Colors.grey[900],
                         child: Icon(
                           Icons.movie,
                           size: 50,
-                          color: colorScheme.onSurface.withOpacity(0.24),
+                          color: colorScheme.onSurface.withValues(alpha: 0.24),
                         ),
                       ),
                     ),
@@ -659,7 +659,7 @@ class _HDHub4uTabState extends State<HDHub4uTab> with TickerProviderStateMixin {
                         borderRadius: BorderRadius.circular(6),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.redAccent.withOpacity(0.4),
+                            color: Colors.redAccent.withValues(alpha: 0.4),
                             blurRadius: 6,
                           ),
                         ],
@@ -687,7 +687,7 @@ class _HDHub4uTabState extends State<HDHub4uTab> with TickerProviderStateMixin {
                           vertical: 4,
                         ),
                         decoration: BoxDecoration(
-                          color: Colors.black.withOpacity(0.75),
+                          color: Colors.black.withValues(alpha: 0.75),
                           borderRadius: BorderRadius.circular(6),
                         ),
                         child: Row(
@@ -737,7 +737,7 @@ class _HDHub4uTabState extends State<HDHub4uTab> with TickerProviderStateMixin {
                       movie.year,
                       style: GoogleFonts.inter(
                         fontSize: 11,
-                        color: colorScheme.onSurface.withOpacity(0.38),
+                        color: colorScheme.onSurface.withValues(alpha: 0.38),
                       ),
                     ),
                 ],
@@ -776,7 +776,7 @@ class _OrbitingDotsPainter extends CustomPainter {
       final y = center.dy + radius * sin(angle);
 
       final paint = Paint()
-        ..color = color.withOpacity(opacity.clamp(0.1, 0.85))
+        ..color = color.withValues(alpha: opacity.clamp(0.1, 0.85))
         ..style = PaintingStyle.fill;
 
       canvas.drawCircle(Offset(x, y), dotRadius, paint);

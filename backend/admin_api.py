@@ -10,7 +10,7 @@ from datetime import datetime, timedelta
 from typing import Optional
 from fastapi import APIRouter, HTTPException, Header
 from pydantic import BaseModel, Field
-from passlib.context import CryptContext
+import bcrypt as _bcrypt
 
 from admin_db import admin_db
 from config.sources import MovieSources
@@ -18,7 +18,14 @@ from config.sources import MovieSources
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/admin", tags=["admin"])
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+
+def _hash_password(password: str) -> str:
+    return _bcrypt.hashpw(password.encode(), _bcrypt.gensalt()).decode()
+
+
+def _verify_password(password: str, hashed: str) -> bool:
+    return _bcrypt.checkpw(password.encode(), hashed.encode())
 
 # In-memory session store (sufficient for single-instance deploy on Render)
 _sessions: dict = {}
@@ -102,7 +109,7 @@ async def ensure_default_admin():
     """Create a default admin user if the table is empty."""
     count = await admin_db.fetch_scalar("SELECT COUNT(*) FROM admin_users")
     if count == 0:
-        hashed = pwd_context.hash("admin123")
+        hashed = _hash_password("admin123")
         await admin_db.insert(
             "INSERT INTO admin_users (username, email, password_hash, role) VALUES (?, ?, ?, ?)",
             ("admin", "admin@moviehub.app", hashed, "super_admin"),
@@ -121,7 +128,7 @@ async def admin_login(req: LoginRequest):
         "SELECT * FROM admin_users WHERE username = ? AND is_active = 1",
         (req.username,),
     )
-    if not user or not pwd_context.verify(req.password, user["password_hash"]):
+    if not user or not _verify_password(req.password, user["password_hash"]):
         raise HTTPException(status_code=401, detail="Invalid credentials")
 
     await admin_db.execute(

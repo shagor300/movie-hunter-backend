@@ -7,6 +7,7 @@ import '../controllers/watchlist_controller.dart';
 import '../controllers/theme_controller.dart';
 import '../models/watchlist_movie.dart';
 import '../models/movie.dart';
+import '../utils/stitch_design_system.dart';
 import '../widgets/empty_state.dart';
 import '../widgets/skeleton_loader.dart';
 import 'details_screen.dart';
@@ -56,19 +57,16 @@ class _LibraryScreenState extends State<LibraryScreen>
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(
-          'My Library',
-          style: GoogleFonts.poppins(fontWeight: FontWeight.w700, fontSize: 22),
-        ),
+        title: Text('My Library', style: StitchText.display(fontSize: 22)),
         centerTitle: true,
         bottom: TabBar(
           controller: _tabController,
           isScrollable: true,
-          indicatorColor: colorScheme.primary,
+          indicatorColor: StitchColors.emerald,
           indicatorWeight: 3,
-          labelColor: colorScheme.primary,
-          unselectedLabelColor: colorScheme.onSurface.withValues(alpha: 0.38),
-          labelStyle: GoogleFonts.inter(
+          labelColor: StitchColors.emerald,
+          unselectedLabelColor: StitchColors.textTertiary,
+          labelStyle: GoogleFonts.plusJakartaSans(
             fontWeight: FontWeight.w600,
             fontSize: 14,
           ),
@@ -231,9 +229,9 @@ class _LibraryScreenState extends State<LibraryScreen>
                         fit: BoxFit.cover,
                         memCacheWidth: 300,
                         placeholder: (context, url) => Shimmer.fromColors(
-                          baseColor: const Color(0xFF1E1E3A),
-                          highlightColor: const Color(0xFF2A2A4A),
-                          child: Container(color: Colors.black),
+                          baseColor: StitchColors.slateChip,
+                          highlightColor: StitchColors.slateChipBorder,
+                          child: Container(color: StitchColors.slateChip),
                         ),
                         errorWidget: (context, url, error) => Container(
                           color: Colors.grey[900],
@@ -257,35 +255,7 @@ class _LibraryScreenState extends State<LibraryScreen>
                     Positioned(
                       top: 8,
                       left: 8,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 6,
-                          vertical: 3,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.black.withValues(alpha: 0.7),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Icon(
-                              Icons.star,
-                              color: Colors.amber,
-                              size: 12,
-                            ),
-                            const SizedBox(width: 3),
-                            Text(
-                              movie.rating.toStringAsFixed(1),
-                              style: GoogleFonts.inter(
-                                color: Colors.white,
-                                fontSize: 11,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
+                      child: RatingBadge(rating: movie.rating),
                     ),
                     // Favorite icon
                     if (movie.favorite)
@@ -317,10 +287,7 @@ class _LibraryScreenState extends State<LibraryScreen>
                   ),
                   child: Text(
                     movie.title,
-                    style: GoogleFonts.inter(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                    ),
+                    style: StitchText.movieTitle(fontSize: 13),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -357,10 +324,7 @@ class _LibraryScreenState extends State<LibraryScreen>
             const SizedBox(height: 20),
             Text(
               movie.title,
-              style: GoogleFonts.poppins(
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-              ),
+              style: StitchText.heading(fontSize: 18),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
@@ -426,13 +390,7 @@ class _LibraryScreenState extends State<LibraryScreen>
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(
-              'Move to',
-              style: GoogleFonts.poppins(
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
+            Text('Move to', style: StitchText.heading(fontSize: 18)),
             const SizedBox(height: 16),
             ...WatchlistCategory.values.map((cat) {
               final isSelected = movie.category == cat;

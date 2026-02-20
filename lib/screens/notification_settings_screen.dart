@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
-import 'package:google_fonts/google_fonts.dart';
+import '../utils/stitch_design_system.dart';
 
 import '../controllers/notification_controller.dart';
 import '../controllers/theme_controller.dart';
@@ -18,13 +18,13 @@ class NotificationSettingsScreen extends StatelessWidget {
     final accent = tc.accentColor;
 
     return Scaffold(
-      backgroundColor: const Color(0xFF0F0F1E),
+      backgroundColor: StitchColors.bgDark,
       appBar: AppBar(
-        backgroundColor: const Color(0xFF0F0F1E),
+        backgroundColor: StitchColors.bgDark,
         elevation: 0,
         title: Text(
           'Notifications',
-          style: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 22),
+          style: StitchText.heading(fontWeight: FontWeight.bold, fontSize: 22),
         ),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new, size: 20),
@@ -275,17 +275,15 @@ class NotificationSettingsScreen extends StatelessWidget {
                         children: [
                           Text(
                             'Enable Quiet Hours',
-                            style: GoogleFonts.inter(
-                              color: Colors.white,
+                            style: StitchText.body(
                               fontWeight: FontWeight.w600,
                               fontSize: 14,
                             ),
                           ),
                           Text(
                             'Silence notifications during set times',
-                            style: GoogleFonts.inter(
-                              color: Colors.white38,
-                              fontSize: 12,
+                            style: StitchText.caption(
+                              color: StitchColors.textTertiary,
                             ),
                           ),
                         ],
@@ -297,7 +295,7 @@ class NotificationSettingsScreen extends StatelessWidget {
                         HapticFeedback.lightImpact();
                         nc.toggleQuietHours(v);
                       },
-                      activeThumbColor: accent,
+                      activeTrackColor: StitchColors.emerald,
                     ),
                   ],
                 ),
@@ -349,12 +347,11 @@ class _Header extends StatelessWidget {
           const SizedBox(width: 8),
           Text(
             title.toUpperCase(),
-            style: GoogleFonts.inter(
-              color: Colors.white38,
+            style: StitchText.heading(
+              color: StitchColors.textTertiary,
               fontSize: 12,
               fontWeight: FontWeight.w700,
-              letterSpacing: 1.2,
-            ),
+            ).copyWith(letterSpacing: 1.2),
           ),
         ],
       ),
@@ -371,9 +368,9 @@ class _Card extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.04),
+        color: StitchColors.glassBackground,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
+        border: Border.all(color: StitchColors.glassBorder),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -387,7 +384,7 @@ class _Divider extends StatelessWidget {
   const _Divider();
   @override
   Widget build(BuildContext c) =>
-      const Divider(color: Colors.white10, height: 24);
+      const Divider(color: StitchColors.glassBorder, height: 24);
 }
 
 class _MasterToggle extends StatelessWidget {
@@ -428,8 +425,7 @@ class _MasterToggle extends StatelessWidget {
             children: [
               Text(
                 'All Notifications',
-                style: GoogleFonts.inter(
-                  color: Colors.white,
+                style: StitchText.body(
                   fontWeight: FontWeight.bold,
                   fontSize: 16,
                 ),
@@ -438,17 +434,20 @@ class _MasterToggle extends StatelessWidget {
                 enabled
                     ? 'Notifications are enabled'
                     : 'All notifications silenced',
-                style: GoogleFonts.inter(
+                style: StitchText.caption(
                   color: enabled
-                      ? accent.withValues(alpha: 0.8)
-                      : Colors.white38,
-                  fontSize: 12,
+                      ? StitchColors.emerald
+                      : StitchColors.textTertiary,
                 ),
               ),
             ],
           ),
         ),
-        Switch(value: enabled, onChanged: onChanged, activeThumbColor: accent),
+        Switch(
+          value: enabled,
+          onChanged: onChanged,
+          activeTrackColor: StitchColors.emerald,
+        ),
       ],
     );
   }
@@ -495,21 +494,24 @@ class _CategoryTile extends StatelessWidget {
                   children: [
                     Text(
                       title,
-                      style: GoogleFonts.inter(
-                        color: Colors.white,
+                      style: StitchText.body(
                         fontWeight: FontWeight.w600,
                         fontSize: 14,
                       ),
                     ),
                     if (locked) ...[
                       const SizedBox(width: 6),
-                      Icon(Icons.lock, color: Colors.white24, size: 14),
+                      const Icon(
+                        Icons.lock,
+                        color: StitchColors.textTertiary,
+                        size: 14,
+                      ),
                     ],
                   ],
                 ),
                 Text(
                   description,
-                  style: GoogleFonts.inter(color: Colors.white38, fontSize: 12),
+                  style: StitchText.caption(color: StitchColors.textTertiary),
                 ),
               ],
             ),
@@ -525,7 +527,7 @@ class _CategoryTile extends StatelessWidget {
           Switch(
             value: value,
             onChanged: enabled && !locked ? onChanged : null,
-            activeThumbColor: accent,
+            activeTrackColor: StitchColors.emerald,
           ),
         ],
       ),
@@ -578,7 +580,10 @@ class _TimePicker extends StatelessWidget {
               const SizedBox(width: 8),
               Text(
                 label,
-                style: GoogleFonts.inter(color: Colors.white54, fontSize: 13),
+                style: StitchText.caption(
+                  color: StitchColors.textSecondary,
+                  fontSize: 13,
+                ),
               ),
               const Spacer(),
               Container(
@@ -587,13 +592,13 @@ class _TimePicker extends StatelessWidget {
                   vertical: 4,
                 ),
                 decoration: BoxDecoration(
-                  color: accent.withValues(alpha: 0.12),
+                  color: StitchColors.emerald.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
                   formatted,
-                  style: GoogleFonts.inter(
-                    color: accent,
+                  style: StitchText.body(
+                    color: StitchColors.emerald,
                     fontWeight: FontWeight.bold,
                     fontSize: 13,
                   ),

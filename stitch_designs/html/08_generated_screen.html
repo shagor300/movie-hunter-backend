@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>MovieHub - Interstellar: The Return</title>
+<!-- Plus Jakarta Sans Font -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS CDN -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            primary: '#1e94f6',
+            surface: '#0f172a',
+            glass: 'rgba(255, 255, 255, 0.1)',
+          },
+          fontFamily: {
+            sans: ['Plus Jakarta Sans', 'sans-serif'],
+          },
+          borderRadius: {
+            'custom': '8px',
+          }
+        }
+      }
+    }
+  </script>
+<style data-purpose="custom-styling">
+    body {
+      background-color: #0f172a;
+      color: #f8fafc;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+    }
+    .glass-effect {
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    .hero-gradient {
+      background: linear-gradient(0deg, #0f172a 0%, rgba(15, 23, 42, 0.6) 50%, rgba(15, 23, 42, 0) 100%);
+    }
+    .btn-gradient {
+      background: linear-gradient(90deg, #1e94f6 0%, #a855f7 100%);
+    }
+    .hide-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .hide-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+  </style>
+</head>
+<body class="antialiased">
+<!-- BEGIN: MovieDetailsLayout -->
+<main class="relative min-h-screen pb-10">
+<!-- BEGIN: HeroSection -->
+<section class="relative h-[450px] w-full" data-purpose="movie-backdrop">
+<!-- Full-bleed Backdrop Image -->
+<img alt="Interstellar: The Return Backdrop" class="absolute inset-0 w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBWURmjIdK1YP4BneaWMLTVDV1E82yirU-aHXEsyQSRXooZXp1gGe3uyLuULjWVho72kHCouSbmAu-2RZJPtXcMEbrmghvBrtOKFLsjB7Whb09qOPEh-xJ83ejw6PzLCi8UhfxBL__XofcYWvbciT5f46ZdcV69EsVu8RtVou8gH2d5OEUSGL3X8gpde5iz31k2GwaI8BwHsi0_y4bjGqOdgORWrxKj9u6xoy_F1czmSR4KBIXy10FbD0_1iEUKFM1hyKZALA3FlEY"/>
+<!-- Gradient Overlay -->
+<div class="absolute inset-0 hero-gradient"></div>
+<!-- Header Actions -->
+<div class="absolute top-0 left-0 right-0 p-6 flex justify-between items-start z-20">
+<button class="w-10 h-10 flex items-center justify-center rounded-full glass-effect" data-purpose="back-button">
+<svg class="h-6 w-6" fill="none" stroke="currentColor" viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M15 19l-7-7 7-7" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+</button>
+<div class="flex gap-3">
+<button class="w-10 h-10 flex items-center justify-center rounded-full glass-effect" data-purpose="favorite-button">
+<svg class="h-5 w-5" fill="none" stroke="currentColor" viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+</button>
+<button class="w-10 h-10 flex items-center justify-center rounded-full glass-effect" data-purpose="watchlist-button">
+<svg class="h-5 w-5" fill="none" stroke="currentColor" viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+</button>
+<button class="w-10 h-10 flex items-center justify-center rounded-full glass-effect" data-purpose="share-button">
+<svg class="h-5 w-5" fill="none" stroke="currentColor" viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+</button>
+</div>
+</div>
+<!-- Title Overlay -->
+<div class="absolute bottom-0 left-0 right-0 p-6 z-10">
+<h1 class="text-3xl font-extrabold tracking-tight leading-tight" data-purpose="movie-title">
+          Interstellar: The Return
+        </h1>
+</div>
+</section>
+<!-- END: HeroSection -->
+<!-- BEGIN: ContentInfo -->
+<section class="px-6 space-y-6 -mt-2 relative z-20">
+<!-- Metadata Row -->
+<div class="flex items-center gap-3 text-sm text-slate-400 font-medium" data-purpose="movie-metadata">
+<span>2023</span>
+<span class="w-1 h-1 rounded-full bg-slate-600"></span>
+<span class="px-2 py-0.5 rounded-sm border border-slate-700 text-[10px] tracking-widest uppercase">HD 4K</span>
+<span class="w-1 h-1 rounded-full bg-slate-600"></span>
+<span>2h 28m</span>
+</div>
+<!-- Rating Row -->
+<div class="flex items-center gap-2" data-purpose="rating-display">
+<div class="flex text-yellow-400">
+<span>★</span><span>★</span><span>★</span><span>★</span><span class="text-slate-600">★</span>
+</div>
+<span class="text-sm font-bold text-white">8.5 / 10</span>
+</div>
+<!-- Action Button -->
+<button class="w-full btn-gradient py-4 rounded-custom font-bold text-lg shadow-lg shadow-blue-500/20 active:scale-[0.98] transition-transform" data-purpose="cta-button">
+        Generate Links
+      </button>
+<!-- Storyline -->
+<div class="space-y-2" data-purpose="storyline-section">
+<h3 class="text-lg font-bold">Storyline</h3>
+<p class="text-slate-400 leading-relaxed text-sm">
+          A decade after the Cooper Station settled near Saturn, a mysterious signal from the Gargantua black hole suggests a temporal anomaly could reunite long-lost pioneers. Now, a new crew must venture back into the void to solve the final mystery of the universe.
+        </p>
+</div>
+<!-- Cast Section -->
+<div class="space-y-4" data-purpose="cast-section">
+<h3 class="text-lg font-bold">Cast</h3>
+<div class="flex overflow-x-auto gap-4 hide-scrollbar pb-2">
+<!-- Cast Item 1 -->
+<div class="flex-shrink-0 text-center w-16">
+<img alt="Cast Member" class="w-14 h-14 rounded-full object-cover border-2 border-primary/20 p-0.5 mb-2 mx-auto" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAJJSbOPui3EFTy7VRHlGkNncmyxhTglajzo2xW5Fe5WqLEtEDVE_XxGusuz-Odc_RU2iB0jK1BsiYOJ0dnI5GNthdhITIDuEwM3cA1YhIIz5t7erVp7GS02tlu0VAspAPgQCwD9MM-aevPEbNInN_s81Desj9swoCJPAuCLwE36k299T-HvZb9t1klohhFTEXd2WAwdJjrlxQ4PSeA3LKQG2drwWOYYBxtPcYLOsxMwJnImt_IhzCPaOn4NP_MiYcZ9_KHyWgvVp4"/>
+<p class="text-[10px] font-medium text-slate-300 truncate">Matthew M.</p>
+</div>
+<!-- Cast Item 2 -->
+<div class="flex-shrink-0 text-center w-16">
+<img alt="Cast Member" class="w-14 h-14 rounded-full object-cover border-2 border-primary/20 p-0.5 mb-2 mx-auto" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB2HwghSZL5prIMiIXNSHq6o9EiNlMeisbOC0Ealjdezh0-RJqg-Eliqd3NBb9A_KrC6SUhSyb-qFVX_hkFXE1h2jMYfHTxV7DrzvUX9ReqCyfpVI4GQkZj54BanXjRTkcsA43BX1pY71R7iU04yceWl_w3B7TTcshIJPyGbYE0JdqugFFcMlCCsMOzn_tu1TgOUtxdTTYvDbbK7OFBjZ7wNikoLmCqcxyaiCJAdl0AenKk6Ab8VyEzcFAbhSi66W8kdYAnoqxDSh0"/>
+<p class="text-[10px] font-medium text-slate-300 truncate">Anne H.</p>
+</div>
+<!-- Cast Item 3 -->
+<div class="flex-shrink-0 text-center w-16">
+<img alt="Cast Member" class="w-14 h-14 rounded-full object-cover border-2 border-primary/20 p-0.5 mb-2 mx-auto" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBCmbE0BRjCbShkWY3gxMFMG8cCPLmwSlzWPwHWneoksVym-abOfaa0LIeUP42oIr7xHQFsJF-7n9aSHaj1uqTAeGAyZ1PRNrV2F2dGfp-SDiEFZsirupYt8zfScb5MVZRbEMD008lOrp7f1drlB7YgIFZ6HEXP3TkHcfg4D_9wyCphPD0OeS67mLVTbXijM_M0T-3sj5YMVltH39BzOHnu9qQlOrg1WNvHmoDCmkkil-0toa4QrmmdHWG-6GC2KKObqq4ThnyRNqc"/>
+<p class="text-[10px] font-medium text-slate-300 truncate">Jessica C.</p>
+</div>
+<!-- Cast Item 4 -->
+<div class="flex-shrink-0 text-center w-16">
+<img alt="Cast Member" class="w-14 h-14 rounded-full object-cover border-2 border-primary/20 p-0.5 mb-2 mx-auto" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBS7smxnLbHsLo5h3aXg5VERcS5CwnVlDEe02DCej-dDYECIJSqhmKOjHIUC6jbuVshr5k8rG9LuCWkQQEvGvp-S0FE-iLq0-V7o5AT-GVxoIbhaFRNdvEcyMjTgYn30WlUCobySAgHlpJqfDj3ArnZrPum3XexuVb68R3YVe70dDF1UjAlpWgbmagRIS5YrHTmPVfyXidKdG2TUc1raSxEsSh1XbSYecSmQcYu-S1ta1B99eKzypuA5WqxG-kcNsOKKUq6WHi867g"/>
+<p class="text-[10px] font-medium text-slate-300 truncate">Timothée C.</p>
+</div>
+<!-- Cast Item 5 -->
+<div class="flex-shrink-0 text-center w-16">
+<img alt="Cast Member" class="w-14 h-14 rounded-full object-cover border-2 border-primary/20 p-0.5 mb-2 mx-auto" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD-hZhCCMA39xr6pHyImWfW4gLjpcTGRtNbibCw1GOS7-vVyE50jjt3TKdgsLOYYJazGHVTj25sTZFa_On7diwSfg7wci2tMv4jIJDUXkUX3jw2MUO-GwCv7s2yPF8d1zEs5uxWcNu2AIoOeZtkV1bFjLq0lVnS0dfbm2BJDhEBx9NwoW3MejQVA-oUcRG5Hos7hciJr9Ha_73n9Ew7wY4baAlzQIsnxltDsqwUpc8fN1gxmqBmuTPugsANmcYeeNxIVsHHQaXF9u0"/>
+<p class="text-[10px] font-medium text-slate-300 truncate">Matt D.</p>
+</div>
+<!-- Cast Item 6 -->
+<div class="flex-shrink-0 text-center w-16">
+<img alt="Cast Member" class="w-14 h-14 rounded-full object-cover border-2 border-primary/20 p-0.5 mb-2 mx-auto" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB02s7yS6Y6UECBgNgTrt2UIv1YGYBjWX3d9IPpfJGMjqnZuwAGz4QOXPXJO0bOtzGUssov7zc4Wx_4QnmZYE4ly85a1UBy-RJdeHNPX5Ei1QSONculU9NesOkfAXoE9oftoKasNjmOTA_ZYjL925UMQjJBJztsg6ewI19kZ-FB6_nqoWey_7ZDZMUw-KnFtzdFyykWKAOr1nImsg-4GQUHVqEOPS7I35vMR0EdtS8tkzHGjJivD7oXGpsMd503XROs0lzX9fBUQNI"/>
+<p class="text-[10px] font-medium text-slate-300 truncate">Casey A.</p>
+</div>
+</div>
+</div>
+</section>
+<!-- END: ContentInfo -->
+</main>
+<!-- END: MovieDetailsLayout -->
+</body></html>

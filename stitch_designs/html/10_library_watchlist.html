@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>MovieHub - My Library</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#1e94f6",
+                        "accent-purple": "#8b5cf6",
+                        "background-light": "#f5f7f8",
+                        "background-dark": "#0F0F1E", // Custom dark navy as requested
+                    },
+                    fontFamily: {
+                        "display": ["Plus Jakarta Sans", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+<style>
+        .glass-nav {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .glass-badge {
+            background: rgba(15, 15, 30, 0.6);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .gradient-border {
+            position: relative;
+        }
+        .gradient-border::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #1e94f6, #8b5cf6);
+            border-radius: 3px 3px 0 0;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100 min-h-screen flex flex-col">
+<!-- Header Section -->
+<header class="sticky top-0 z-20 bg-background-light dark:bg-background-dark/80 backdrop-blur-md px-6 pt-8 pb-4">
+<div class="flex items-center justify-between">
+<h1 class="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">My Library</h1>
+<button class="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary hover:bg-primary/20 transition-colors">
+<span class="material-symbols-outlined">add</span>
+</button>
+</div>
+<!-- Tab Bar -->
+<nav class="mt-6 flex gap-6 overflow-x-auto no-scrollbar border-b border-slate-200 dark:border-white/10">
+<a class="relative pb-3 text-sm font-bold text-slate-900 dark:text-white gradient-border whitespace-nowrap" href="#">
+                Watch Later
+            </a>
+<a class="pb-3 text-sm font-bold text-slate-500 dark:text-slate-400 whitespace-nowrap hover:text-primary transition-colors" href="#">
+                Favorites
+            </a>
+<a class="pb-3 text-sm font-bold text-slate-500 dark:text-slate-400 whitespace-nowrap hover:text-primary transition-colors" href="#">
+                Watched
+            </a>
+<a class="pb-3 text-sm font-bold text-slate-500 dark:text-slate-400 whitespace-nowrap hover:text-primary transition-colors" href="#">
+                Dropped
+            </a>
+</nav>
+</header>
+<!-- Content Grid -->
+<main class="flex-1 px-6 py-4 pb-24">
+<div class="grid grid-cols-2 gap-x-4 gap-y-8">
+<!-- Movie Card 1 -->
+<div class="group flex flex-col gap-3">
+<div class="relative aspect-[2/3] w-full overflow-hidden rounded-xl shadow-lg">
+<img alt="Dune Movie Poster" class="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105" data-alt="Cinematic desert landscape with sci-fi architecture" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD2xuT75lpKSfPhZLbHfsjwZTGJ0gCCrNintHAjW4cHqPKA-BZ4_bg-bTwAfWdZUUAwuan16OLioTQEVbFRumlw5imppmBI8COHgmzSQX9_qm3E2Gno-sBF9v7cbQ3ZfKVaWRMTKhc-tEUktdjaw8rJIwViMscBCpbRu2gZXFj3h_3DmKiT6Hym02rNgFlcIlhanchvRpYnunn7bz9AsIzaaqmHW66b2hPN0MRw16dpDKXZ59qpkien64BACPOhUCzKE9rjEZ-Lhew"/>
+<div class="absolute top-2 right-2 glass-badge px-2 py-1 rounded text-[10px] font-bold text-primary uppercase tracking-wider">
+                        HDHub4u
+                    </div>
+</div>
+<div>
+<h3 class="text-base font-semibold text-slate-900 dark:text-white leading-tight">Dune: Part Two</h3>
+<p class="mt-1 text-xs text-slate-500 dark:text-slate-400">2024 • Sci-Fi</p>
+</div>
+</div>
+<!-- Movie Card 2 -->
+<div class="group flex flex-col gap-3">
+<div class="relative aspect-[2/3] w-full overflow-hidden rounded-xl shadow-lg">
+<img alt="Oppenheimer Poster" class="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105" data-alt="Intense close up of a man in a vintage hat" src="https://lh3.googleusercontent.com/aida-public/AB6AXuChwDt-VBdLyGSGR-ltqRzbzCvfgTo9vPERgJagHoaD6d6mZ_X7i9T9FT7mEKgCDwlij1Q-zo38qxWlREcrfz2qiJaZLa49Ghn7cVgAOQXHyiNl8_0wWlQ9xPX-zRf5v5g_S5I1r875LcmFaqlbA77X9gFHPKTA3NHSK8K1XtDaemH2DtgSJg5YGRfTZGS-NQslzZn1PWVbpaL8KULnChXH_MYZhxFXE7vu6Q3HhXxtQ1pqMH-3fh0Tndxcytx-fGyjn3nX1P6WeQg"/>
+<div class="absolute top-2 right-2 glass-badge px-2 py-1 rounded text-[10px] font-bold text-primary uppercase tracking-wider">
+                        HDHub4u
+                    </div>
+</div>
+<div>
+<h3 class="text-base font-semibold text-slate-900 dark:text-white leading-tight">Oppenheimer</h3>
+<p class="mt-1 text-xs text-slate-500 dark:text-slate-400">2023 • Biography</p>
+</div>
+</div>
+<!-- Movie Card 3 -->
+<div class="group flex flex-col gap-3">
+<div class="relative aspect-[2/3] w-full overflow-hidden rounded-xl shadow-lg">
+<img alt="Spider-Man Poster" class="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105" data-alt="Vibrant colorful stylized urban superhero art" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBCBv4e9kG_xImSDpWm2EwoPUZLgTI52EV7lt9QleM_t1zPU-b5K1A-eQUP7CRqN0XoirrQGeDVCpDrPja1VO0WKG_xCIVBcT_6tppOZDDoKfHQmvSs_Sf7fTMnpOHltOf9YqSsoQVDMIf1qhiGYDGDlTn8HfrtTrlwweoPtqZWXTtRrbRT9Tz292USgQOGIrowazUHlOUl7s6euDTvGjqosi_wb-qgxfZKBqaJYy1FkHCdpJ7eiYu3r2Y9_qe8qAE0MKhrToraut4"/>
+<div class="absolute top-2 right-2 glass-badge px-2 py-1 rounded text-[10px] font-bold text-primary uppercase tracking-wider">
+                        HDHub4u
+                    </div>
+</div>
+<div>
+<h3 class="text-base font-semibold text-slate-900 dark:text-white leading-tight">Across the Spider-Verse</h3>
+<p class="mt-1 text-xs text-slate-500 dark:text-slate-400">2023 • Animation</p>
+</div>
+</div>
+<!-- Movie Card 4 -->
+<div class="group flex flex-col gap-3">
+<div class="relative aspect-[2/3] w-full overflow-hidden rounded-xl shadow-lg">
+<img alt="The Batman Poster" class="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105" data-alt="Dark gritty atmosphere with red lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC0-LXgT3manqXIvKqI1VdvoOItWGoKDxyOr9kBmAU_kNL3SWeQVfqdKM7SLDqjyQnC896uDdJLkhqS1r5S-mYrhDWoAIAJox9LPqIzQvr-NYjZvuzHcgdRgNxgsoi-JTLcX_xpD7_gQQVJ-cU4mLdJtSmBR_SLRnOsrM7erz8INGFMXIDmNFflqiJF1IBjPmuSgRebWj0La3j2e-pUVr6hr8ozqeNM0RXwBlPBE2QcC-KtS4zqo50gdGKLDLgeSfE37-ouu-3NJu4"/>
+<div class="absolute top-2 right-2 glass-badge px-2 py-1 rounded text-[10px] font-bold text-primary uppercase tracking-wider">
+                        HDHub4u
+                    </div>
+</div>
+<div>
+<h3 class="text-base font-semibold text-slate-900 dark:text-white leading-tight">The Batman</h3>
+<p class="mt-1 text-xs text-slate-500 dark:text-slate-400">2022 • Action</p>
+</div>
+</div>
+<!-- Movie Card 5 -->
+<div class="group flex flex-col gap-3">
+<div class="relative aspect-[2/3] w-full overflow-hidden rounded-xl shadow-lg">
+<img alt="Avatar Poster" class="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105" data-alt="Lush alien jungle landscape at night" src="https://lh3.googleusercontent.com/aida-public/AB6AXuARoMPVYYLV4SftiAEz6fZZX-tbkAs4k4d-6xElBGadC2NqR9HJNghTSi9MdkjEeeKxRATQZhnhTUia8bVAMuxFm2SG_nq4yCL0fzZ341a07lHMFhp9EZrG6kosdo2sc9Mo1YbqK5JS5mfwcfCWlfWtUuEDpOSjF-vlBU-oD8hJ2tPmU79SzU84fiodiWlXoCkrkRcSHuz84JE1TYqwNryfQ3rtHfMCZ5ksr8AXBo3zDlINPq-mB3AGfI-V7WkhjIfrdiGB_WazEdk"/>
+<div class="absolute top-2 right-2 glass-badge px-2 py-1 rounded text-[10px] font-bold text-primary uppercase tracking-wider">
+                        HDHub4u
+                    </div>
+</div>
+<div>
+<h3 class="text-base font-semibold text-slate-900 dark:text-white leading-tight">Avatar: The Way of Water</h3>
+<p class="mt-1 text-xs text-slate-500 dark:text-slate-400">2022 • Adventure</p>
+</div>
+</div>
+<!-- Movie Card 6 -->
+<div class="group flex flex-col gap-3">
+<div class="relative aspect-[2/3] w-full overflow-hidden rounded-xl shadow-lg">
+<img alt="Interstellar Poster" class="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105" data-alt="Vast cosmic nebula with swirling stars" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDrCgAYPocxDzSsEeXi8zkbnwtsl6-Ww4alGvD9yC5whgNm4dCnzq5BnTnOLTHxN-hONg7sQ0NqEmB7Ak0_84TmtoSY_3lzdALviqERLYR3dbINkkEz0GP0AXx4ogi9MFi8vBy2Hs7YtNmaYvrdx7FeEITFqs-XuEy_NB4hLZ7jv5uzT1kle5EFb_Q5_4uihkwtLpFtGeqe0ARybK5m1lZzQALqWXKgfgNC3KkACKhC2ZXfNE5E8rzIYgHwvwlp3oux2S7jEqNNMRw"/>
+<div class="absolute top-2 right-2 glass-badge px-2 py-1 rounded text-[10px] font-bold text-primary uppercase tracking-wider">
+                        HDHub4u
+                    </div>
+</div>
+<div>
+<h3 class="text-base font-semibold text-slate-900 dark:text-white leading-tight">Interstellar</h3>
+<p class="mt-1 text-xs text-slate-500 dark:text-slate-400">2014 • Sci-Fi</p>
+</div>
+</div>
+</div>
+</main>
+<!-- Bottom Navigation Bar -->
+<nav class="fixed bottom-0 left-0 right-0 z-50 glass-nav px-6 pb-6 pt-3">
+<div class="flex items-center justify-between max-w-md mx-auto">
+<a class="flex flex-col items-center gap-1 text-slate-500 dark:text-slate-400" href="#">
+<span class="material-symbols-outlined">home</span>
+<span class="text-[10px] font-medium">Home</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-slate-500 dark:text-slate-400" href="#">
+<span class="material-symbols-outlined">search</span>
+<span class="text-[10px] font-medium">Search</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-primary" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1">video_library</span>
+<span class="text-[10px] font-bold">Library</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-slate-500 dark:text-slate-400" href="#">
+<span class="material-symbols-outlined">person</span>
+<span class="text-[10px] font-medium">Profile</span>
+</a>
+</div>
+</nav>
+</body></html>

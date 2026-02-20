@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>MovieHub Settings</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#1e94f6",
+                        "background-light": "#f5f7f8",
+                        "background-dark": "#0F0F1E", // Custom dark as requested
+                        "glass": "rgba(255, 255, 255, 0.03)",
+                        "glass-border": "rgba(255, 255, 255, 0.08)"
+                    },
+                    fontFamily: {
+                        "display": ["Plus Jakarta Sans", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "2xl": "1rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+<style>
+        .glass-card {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .gradient-accent {
+            background: linear-gradient(135deg, #1e94f6 0%, #a855f7 100%);
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100 min-h-screen flex flex-col">
+<!-- Header Section -->
+<header class="sticky top-0 z-50 glass-card border-b-0 px-6 py-6 flex items-center gap-4">
+<button class="flex items-center justify-center size-10 rounded-full hover:bg-white/10 transition-colors">
+<span class="material-symbols-outlined text-2xl">arrow_back</span>
+</button>
+<h1 class="text-[28px] font-bold tracking-tight">Settings</h1>
+</header>
+<!-- Main Content -->
+<main class="flex-1 overflow-y-auto px-4 py-6 space-y-6 custom-scrollbar">
+<!-- Section: Appearance -->
+<section class="space-y-3">
+<h2 class="px-2 text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">Appearance</h2>
+<div class="glass-card rounded-2xl p-4 space-y-6">
+<!-- Theme Selector -->
+<div class="space-y-3">
+<p class="text-sm font-medium">Theme</p>
+<div class="flex p-1 bg-white/5 rounded-xl">
+<button class="flex-1 py-2 text-sm font-medium rounded-lg transition-all">Light</button>
+<button class="flex-1 py-2 text-sm font-medium rounded-lg gradient-accent shadow-lg shadow-primary/20">Dark</button>
+<button class="flex-1 py-2 text-sm font-medium rounded-lg">System</button>
+</div>
+</div>
+<!-- Accent Color Picker -->
+<div class="space-y-3">
+<p class="text-sm font-medium">Accent Color</p>
+<div class="flex gap-4">
+<label class="size-8 rounded-full border-2 border-primary ring-2 ring-primary/20 cursor-pointer" style="background-color: #1e94f6;">
+<input checked="" class="hidden" name="accent" type="radio"/>
+</label>
+<label class="size-8 rounded-full border-2 border-transparent hover:border-white/20 cursor-pointer" style="background-color: #a855f7;">
+<input class="hidden" name="accent" type="radio"/>
+</label>
+<label class="size-8 rounded-full border-2 border-transparent hover:border-white/20 cursor-pointer" style="background-color: #ec4899;">
+<input class="hidden" name="accent" type="radio"/>
+</label>
+<label class="size-8 rounded-full border-2 border-transparent hover:border-white/20 cursor-pointer" style="background-color: #10b981;">
+<input class="hidden" name="accent" type="radio"/>
+</label>
+<label class="size-8 rounded-full border-2 border-transparent hover:border-white/20 cursor-pointer" style="background-color: #f59e0b;">
+<input class="hidden" name="accent" type="radio"/>
+</label>
+</div>
+</div>
+</div>
+</section>
+<!-- Section: Playback -->
+<section class="space-y-3">
+<h2 class="px-2 text-xs font-bold uppercase tracking-widest text-slate-400">Playback</h2>
+<div class="glass-card rounded-2xl overflow-hidden divide-y divide-white/5">
+<!-- Auto-play Toggle -->
+<div class="flex items-center justify-between p-4">
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-primary">play_circle</span>
+<div>
+<p class="text-sm font-semibold">Auto-play next episode</p>
+<p class="text-xs text-slate-400">Start next episode automatically</p>
+</div>
+</div>
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox"/>
+<div class="w-11 h-6 bg-white/10 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+</label>
+</div>
+<!-- Skip Intro Toggle -->
+<div class="flex items-center justify-between p-4">
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-primary">fast_forward</span>
+<div>
+<p class="text-sm font-semibold">Skip intro</p>
+<p class="text-xs text-slate-400">Automatically skip opening credits</p>
+</div>
+</div>
+<label class="relative inline-flex items-center cursor-pointer">
+<input class="sr-only peer" type="checkbox"/>
+<div class="w-11 h-6 bg-white/10 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+</label>
+</div>
+</div>
+</section>
+<!-- Section: Downloads -->
+<section class="space-y-3">
+<h2 class="px-2 text-xs font-bold uppercase tracking-widest text-slate-400">Downloads</h2>
+<div class="glass-card rounded-2xl overflow-hidden divide-y divide-white/5">
+<!-- Default Quality -->
+<div class="flex items-center justify-between p-4">
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-primary">high_quality</span>
+<div>
+<p class="text-sm font-semibold">Default quality</p>
+<p class="text-xs text-slate-400">Choose your preferred download resolution</p>
+</div>
+</div>
+<div class="flex items-center gap-1 text-primary text-sm font-medium">
+                        Full HD (1080p)
+                        <span class="material-symbols-outlined text-lg">expand_more</span>
+</div>
+</div>
+<!-- WiFi Only Toggle -->
+<div class="flex items-center justify-between p-4">
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-primary">wifi</span>
+<div>
+<p class="text-sm font-semibold">WiFi only</p>
+<p class="text-xs text-slate-400">Restrict downloads to WiFi connections</p>
+</div>
+</div>
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox"/>
+<div class="w-11 h-6 bg-white/10 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+</label>
+</div>
+</div>
+</section>
+<!-- Section: Notifications -->
+<section class="space-y-3">
+<h2 class="px-2 text-xs font-bold uppercase tracking-widest text-slate-400">Notifications</h2>
+<div class="glass-card rounded-2xl overflow-hidden">
+<a class="flex items-center justify-between p-4 hover:bg-white/5 transition-colors" href="#">
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-primary">notifications</span>
+<div>
+<p class="text-sm font-semibold">Notification Preferences</p>
+<p class="text-xs text-slate-400">Manage alerts and newsletters</p>
+</div>
+</div>
+<span class="material-symbols-outlined text-slate-500">chevron_right</span>
+</a>
+</div>
+</section>
+<!-- Section: Storage -->
+<section class="space-y-3">
+<h2 class="px-2 text-xs font-bold uppercase tracking-widest text-slate-400">Storage</h2>
+<div class="glass-card rounded-2xl p-4 flex items-center justify-between">
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-primary">database</span>
+<div>
+<p class="text-sm font-semibold">Cache Usage</p>
+<p class="text-xs text-slate-400">Currently using 245 MB</p>
+</div>
+</div>
+<button class="px-4 py-2 bg-white/5 hover:bg-white/10 rounded-lg text-xs font-bold transition-colors">CLEAR CACHE</button>
+</div>
+</section>
+<!-- Section: About -->
+<section class="space-y-3">
+<h2 class="px-2 text-xs font-bold uppercase tracking-widest text-slate-400">About</h2>
+<div class="glass-card rounded-2xl overflow-hidden divide-y divide-white/5">
+<div class="p-4 flex items-center justify-between">
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-primary">info</span>
+<div>
+<p class="text-sm font-semibold">App Version</p>
+<p class="text-xs text-slate-400">v4.12.0 (Stable Build)</p>
+</div>
+</div>
+<button class="px-4 py-2 gradient-accent rounded-lg text-xs font-bold shadow-lg shadow-primary/20">CHECK UPDATES</button>
+</div>
+<a class="flex items-center justify-between p-4 hover:bg-white/5 transition-colors" href="#">
+<p class="text-sm">Privacy Policy</p>
+<span class="material-symbols-outlined text-slate-500 text-lg">open_in_new</span>
+</a>
+<a class="flex items-center justify-between p-4 hover:bg-white/5 transition-colors" href="#">
+<p class="text-sm">Terms of Service</p>
+<span class="material-symbols-outlined text-slate-500 text-lg">open_in_new</span>
+</a>
+</div>
+</section>
+<!-- Section: Data Management -->
+<section class="space-y-3 pb-8">
+<h2 class="px-2 text-xs font-bold uppercase tracking-widest text-slate-400">Data Management</h2>
+<div class="glass-card rounded-2xl overflow-hidden divide-y divide-white/5">
+<button class="w-full text-left p-4 hover:bg-white/5 transition-colors">
+<p class="text-sm font-medium">Clear search history</p>
+</button>
+<button class="w-full text-left p-4 hover:bg-white/5 transition-colors">
+<p class="text-sm font-medium">Clear watchlist</p>
+</button>
+<button class="w-full text-left p-4 hover:bg-red-500/10 transition-colors">
+<p class="text-sm font-bold text-red-500">Reset all settings</p>
+</button>
+</div>
+</section>
+</main>
+<!-- Bottom Navigation Component Replacement -->
+<nav class="glass-card border-t-0 border-white/5 px-4 pb-6 pt-3 flex justify-around items-end">
+<a class="flex flex-col items-center gap-1 text-slate-400" href="#">
+<span class="material-symbols-outlined">home</span>
+<span class="text-[10px] font-medium">Home</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-slate-400" href="#">
+<span class="material-symbols-outlined">search</span>
+<span class="text-[10px] font-medium">Search</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-slate-400" href="#">
+<span class="material-symbols-outlined">download</span>
+<span class="text-[10px] font-medium">Downloads</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-primary" href="#">
+<span class="material-symbols-outlined fill-1">settings</span>
+<span class="text-[10px] font-medium">Settings</span>
+</a>
+</nav>
+</body></html>

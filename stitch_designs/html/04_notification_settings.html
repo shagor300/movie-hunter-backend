@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>MovieHub - Notification Settings</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#1e94f6",
+                        "background-light": "#f5f7f8",
+                        "background-dark": "#0F0F1E",
+                    },
+                    fontFamily: {
+                        "display": ["Plus Jakarta Sans", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+<style>
+        .glass {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .purple-gradient {
+            background: linear-gradient(135deg, #1e94f6 0%, #a855f7 100%);
+        }
+        .text-gradient {
+            background: linear-gradient(135deg, #1e94f6 0%, #a855f7 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100 min-h-screen flex flex-col">
+<!-- Header -->
+<header class="sticky top-0 z-50 glass px-4 py-4 flex items-center gap-4">
+<button class="flex items-center justify-center size-10 rounded-full hover:bg-white/10 transition-colors">
+<span class="material-symbols-outlined text-2xl">arrow_back</span>
+</button>
+<h1 class="text-2xl font-bold tracking-tight">Notifications</h1>
+</header>
+<main class="flex-1 overflow-y-auto px-4 py-6 space-y-8 max-w-2xl mx-auto w-full">
+<!-- Master Toggle Card -->
+<section>
+<div class="glass rounded-xl p-6 flex items-center justify-between border-primary/20">
+<div class="flex items-center gap-4">
+<div class="purple-gradient size-14 rounded-xl flex items-center justify-center shadow-lg shadow-primary/20">
+<span class="material-symbols-outlined text-white text-3xl">notifications_active</span>
+</div>
+<div>
+<h2 class="text-lg font-bold">Enable Notifications</h2>
+<p class="text-slate-400 text-sm">Master toggle for all app alerts</p>
+</div>
+</div>
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox"/>
+<div class="w-14 h-7 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:start-[4px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-primary"></div>
+</label>
+</div>
+</section>
+<!-- Categories Section -->
+<section class="space-y-4">
+<h3 class="text-xs font-bold tracking-[0.2em] text-slate-500 uppercase px-1">Categories</h3>
+<div class="glass rounded-xl overflow-hidden">
+<!-- Downloads -->
+<div class="flex items-center justify-between p-4 border-b border-white/5">
+<div class="flex items-center gap-4">
+<div class="size-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined">download</span>
+</div>
+<div>
+<p class="font-medium">Downloads</p>
+<p class="text-xs text-slate-400">Offline content readiness</p>
+</div>
+</div>
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox"/>
+<div class="w-11 h-6 bg-slate-700 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+</label>
+</div>
+<!-- New Movies -->
+<div class="flex items-center justify-between p-4 border-b border-white/5">
+<div class="flex items-center gap-4">
+<div class="size-10 rounded-lg bg-purple-500/10 flex items-center justify-center text-purple-400">
+<span class="material-symbols-outlined">movie</span>
+</div>
+<div>
+<p class="font-medium">New Movies</p>
+<p class="text-xs text-slate-400">Fresh releases in your genre</p>
+</div>
+</div>
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox"/>
+<div class="w-11 h-6 bg-slate-700 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+</label>
+</div>
+<!-- Recommendations -->
+<div class="flex items-center justify-between p-4 border-b border-white/5">
+<div class="flex items-center gap-4">
+<div class="size-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined">star</span>
+</div>
+<div>
+<p class="font-medium">Recommendations</p>
+<p class="text-xs text-slate-400">Curated picks just for you</p>
+</div>
+</div>
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox"/>
+<div class="w-11 h-6 bg-slate-700 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+</label>
+</div>
+<!-- App Updates -->
+<div class="flex items-center justify-between p-4 border-b border-white/5">
+<div class="flex items-center gap-4">
+<div class="size-10 rounded-lg bg-slate-500/10 flex items-center justify-center text-slate-400">
+<span class="material-symbols-outlined">system_update</span>
+</div>
+<div>
+<p class="font-medium">App Updates</p>
+<p class="text-xs text-slate-400">New features and improvements</p>
+</div>
+</div>
+<label class="relative inline-flex items-center cursor-pointer">
+<input class="sr-only peer" type="checkbox"/>
+<div class="w-11 h-6 bg-slate-700 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+</label>
+</div>
+<!-- Errors -->
+<div class="flex items-center justify-between p-4">
+<div class="flex items-center gap-4">
+<div class="size-10 rounded-lg bg-red-500/10 flex items-center justify-center text-red-400">
+<span class="material-symbols-outlined">error</span>
+</div>
+<div>
+<p class="font-medium">Errors</p>
+<p class="text-xs text-slate-400">Account and sync issues</p>
+</div>
+</div>
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox"/>
+<div class="w-11 h-6 bg-slate-700 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+</label>
+</div>
+</div>
+</section>
+<!-- Quiet Hours -->
+<section class="space-y-4">
+<h3 class="text-xs font-bold tracking-[0.2em] text-slate-500 uppercase px-1">Schedule</h3>
+<div class="glass rounded-xl p-6 space-y-6">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-4">
+<div class="size-10 rounded-lg bg-indigo-500/10 flex items-center justify-center text-indigo-400">
+<span class="material-symbols-outlined">bedtime</span>
+</div>
+<p class="font-medium">Enable quiet hours</p>
+</div>
+<label class="relative inline-flex items-center cursor-pointer">
+<input class="sr-only peer" type="checkbox"/>
+<div class="w-11 h-6 bg-slate-700 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+</label>
+</div>
+<div class="grid grid-cols-2 gap-4">
+<div class="space-y-2">
+<label class="text-xs text-slate-400 uppercase">From</label>
+<div class="glass rounded-lg px-4 py-3 flex items-center justify-between border-white/5">
+<span class="font-semibold">22:00</span>
+<span class="material-symbols-outlined text-sm text-slate-500">schedule</span>
+</div>
+</div>
+<div class="space-y-2">
+<label class="text-xs text-slate-400 uppercase">To</label>
+<div class="glass rounded-lg px-4 py-3 flex items-center justify-between border-white/5">
+<span class="font-semibold">08:00</span>
+<span class="material-symbols-outlined text-sm text-slate-500">schedule</span>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Style Section -->
+<section class="space-y-4">
+<h3 class="text-xs font-bold tracking-[0.2em] text-slate-500 uppercase px-1">Alert Style</h3>
+<div class="glass rounded-xl overflow-hidden">
+<div class="flex items-center justify-between p-4 border-b border-white/5">
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-slate-400">volume_up</span>
+<p class="font-medium">Sound</p>
+</div>
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox"/>
+<div class="w-11 h-6 bg-slate-700 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+</label>
+</div>
+<div class="flex items-center justify-between p-4 border-b border-white/5">
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-slate-400">vibration</span>
+<p class="font-medium">Vibration</p>
+</div>
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox"/>
+<div class="w-11 h-6 bg-slate-700 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+</label>
+</div>
+<div class="flex items-center justify-between p-4">
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-slate-400">visibility</span>
+<p class="font-medium">Show preview</p>
+</div>
+<label class="relative inline-flex items-center cursor-pointer">
+<input class="sr-only peer" type="checkbox"/>
+<div class="w-11 h-6 bg-slate-700 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+</label>
+</div>
+</div>
+</section>
+<div class="pb-24"></div>
+</main>
+<!-- Navigation Bar -->
+<nav class="fixed bottom-0 left-0 right-0 glass border-t border-white/10 px-6 py-3 flex justify-between items-center z-50">
+<a class="flex flex-col items-center gap-1 text-slate-500 hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined">home</span>
+<span class="text-[10px] font-medium">Home</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-slate-500 hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined">movie</span>
+<span class="text-[10px] font-medium">Movies</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-slate-500 hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined">search</span>
+<span class="text-[10px] font-medium">Search</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-primary" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1">settings</span>
+<span class="text-[10px] font-medium">Settings</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-slate-500 hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined">person</span>
+<span class="text-[10px] font-medium">Profile</span>
+</a>
+</nav>
+</body></html>

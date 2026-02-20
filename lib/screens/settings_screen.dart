@@ -10,6 +10,7 @@ import '../controllers/watchlist_controller.dart';
 import '../controllers/update_controller.dart';
 import '../models/theme_preferences.dart';
 import 'notification_settings_screen.dart';
+import '../utils/stitch_design_system.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
@@ -19,13 +20,13 @@ class SettingsScreen extends StatelessWidget {
     final tc = Get.find<ThemeController>();
 
     return Scaffold(
-      backgroundColor: const Color(0xFF0F0F1E),
+      backgroundColor: StitchColors.bgDark,
       appBar: AppBar(
-        backgroundColor: const Color(0xFF0F0F1E),
+        backgroundColor: StitchColors.bgDark,
         elevation: 0,
         title: Text(
           'Settings',
-          style: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 22),
+          style: StitchText.heading(fontWeight: FontWeight.bold, fontSize: 22),
         ),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new, size: 20),
@@ -54,7 +55,7 @@ class SettingsScreen extends StatelessWidget {
                       label: 'Dark',
                       icon: Icons.dark_mode,
                       selected: prefs.themeMode == AppThemeMode.dark,
-                      color: const Color(0xFF7C4DFF),
+                      color: StitchColors.emerald,
                       onTap: () => tc.setThemeMode(AppThemeMode.dark),
                     ),
                     const SizedBox(width: 10),
@@ -62,7 +63,7 @@ class SettingsScreen extends StatelessWidget {
                       label: 'AMOLED',
                       icon: Icons.brightness_2,
                       selected: prefs.themeMode == AppThemeMode.amoled,
-                      color: Colors.white,
+                      color: StitchColors.emerald,
                       onTap: () => tc.setThemeMode(AppThemeMode.amoled),
                     ),
                     const SizedBox(width: 10),
@@ -70,7 +71,7 @@ class SettingsScreen extends StatelessWidget {
                       label: 'Light',
                       icon: Icons.light_mode,
                       selected: prefs.themeMode == AppThemeMode.light,
-                      color: Colors.amber,
+                      color: StitchColors.emerald,
                       onTap: () => tc.setThemeMode(AppThemeMode.light),
                     ),
                   ],
@@ -127,9 +128,8 @@ class SettingsScreen extends StatelessWidget {
                   child: Text(
                     ThemeController.accentColorNames[prefs.accentColorIndex
                         .clamp(0, ThemeController.accentColorNames.length - 1)],
-                    style: GoogleFonts.inter(
-                      color: Colors.white38,
-                      fontSize: 12,
+                    style: StitchText.caption(
+                      color: StitchColors.textSecondary.withValues(alpha: 0.5),
                     ),
                   ),
                 ),
@@ -151,13 +151,13 @@ class SettingsScreen extends StatelessWidget {
                         vertical: 4,
                       ),
                       decoration: BoxDecoration(
-                        color: Colors.blueAccent.withValues(alpha: 0.15),
+                        color: StitchColors.emerald.withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(
                         '${prefs.fontSize.round()}',
-                        style: GoogleFonts.inter(
-                          color: Colors.blueAccent,
+                        style: StitchText.body(
+                          color: StitchColors.emerald,
                           fontWeight: FontWeight.bold,
                           fontSize: 13,
                         ),
@@ -186,15 +186,15 @@ class SettingsScreen extends StatelessWidget {
                   children: [
                     Text(
                       'Aa',
-                      style: GoogleFonts.inter(
-                        color: Colors.white24,
+                      style: StitchText.caption(
+                        color: StitchColors.textTertiary,
                         fontSize: 11,
                       ),
                     ),
                     Text(
                       'Aa',
-                      style: GoogleFonts.inter(
-                        color: Colors.white24,
+                      style: StitchText.body(
+                        color: StitchColors.textTertiary,
                         fontSize: 18,
                       ),
                     ),
@@ -205,13 +205,13 @@ class SettingsScreen extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.05),
+                    color: StitchColors.glassBackground,
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Text(
                     'Preview: The quick brown fox jumps over the lazy dog',
-                    style: GoogleFonts.inter(
-                      color: Colors.white70,
+                    style: StitchText.body(
+                      color: StitchColors.textSecondary,
                       fontSize: prefs.fontSize,
                     ),
                   ),
@@ -278,10 +278,10 @@ class SettingsScreen extends StatelessWidget {
                               child: Center(
                                 child: Text(
                                   '$count',
-                                  style: GoogleFonts.inter(
+                                  style: StitchText.body(
                                     color: isSelected
-                                        ? tc.accentColor
-                                        : Colors.white38,
+                                        ? StitchColors.emerald
+                                        : StitchColors.textTertiary,
                                     fontWeight: FontWeight.bold,
                                     fontSize: 14,
                                   ),
@@ -346,17 +346,15 @@ class SettingsScreen extends StatelessWidget {
                               children: [
                                 Text(
                                   'Notifications',
-                                  style: GoogleFonts.inter(
-                                    color: Colors.white,
+                                  style: StitchText.body(
                                     fontWeight: FontWeight.w600,
                                     fontSize: 14,
                                   ),
                                 ),
                                 Text(
                                   s.masterEnabled ? 'Enabled' : 'Disabled',
-                                  style: GoogleFonts.inter(
-                                    color: Colors.white38,
-                                    fontSize: 12,
+                                  style: StitchText.caption(
+                                    color: StitchColors.textTertiary,
                                   ),
                                 ),
                               ],
@@ -421,20 +419,22 @@ class SettingsScreen extends StatelessWidget {
                         '✅ Cache Cleared',
                         'Movie & image cache has been cleared',
                         snackPosition: SnackPosition.BOTTOM,
-                        backgroundColor: Colors.green.withValues(alpha: 0.85),
-                        colorText: Colors.white,
+                        backgroundColor: StitchColors.emerald.withValues(
+                          alpha: 0.85,
+                        ),
+                        colorText: Colors.black,
                         margin: const EdgeInsets.all(20),
                         duration: const Duration(seconds: 2),
                       );
                     },
                   ),
                 ),
-                const Divider(color: Colors.white10, height: 20),
+                const Divider(color: StitchColors.glassBorder, height: 20),
                 _ActionTile(
                   icon: Icons.bookmark_remove_outlined,
                   title: 'Clear Watchlist',
                   subtitle: 'Remove all movies from your watchlist',
-                  iconColor: Colors.redAccent,
+                  iconColor: StitchColors.redDanger,
                   onTap: () => _confirmAction(
                     context,
                     title: 'Clear Watchlist?',
@@ -451,20 +451,22 @@ class SettingsScreen extends StatelessWidget {
                         '✅ Watchlist Cleared',
                         'All watchlist items removed',
                         snackPosition: SnackPosition.BOTTOM,
-                        backgroundColor: Colors.green.withValues(alpha: 0.85),
-                        colorText: Colors.white,
+                        backgroundColor: StitchColors.emerald.withValues(
+                          alpha: 0.85,
+                        ),
+                        colorText: Colors.black,
                         margin: const EdgeInsets.all(20),
                         duration: const Duration(seconds: 2),
                       );
                     },
                   ),
                 ),
-                const Divider(color: Colors.white10, height: 20),
+                const Divider(color: StitchColors.glassBorder, height: 20),
                 _ActionTile(
                   icon: Icons.delete_sweep_outlined,
                   title: 'Clear Download History',
                   subtitle: 'Remove download records (files remain)',
-                  iconColor: Colors.amber,
+                  iconColor: const Color(0xFFF59E0B),
                   onTap: () => _confirmAction(
                     context,
                     title: 'Clear Download History?',
@@ -477,20 +479,22 @@ class SettingsScreen extends StatelessWidget {
                         '✅ History Cleared',
                         'Download history has been cleared',
                         snackPosition: SnackPosition.BOTTOM,
-                        backgroundColor: Colors.green.withValues(alpha: 0.85),
-                        colorText: Colors.white,
+                        backgroundColor: StitchColors.emerald.withValues(
+                          alpha: 0.85,
+                        ),
+                        colorText: Colors.black,
                         margin: const EdgeInsets.all(20),
                         duration: const Duration(seconds: 2),
                       );
                     },
                   ),
                 ),
-                const Divider(color: Colors.white10, height: 20),
+                const Divider(color: StitchColors.glassBorder, height: 20),
                 _ActionTile(
                   icon: Icons.restart_alt,
                   title: 'Reset All Settings',
                   subtitle: 'Restore all settings to default',
-                  iconColor: Colors.red,
+                  iconColor: StitchColors.redDanger,
                   onTap: () => _confirmAction(
                     context,
                     title: 'Reset All Settings?',
@@ -498,7 +502,7 @@ class SettingsScreen extends StatelessWidget {
                         'This will restore theme, layout, and all preferences to their default values.',
                     onConfirm: () {
                       tc.setThemeMode(AppThemeMode.dark);
-                      tc.setAccentColor(1);
+                      tc.setAccentColor(3); // Emerald index
                       tc.setFontSize(14.0);
                       tc.setGridColumnCount(2);
                       if (!prefs.useGridLayout) tc.toggleGridLayout();
@@ -507,8 +511,10 @@ class SettingsScreen extends StatelessWidget {
                         '✅ Settings Reset',
                         'All settings restored to default',
                         snackPosition: SnackPosition.BOTTOM,
-                        backgroundColor: Colors.green.withValues(alpha: 0.85),
-                        colorText: Colors.white,
+                        backgroundColor: StitchColors.emerald.withValues(
+                          alpha: 0.85,
+                        ),
+                        colorText: Colors.black,
                         margin: const EdgeInsets.all(20),
                         duration: const Duration(seconds: 2),
                       );
@@ -574,13 +580,16 @@ class SettingsScreen extends StatelessWidget {
                               ),
                               const SizedBox(height: 8),
                               ...[
+                                'Phase 3: Experience Screens (Stitch Redesign)',
+                                'Phase 2: Home Shell & Core Tabs',
+                                'Phase 1: Theme & Entry Screens',
                                 'Personalized For You tab with 20+ sections',
                                 'Voice search support',
                                 'Grid & list view toggle',
                                 'Customizable themes & accent colors',
                                 'Smart notification system',
                                 'Download manager with progress tracking',
-                                'Watchlist with categories (Watching, Completed, Favorites)',
+                                'Watchlist with categories',
                                 'Video player with resume support',
                               ].map(
                                 (item) => Padding(
@@ -591,15 +600,15 @@ class SettingsScreen extends StatelessWidget {
                                     children: [
                                       Text(
                                         '• ',
-                                        style: GoogleFonts.inter(
-                                          color: Colors.white70,
+                                        style: StitchText.body(
+                                          color: StitchColors.textSecondary,
                                         ),
                                       ),
                                       Expanded(
                                         child: Text(
                                           item,
-                                          style: GoogleFonts.inter(
-                                            color: Colors.white70,
+                                          style: StitchText.body(
+                                            color: StitchColors.textSecondary,
                                             fontSize: 13,
                                           ),
                                         ),
@@ -629,13 +638,18 @@ class SettingsScreen extends StatelessWidget {
                                       fontWeight: FontWeight.w600,
                                     ),
                                   ),
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: tc.accentColor,
-                                    foregroundColor: Colors.white,
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(10),
-                                    ),
-                                  ),
+                                  style:
+                                      ElevatedButton.styleFrom(
+                                        backgroundColor: StitchColors.emerald,
+                                        foregroundColor: Colors.black,
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(
+                                            10,
+                                          ),
+                                        ),
+                                      ).copyWith(
+                                        elevation: WidgetStateProperty.all(0),
+                                      ),
                                 ),
                               ),
                             ],
@@ -646,7 +660,9 @@ class SettingsScreen extends StatelessWidget {
                             onPressed: () => Navigator.pop(context),
                             child: Text(
                               'Close',
-                              style: GoogleFonts.inter(color: Colors.white60),
+                              style: StitchText.body(
+                                color: StitchColors.textTertiary,
+                              ),
                             ),
                           ),
                         ],
@@ -773,7 +789,10 @@ class SettingsScreen extends StatelessWidget {
             Center(
               child: Text(
                 'Made with ❤️ for movie lovers',
-                style: GoogleFonts.inter(color: Colors.white24, fontSize: 12),
+                style: StitchText.caption(
+                  color: StitchColors.textTertiary,
+                  fontSize: 12,
+                ),
               ),
             ),
             const SizedBox(height: 30),
@@ -792,26 +811,22 @@ class SettingsScreen extends StatelessWidget {
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
-        backgroundColor: const Color(0xFF1A1A2E),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        backgroundColor: StitchColors.surfaceDark,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: Text(
           title,
-          style: GoogleFonts.poppins(
-            color: Colors.white,
-            fontWeight: FontWeight.bold,
-            fontSize: 18,
-          ),
+          style: StitchText.heading(color: StitchColors.textPrimary),
         ),
         content: Text(
           message,
-          style: GoogleFonts.inter(color: Colors.white70, fontSize: 14),
+          style: StitchText.body(color: StitchColors.textSecondary),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
             child: Text(
               'Cancel',
-              style: GoogleFonts.inter(color: Colors.white60),
+              style: StitchText.body(color: StitchColors.textTertiary),
             ),
           ),
           ElevatedButton(
@@ -820,14 +835,15 @@ class SettingsScreen extends StatelessWidget {
               onConfirm();
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.redAccent,
+              backgroundColor: StitchColors.emerald,
+              foregroundColor: Colors.black,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(10),
               ),
-            ),
+            ).copyWith(elevation: WidgetStateProperty.all(0)),
             child: Text(
               'Confirm',
-              style: GoogleFonts.inter(fontWeight: FontWeight.bold),
+              style: StitchText.body(fontWeight: FontWeight.bold),
             ),
           ),
         ],
@@ -848,19 +864,18 @@ class _SectionHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(left: 4, top: 8),
+      padding: const EdgeInsets.only(left: 4, top: 16, bottom: 8),
       child: Row(
         children: [
-          Icon(icon, color: Colors.white38, size: 18),
+          Icon(icon, color: StitchColors.emerald, size: 18),
           const SizedBox(width: 8),
           Text(
             title.toUpperCase(),
-            style: GoogleFonts.inter(
-              color: Colors.white38,
+            style: StitchText.heading(
+              color: StitchColors.emerald,
               fontSize: 12,
               fontWeight: FontWeight.w700,
-              letterSpacing: 1.2,
-            ),
+            ).copyWith(letterSpacing: 1.2),
           ),
         ],
       ),
@@ -877,13 +892,16 @@ class _SettingsCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.04),
+        color: StitchColors.glassBackground,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
+        border: Border.all(color: StitchColors.glassBorder),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: children,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: children,
+        ),
       ),
     );
   }
@@ -897,11 +915,7 @@ class _SettingsLabel extends StatelessWidget {
   Widget build(BuildContext context) {
     return Text(
       text,
-      style: GoogleFonts.inter(
-        color: Colors.white,
-        fontWeight: FontWeight.w600,
-        fontSize: 15,
-      ),
+      style: StitchText.body(fontWeight: FontWeight.w600, fontSize: 15),
     );
   }
 }
@@ -931,22 +945,27 @@ class _ThemeChip extends StatelessWidget {
           decoration: BoxDecoration(
             color: selected
                 ? color.withValues(alpha: 0.15)
-                : Colors.white.withValues(alpha: 0.04),
+                : StitchColors.slateChip.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: selected ? color.withValues(alpha: 0.5) : Colors.white10,
+              color: selected
+                  ? color.withValues(alpha: 0.5)
+                  : StitchColors.glassBorder,
               width: selected ? 1.5 : 1,
             ),
           ),
           child: Column(
             children: [
-              Icon(icon, color: selected ? color : Colors.white38, size: 22),
+              Icon(
+                icon,
+                color: selected ? color : StitchColors.textTertiary,
+                size: 22,
+              ),
               const SizedBox(height: 6),
               Text(
                 label,
-                style: GoogleFonts.inter(
-                  color: selected ? color : Colors.white38,
-                  fontSize: 12,
+                style: StitchText.caption(
+                  color: selected ? color : StitchColors.textTertiary,
                   fontWeight: selected ? FontWeight.bold : FontWeight.normal,
                 ),
               ),
@@ -978,7 +997,7 @@ class _ToggleTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        Icon(icon, color: Colors.white38, size: 20),
+        Icon(icon, color: StitchColors.textTertiary, size: 20),
         const SizedBox(width: 12),
         Expanded(
           child: Column(
@@ -986,15 +1005,14 @@ class _ToggleTile extends StatelessWidget {
             children: [
               Text(
                 title,
-                style: GoogleFonts.inter(
-                  color: Colors.white,
+                style: StitchText.body(
                   fontWeight: FontWeight.w600,
                   fontSize: 14,
                 ),
               ),
               Text(
                 subtitle,
-                style: GoogleFonts.inter(color: Colors.white38, fontSize: 12),
+                style: StitchText.caption(color: StitchColors.textTertiary),
               ),
             ],
           ),
@@ -1002,7 +1020,7 @@ class _ToggleTile extends StatelessWidget {
         Switch(
           value: value,
           onChanged: onChanged,
-          activeThumbColor: accentColor,
+          activeTrackColor: StitchColors.emerald,
         ),
       ],
     );
@@ -1048,23 +1066,23 @@ class _ActionTile extends StatelessWidget {
                 children: [
                   Text(
                     title,
-                    style: GoogleFonts.inter(
-                      color: Colors.white,
+                    style: StitchText.body(
                       fontWeight: FontWeight.w600,
                       fontSize: 14,
                     ),
                   ),
                   Text(
                     subtitle,
-                    style: GoogleFonts.inter(
-                      color: Colors.white38,
-                      fontSize: 12,
-                    ),
+                    style: StitchText.caption(color: StitchColors.textTertiary),
                   ),
                 ],
               ),
             ),
-            const Icon(Icons.chevron_right, color: Colors.white24, size: 20),
+            const Icon(
+              Icons.chevron_right,
+              color: StitchColors.glassBorder,
+              size: 20,
+            ),
           ],
         ),
       ),

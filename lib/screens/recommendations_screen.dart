@@ -1,4 +1,5 @@
 import 'dart:math';
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -9,6 +10,7 @@ import '../models/watchlist_movie.dart';
 import '../services/recommendation_service.dart';
 import '../services/tmdb_service.dart';
 import '../controllers/watchlist_controller.dart';
+import '../utils/stitch_design_system.dart';
 import '../widgets/continue_watching_section.dart';
 import 'details_screen.dart';
 import 'settings_screen.dart';
@@ -59,7 +61,7 @@ class _RecommendationsScreenState extends State<RecommendationsScreen>
 
     final sections = <_RecommendationSection>[];
 
-    // ── 1. Trending Now — always first ──
+    // ── 1. Trending Now ──
     try {
       final trending = await _tmdbService.getTrendingMovies();
       if (trending.isNotEmpty) {
@@ -144,7 +146,7 @@ class _RecommendationsScreenState extends State<RecommendationsScreen>
       if (s != null) sections.add(s);
     }
 
-    // ── 5. Existing genre sections (parallel) ──
+    // ── 5. Genre sections (parallel) ──
     final genreSections = await Future.wait([
       _fetchGenreSection('Top Action', 28, Icons.sports_mma),
       _fetchGenreSection('Drama Masterpieces', 18, Icons.theater_comedy),
@@ -256,7 +258,6 @@ class _RecommendationsScreenState extends State<RecommendationsScreen>
     return null;
   }
 
-  /// Fetch a section using arbitrary TMDB discover parameters.
   Future<_RecommendationSection?> _fetchDiscoverSection(
     String title,
     IconData icon,
@@ -273,20 +274,18 @@ class _RecommendationsScreenState extends State<RecommendationsScreen>
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-
     return Scaffold(
       body: _isLoading
-          ? _buildLoading(colorScheme)
+          ? _buildLoading()
           : _sections.isEmpty
           ? RefreshIndicator(
               onRefresh: _loadRecommendations,
-              color: colorScheme.primary,
+              color: StitchColors.emerald,
               child: ListView(
                 physics: const AlwaysScrollableScrollPhysics(),
                 children: [
                   SizedBox(height: MediaQuery.of(context).size.height * 0.3),
-                  _buildEmpty(colorScheme),
+                  _buildEmpty(),
                 ],
               ),
             )
@@ -294,26 +293,18 @@ class _RecommendationsScreenState extends State<RecommendationsScreen>
               opacity: _fadeAnim,
               child: RefreshIndicator(
                 onRefresh: _loadRecommendations,
-                color: colorScheme.primary,
+                color: StitchColors.emerald,
                 child: CustomScrollView(
                   physics: const BouncingScrollPhysics(
                     parent: AlwaysScrollableScrollPhysics(),
                   ),
                   slivers: [
-                    // Hero banner + AppBar
-                    _buildHeroSliver(colorScheme),
-
-                    // Continue Watching
+                    _buildHeroSliver(),
                     const SliverToBoxAdapter(child: ContinueWatchingSection()),
-
-                    // Movie sections
                     ..._sections.map(
-                      (s) => SliverToBoxAdapter(
-                        child: _buildSection(s, colorScheme),
-                      ),
+                      (s) => SliverToBoxAdapter(child: _buildSection(s)),
                     ),
-
-                    const SliverToBoxAdapter(child: SizedBox(height: 24)),
+                    const SliverToBoxAdapter(child: SizedBox(height: 100)),
                   ],
                 ),
               ),
@@ -321,22 +312,34 @@ class _RecommendationsScreenState extends State<RecommendationsScreen>
     );
   }
 
-  // ── Hero Banner with SliverAppBar ──────────────────────────────────────
+  // ── Hero Banner with SliverAppBar ──
 
-  Widget _buildHeroSliver(ColorScheme colorScheme) {
+  Widget _buildHeroSliver() {
     if (_featuredMovie == null) {
       return SliverAppBar(
         floating: true,
         snap: true,
-        backgroundColor: colorScheme.surface,
-        title: Text(
-          'For You',
-          style: GoogleFonts.poppins(fontWeight: FontWeight.w700, fontSize: 22),
+        backgroundColor: StitchColors.bgDark,
+        title: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text('Movie', style: StitchText.display(fontSize: 22)),
+            Text(
+              'Hub',
+              style: StitchText.display(
+                fontSize: 22,
+                color: StitchColors.emerald,
+              ),
+            ),
+          ],
         ),
         centerTitle: true,
         actions: [
           IconButton(
-            icon: const Icon(Icons.settings_outlined),
+            icon: const Icon(
+              Icons.settings_outlined,
+              color: StitchColors.textSecondary,
+            ),
             tooltip: 'Settings',
             onPressed: () => Navigator.push(
               context,
@@ -350,18 +353,30 @@ class _RecommendationsScreenState extends State<RecommendationsScreen>
     final movie = _featuredMovie!;
 
     return SliverAppBar(
-      expandedHeight: 380,
+      expandedHeight: 420,
       floating: false,
       pinned: true,
-      backgroundColor: colorScheme.surface,
-      title: Text(
-        'For You',
-        style: GoogleFonts.poppins(fontWeight: FontWeight.w700, fontSize: 22),
+      backgroundColor: StitchColors.bgDark,
+      title: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text('Movie', style: StitchText.display(fontSize: 22)),
+          Text(
+            'Hub',
+            style: StitchText.display(
+              fontSize: 22,
+              color: StitchColors.emerald,
+            ),
+          ),
+        ],
       ),
       centerTitle: true,
       actions: [
         IconButton(
-          icon: const Icon(Icons.settings_outlined),
+          icon: const Icon(
+            Icons.settings_outlined,
+            color: StitchColors.textSecondary,
+          ),
           tooltip: 'Settings',
           onPressed: () => Navigator.push(
             context,
@@ -387,22 +402,22 @@ class _RecommendationsScreenState extends State<RecommendationsScreen>
                   ),
                   fit: BoxFit.cover,
                   memCacheWidth: 780,
-                  placeholder: (_, _) => Container(color: colorScheme.surface),
+                  placeholder: (_, _) => Container(color: StitchColors.bgDark),
                   errorWidget: (_, _, _) =>
-                      Container(color: colorScheme.surface),
+                      Container(color: StitchColors.bgDark),
                 ),
 
-              // Gradient overlay
+              // Cinematic gradient overlay
               Container(
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
                     colors: [
-                      colorScheme.surface.withValues(alpha: 0.3),
-                      colorScheme.surface.withValues(alpha: 0.1),
-                      colorScheme.surface.withValues(alpha: 0.7),
-                      colorScheme.surface,
+                      StitchColors.bgDark.withValues(alpha: 0.3),
+                      Colors.transparent,
+                      StitchColors.bgDark.withValues(alpha: 0.8),
+                      StitchColors.bgDark,
                     ],
                     stops: const [0.0, 0.3, 0.7, 1.0],
                   ),
@@ -417,36 +432,31 @@ class _RecommendationsScreenState extends State<RecommendationsScreen>
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // "FEATURED" badge
+                    // "FEATURED" badge — emerald
                     Container(
                       padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 4,
+                        horizontal: 12,
+                        vertical: 5,
                       ),
                       decoration: BoxDecoration(
-                        color: colorScheme.primary,
-                        borderRadius: BorderRadius.circular(6),
+                        gradient: StitchGradients.accent,
+                        borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(
                         'FEATURED',
-                        style: GoogleFonts.inter(
+                        style: GoogleFonts.plusJakartaSans(
                           fontSize: 10,
                           fontWeight: FontWeight.w800,
-                          letterSpacing: 1.2,
-                          color: colorScheme.onPrimary,
+                          letterSpacing: 1.5,
+                          color: Colors.white,
                         ),
                       ),
                     ),
-                    const SizedBox(height: 10),
+                    const SizedBox(height: 12),
                     // Title
                     Text(
                       movie.title,
-                      style: GoogleFonts.poppins(
-                        fontSize: 26,
-                        fontWeight: FontWeight.w800,
-                        color: Colors.white,
-                        height: 1.2,
-                      ),
+                      style: StitchText.movieTitle(fontSize: 28),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -455,14 +465,17 @@ class _RecommendationsScreenState extends State<RecommendationsScreen>
                     Row(
                       children: [
                         if (movie.rating > 0) ...[
-                          const Icon(Icons.star, color: Colors.amber, size: 16),
+                          const Icon(
+                            Icons.star_rounded,
+                            color: Colors.amber,
+                            size: 16,
+                          ),
                           const SizedBox(width: 4),
                           Text(
                             movie.rating.toStringAsFixed(1),
-                            style: GoogleFonts.inter(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
+                            style: StitchText.body(
                               fontSize: 14,
+                              fontWeight: FontWeight.w700,
                             ),
                           ),
                           const SizedBox(width: 16),
@@ -470,65 +483,93 @@ class _RecommendationsScreenState extends State<RecommendationsScreen>
                         if (movie.year.isNotEmpty) ...[
                           Icon(
                             Icons.calendar_today,
-                            color: Colors.white60,
+                            color: StitchColors.textTertiary,
                             size: 14,
                           ),
                           const SizedBox(width: 4),
                           Text(
                             movie.year,
-                            style: GoogleFonts.inter(
-                              color: Colors.white70,
-                              fontSize: 13,
-                            ),
+                            style: StitchText.caption(fontSize: 13),
                           ),
                         ],
                       ],
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 14),
                     // Action buttons
                     Row(
                       children: [
                         Expanded(
-                          child: ElevatedButton.icon(
-                            onPressed: () => Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => DetailsScreen(movie: movie),
-                              ),
+                          child: Container(
+                            decoration: BoxDecoration(
+                              gradient: StitchGradients.accent,
+                              borderRadius: BorderRadius.circular(14),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: StitchColors.emerald.withValues(
+                                    alpha: 0.3,
+                                  ),
+                                  blurRadius: 16,
+                                  offset: const Offset(0, 4),
+                                ),
+                              ],
                             ),
-                            icon: const Icon(Icons.play_arrow, size: 20),
-                            label: Text(
-                              'Watch Now',
-                              style: GoogleFonts.inter(
-                                fontWeight: FontWeight.w700,
-                                fontSize: 14,
+                            child: ElevatedButton.icon(
+                              onPressed: () => Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => DetailsScreen(movie: movie),
+                                ),
                               ),
-                            ),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: colorScheme.primary,
-                              foregroundColor: colorScheme.onPrimary,
-                              padding: const EdgeInsets.symmetric(vertical: 12),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
+                              icon: const Icon(
+                                Icons.play_arrow_rounded,
+                                size: 22,
+                              ),
+                              label: Text(
+                                'Watch Now',
+                                style: GoogleFonts.plusJakartaSans(
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 14,
+                                ),
+                              ),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.transparent,
+                                foregroundColor: Colors.white,
+                                shadowColor: Colors.transparent,
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 14,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(14),
+                                ),
                               ),
                             ),
                           ),
                         ),
                         const SizedBox(width: 12),
-                        Container(
-                          decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.15),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: IconButton(
-                            icon: const Icon(
-                              Icons.info_outline,
-                              color: Colors.white,
-                            ),
-                            onPressed: () => Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => DetailsScreen(movie: movie),
+                        // Info button — glass
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(14),
+                          child: BackdropFilter(
+                            filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: Colors.white.withValues(alpha: 0.1),
+                                borderRadius: BorderRadius.circular(14),
+                                border: Border.all(
+                                  color: Colors.white.withValues(alpha: 0.15),
+                                ),
+                              ),
+                              child: IconButton(
+                                icon: const Icon(
+                                  Icons.info_outline,
+                                  color: Colors.white,
+                                ),
+                                onPressed: () => Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => DetailsScreen(movie: movie),
+                                  ),
+                                ),
                               ),
                             ),
                           ),
@@ -545,19 +586,18 @@ class _RecommendationsScreenState extends State<RecommendationsScreen>
     );
   }
 
-  // ── Loading Shimmer ────────────────────────────────────────────────────
+  // ── Loading Shimmer ──
 
-  Widget _buildLoading(ColorScheme colorScheme) {
+  Widget _buildLoading() {
     return SafeArea(
       child: ListView.builder(
         padding: const EdgeInsets.all(16),
         itemCount: 4,
         itemBuilder: (context, index) {
           if (index == 0) {
-            // Hero shimmer
             return Shimmer.fromColors(
-              baseColor: colorScheme.surface,
-              highlightColor: colorScheme.onSurface.withValues(alpha: 0.05),
+              baseColor: StitchColors.slateChip,
+              highlightColor: StitchColors.slateChipBorder,
               child: Container(
                 height: 280,
                 margin: const EdgeInsets.only(bottom: 24),
@@ -574,8 +614,8 @@ class _RecommendationsScreenState extends State<RecommendationsScreen>
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Shimmer.fromColors(
-                  baseColor: colorScheme.surface,
-                  highlightColor: colorScheme.onSurface.withValues(alpha: 0.05),
+                  baseColor: StitchColors.slateChip,
+                  highlightColor: StitchColors.slateChipBorder,
                   child: Container(
                     width: 180,
                     height: 24,
@@ -593,10 +633,8 @@ class _RecommendationsScreenState extends State<RecommendationsScreen>
                     itemCount: 4,
                     itemBuilder: (context, i) {
                       return Shimmer.fromColors(
-                        baseColor: colorScheme.surface,
-                        highlightColor: colorScheme.onSurface.withValues(
-                          alpha: 0.05,
-                        ),
+                        baseColor: StitchColors.slateChip,
+                        highlightColor: StitchColors.slateChipBorder,
                         child: Container(
                           width: 130,
                           margin: const EdgeInsets.only(right: 12),
@@ -617,58 +655,68 @@ class _RecommendationsScreenState extends State<RecommendationsScreen>
     );
   }
 
-  // ── Empty State ────────────────────────────────────────────────────────
+  // ── Empty State ──
 
-  Widget _buildEmpty(ColorScheme colorScheme) {
+  Widget _buildEmpty() {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Container(
-            padding: const EdgeInsets.all(24),
+            padding: const EdgeInsets.all(28),
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: colorScheme.primary.withValues(alpha: 0.1),
+              color: StitchColors.emerald.withValues(alpha: 0.1),
             ),
             child: Icon(
               _hasError ? Icons.wifi_off_rounded : Icons.movie_filter,
               size: 56,
-              color: colorScheme.primary.withValues(alpha: 0.5),
+              color: StitchColors.emerald.withValues(alpha: 0.5),
             ),
           ),
           const SizedBox(height: 20),
           Text(
             _hasError ? 'Something went wrong' : 'No recommendations yet',
-            style: GoogleFonts.poppins(
-              color: colorScheme.onSurface.withValues(alpha: 0.7),
-              fontSize: 18,
-              fontWeight: FontWeight.w600,
-            ),
+            style: StitchText.heading(fontSize: 18),
           ),
           const SizedBox(height: 8),
           Text(
             _hasError
                 ? 'Check your internet connection'
                 : 'Watch some movies first!',
-            style: GoogleFonts.inter(
-              color: colorScheme.onSurface.withValues(alpha: 0.4),
-              fontSize: 14,
-            ),
+            style: StitchText.caption(fontSize: 14),
           ),
           const SizedBox(height: 24),
-          ElevatedButton.icon(
-            onPressed: _loadRecommendations,
-            icon: const Icon(Icons.refresh, size: 18),
-            label: Text(
-              'Try Again',
-              style: GoogleFonts.inter(fontWeight: FontWeight.w600),
+          Container(
+            decoration: BoxDecoration(
+              gradient: StitchGradients.accent,
+              borderRadius: BorderRadius.circular(14),
+              boxShadow: [
+                BoxShadow(
+                  color: StitchColors.emerald.withValues(alpha: 0.25),
+                  blurRadius: 16,
+                  offset: const Offset(0, 4),
+                ),
+              ],
             ),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: colorScheme.primary,
-              foregroundColor: colorScheme.onPrimary,
-              padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 14),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(14),
+            child: ElevatedButton.icon(
+              onPressed: _loadRecommendations,
+              icon: const Icon(Icons.refresh, size: 18),
+              label: Text(
+                'Try Again',
+                style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w600),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.transparent,
+                foregroundColor: Colors.white,
+                shadowColor: Colors.transparent,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 28,
+                  vertical: 14,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
               ),
             ),
           ),
@@ -677,16 +725,13 @@ class _RecommendationsScreenState extends State<RecommendationsScreen>
     );
   }
 
-  // ── Section ────────────────────────────────────────────────────────────
+  // ── Section ──
 
-  Widget _buildSection(
-    _RecommendationSection section,
-    ColorScheme colorScheme,
-  ) {
+  Widget _buildSection(_RecommendationSection section) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Section header — tappable → opens full grid view
+        // Section header — tappable
         GestureDetector(
           onTap: () => Get.to(
             () => SectionDetailScreen(
@@ -704,12 +749,12 @@ class _RecommendationsScreenState extends State<RecommendationsScreen>
                 Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: colorScheme.primary.withValues(alpha: 0.1),
+                    color: StitchColors.emerald.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Icon(
                     section.icon,
-                    color: colorScheme.primary,
+                    color: StitchColors.emerald,
                     size: 18,
                   ),
                 ),
@@ -717,19 +762,24 @@ class _RecommendationsScreenState extends State<RecommendationsScreen>
                 Expanded(
                   child: Text(
                     section.title,
-                    style: GoogleFonts.poppins(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w700,
-                      color: colorScheme.onSurface,
-                    ),
+                    style: StitchText.heading(fontSize: 17),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
-                Icon(
+                Text(
+                  'See All',
+                  style: StitchText.caption(
+                    fontSize: 12,
+                    color: StitchColors.emerald,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(width: 4),
+                const Icon(
                   Icons.arrow_forward_ios,
-                  color: colorScheme.onSurface.withValues(alpha: 0.3),
-                  size: 14,
+                  color: StitchColors.emerald,
+                  size: 12,
                 ),
               ],
             ),
@@ -744,7 +794,7 @@ class _RecommendationsScreenState extends State<RecommendationsScreen>
             physics: const BouncingScrollPhysics(),
             itemCount: section.movies.length,
             itemBuilder: (context, index) {
-              return _buildMovieCard(section.movies[index], colorScheme);
+              return _buildMovieCard(section.movies[index]);
             },
           ),
         ),
@@ -752,9 +802,9 @@ class _RecommendationsScreenState extends State<RecommendationsScreen>
     );
   }
 
-  // ── Movie Card ─────────────────────────────────────────────────────────
+  // ── Movie Card ──
 
-  Widget _buildMovieCard(Movie movie, ColorScheme colorScheme) {
+  Widget _buildMovieCard(Movie movie) {
     return GestureDetector(
       onTap: () => Navigator.push(
         context,
@@ -762,108 +812,81 @@ class _RecommendationsScreenState extends State<RecommendationsScreen>
       ),
       child: Container(
         width: 140,
-        margin: const EdgeInsets.only(right: 12),
+        margin: const EdgeInsets.only(right: 14),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Expanded(
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(14),
-                child: Stack(
-                  fit: StackFit.expand,
-                  children: [
-                    movie.tmdbPoster.isNotEmpty
-                        ? CachedNetworkImage(
-                            imageUrl: movie.fullPosterPath,
-                            fit: BoxFit.cover,
-                            width: double.infinity,
-                            memCacheWidth: 280,
-                            placeholder: (_, _) => Shimmer.fromColors(
-                              baseColor: colorScheme.surface,
-                              highlightColor: colorScheme.onSurface.withValues(
-                                alpha: 0.05,
+              child: Container(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(
+                    color: Colors.white.withValues(alpha: 0.08),
+                    width: 1,
+                  ),
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(14),
+                  child: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      movie.tmdbPoster.isNotEmpty
+                          ? CachedNetworkImage(
+                              imageUrl: movie.fullPosterPath,
+                              fit: BoxFit.cover,
+                              width: double.infinity,
+                              memCacheWidth: 280,
+                              placeholder: (_, _) => Shimmer.fromColors(
+                                baseColor: StitchColors.slateChip,
+                                highlightColor: StitchColors.slateChipBorder,
+                                child: Container(color: StitchColors.slateChip),
                               ),
-                              child: Container(color: colorScheme.surface),
-                            ),
-                            errorWidget: (_, _, _) => Container(
-                              color: colorScheme.surfaceContainerHighest,
-                              child: Icon(
-                                Icons.movie,
-                                color: colorScheme.onSurface.withValues(
-                                  alpha: 0.2,
+                              errorWidget: (_, _, _) => Container(
+                                color: StitchColors.slateChip,
+                                child: const Icon(
+                                  Icons.movie,
+                                  color: StitchColors.textTertiary,
+                                  size: 40,
                                 ),
+                              ),
+                            )
+                          : Container(
+                              color: StitchColors.slateChip,
+                              child: const Icon(
+                                Icons.movie,
+                                color: StitchColors.textTertiary,
                                 size: 40,
                               ),
                             ),
-                          )
-                        : Container(
-                            color: colorScheme.surfaceContainerHighest,
-                            child: Icon(
-                              Icons.movie,
-                              color: colorScheme.onSurface.withValues(
-                                alpha: 0.2,
-                              ),
-                              size: 40,
-                            ),
-                          ),
-                    // Rating badge
-                    if (movie.rating > 0)
-                      Positioned(
-                        top: 6,
-                        left: 6,
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 6,
-                            vertical: 3,
-                          ),
+                      // Rating badge
+                      if (movie.rating > 0)
+                        Positioned(
+                          top: 8,
+                          left: 8,
+                          child: RatingBadge(rating: movie.rating),
+                        ),
+                      // Bottom gradient
+                      Positioned.fill(
+                        child: DecoratedBox(
                           decoration: BoxDecoration(
-                            color: Colors.black.withValues(alpha: 0.75),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              const Icon(
-                                Icons.star_rounded,
-                                color: Colors.amber,
-                                size: 12,
-                              ),
-                              const SizedBox(width: 3),
-                              Text(
-                                movie.rating.toStringAsFixed(1),
-                                style: GoogleFonts.inter(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.white,
-                                ),
-                              ),
-                            ],
+                            gradient: StitchGradients.posterFade,
                           ),
                         ),
                       ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             ),
             const SizedBox(height: 8),
             Text(
               movie.title,
-              style: GoogleFonts.inter(
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-                color: colorScheme.onSurface,
-              ),
+              style: StitchText.movieTitle(fontSize: 13),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
             const SizedBox(height: 2),
-            Text(
-              movie.year,
-              style: GoogleFonts.inter(
-                fontSize: 11,
-                color: colorScheme.onSurface.withValues(alpha: 0.4),
-              ),
-            ),
+            Text(movie.year, style: StitchText.caption(fontSize: 11)),
           ],
         ),
       ),

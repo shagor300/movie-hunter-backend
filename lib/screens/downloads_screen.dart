@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:open_filex/open_filex.dart';
 import '../controllers/download_controller.dart';
 import '../models/download_item.dart';
+import '../utils/stitch_design_system.dart';
 import '../widgets/empty_state.dart';
 
 class DownloadsScreen extends StatelessWidget {
@@ -23,7 +24,7 @@ class DownloadsScreen extends StatelessWidget {
         title: Obx(
           () => Text(
             'Downloads (${controller.allDownloads.length})',
-            style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 20),
+            style: StitchText.display(fontSize: 20),
           ),
         ),
         actions: [
@@ -88,27 +89,20 @@ class DownloadsScreen extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: 10, top: 4),
       child: Row(
         children: [
-          Text(
-            title,
-            style: GoogleFonts.inter(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              color: colorScheme.onSurface.withValues(alpha: 0.9),
-            ),
-          ),
+          Text(title, style: StitchText.heading(fontSize: 16)),
           const SizedBox(width: 8),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
             decoration: BoxDecoration(
-              color: colorScheme.primary.withValues(alpha: 0.2),
+              color: StitchColors.emerald.withValues(alpha: 0.2),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Text(
               '$count',
-              style: GoogleFonts.inter(
+              style: GoogleFonts.plusJakartaSans(
                 fontSize: 12,
                 fontWeight: FontWeight.bold,
-                color: colorScheme.primary,
+                color: StitchColors.emerald,
               ),
             ),
           ),
@@ -143,7 +137,7 @@ class _DownloadCard extends StatelessWidget {
     return Card(
       margin: const EdgeInsets.only(bottom: 10),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-      color: Colors.white.withValues(alpha: 0.06),
+      color: StitchColors.glassBackground,
       elevation: 0,
       child: Padding(
         padding: const EdgeInsets.all(14),
@@ -161,11 +155,7 @@ class _DownloadCard extends StatelessWidget {
                     children: [
                       Text(
                         item.movieTitle,
-                        style: GoogleFonts.inter(
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                        ),
+                        style: StitchText.movieTitle(fontSize: 14),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -177,10 +167,7 @@ class _DownloadCard extends StatelessWidget {
                           Flexible(
                             child: Text(
                               item.fileName,
-                              style: GoogleFonts.inter(
-                                color: Colors.grey[500],
-                                fontSize: 11,
-                              ),
+                              style: StitchText.caption(fontSize: 11),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),
@@ -204,8 +191,8 @@ class _DownloadCard extends StatelessWidget {
                 padding: const EdgeInsets.only(top: 8),
                 child: Text(
                   '✅ ${item.fileSizeText} · Completed',
-                  style: GoogleFonts.inter(
-                    color: Colors.green[400],
+                  style: GoogleFonts.plusJakartaSans(
+                    color: StitchColors.emerald,
                     fontSize: 12,
                   ),
                 ),
@@ -217,7 +204,7 @@ class _DownloadCard extends StatelessWidget {
                 padding: const EdgeInsets.only(top: 8),
                 child: Text(
                   '❌ Failed · Tap retry to try again',
-                  style: GoogleFonts.inter(
+                  style: GoogleFonts.plusJakartaSans(
                     color: Colors.red[400],
                     fontSize: 12,
                   ),
@@ -258,9 +245,9 @@ class _ProgressSection extends StatelessWidget {
               child: LinearProgressIndicator(
                 value: progress.clamp(0.0, 1.0),
                 minHeight: 5,
-                backgroundColor: Colors.grey[800],
+                backgroundColor: StitchColors.slateChip,
                 valueColor: AlwaysStoppedAnimation(
-                  isPaused ? Colors.orange : const Color(0xFF6C63FF),
+                  isPaused ? Colors.orange : StitchColors.emerald,
                 ),
               ),
             ),
@@ -271,15 +258,15 @@ class _ProgressSection extends StatelessWidget {
               children: [
                 Text(
                   '${item.downloadedText} / ${item.fileSizeText}',
-                  style: GoogleFonts.inter(
-                    color: Colors.grey[500],
+                  style: GoogleFonts.plusJakartaSans(
+                    color: StitchColors.textTertiary,
                     fontSize: 11,
                   ),
                 ),
                 Text(
                   item.progressText,
-                  style: GoogleFonts.inter(
-                    color: const Color(0xFF6C63FF),
+                  style: GoogleFonts.plusJakartaSans(
+                    color: StitchColors.emerald,
                     fontSize: 11,
                     fontWeight: FontWeight.bold,
                   ),
@@ -287,15 +274,15 @@ class _ProgressSection extends StatelessWidget {
                 if (!isPaused)
                   Text(
                     '$speed · $eta',
-                    style: GoogleFonts.inter(
-                      color: Colors.grey[500],
+                    style: GoogleFonts.plusJakartaSans(
+                      color: StitchColors.textTertiary,
                       fontSize: 11,
                     ),
                   )
                 else
                   Text(
                     'Paused',
-                    style: GoogleFonts.inter(
+                    style: GoogleFonts.plusJakartaSans(
                       color: Colors.orange,
                       fontSize: 11,
                     ),
@@ -324,7 +311,7 @@ class _StatusIcon extends StatelessWidget {
 
     switch (status) {
       case 'downloading':
-        color = const Color(0xFF6C63FF);
+        color = StitchColors.emerald;
         icon = Icons.download;
         break;
       case 'completed':
@@ -365,12 +352,12 @@ class _QualityBadge extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
       decoration: BoxDecoration(
-        color: const Color(0xFF6C63FF),
+        color: StitchColors.emerald,
         borderRadius: BorderRadius.circular(4),
       ),
       child: Text(
         quality,
-        style: GoogleFonts.inter(
+        style: GoogleFonts.plusJakartaSans(
           color: Colors.white,
           fontSize: 10,
           fontWeight: FontWeight.bold,
@@ -430,7 +417,7 @@ class _ActionButtons extends StatelessWidget {
             IconButton(
               icon: const Icon(
                 Icons.play_circle_outline,
-                color: Color(0xFF6C63FF),
+                color: StitchColors.emerald,
                 size: 22,
               ),
               onPressed: () async {
@@ -491,26 +478,23 @@ class _ActionButtons extends StatelessWidget {
   void _deleteDialog(BuildContext context) {
     Get.dialog(
       AlertDialog(
-        backgroundColor: const Color(0xFF1A1A2E),
+        backgroundColor: StitchColors.bgAlt,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: Text(
           'Delete Download?',
-          style: GoogleFonts.inter(
-            color: Colors.white,
+          style: GoogleFonts.plusJakartaSans(
+            color: StitchColors.textPrimary,
             fontWeight: FontWeight.bold,
           ),
         ),
         content: Text(
           'Delete "${item.movieTitle}" from your downloads?',
-          style: GoogleFonts.inter(color: Colors.white70),
+          style: StitchText.caption(fontSize: 14),
         ),
         actions: [
           TextButton(
             onPressed: () => Get.back(),
-            child: Text(
-              'Cancel',
-              style: GoogleFonts.inter(color: Colors.white38),
-            ),
+            child: Text('Cancel', style: StitchText.caption(fontSize: 14)),
           ),
           ElevatedButton(
             onPressed: () {

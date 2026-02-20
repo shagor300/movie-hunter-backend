@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>MovieHub - Voice Search</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;family=Poppins:wght@600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#1e94f6",
+                        "background-light": "#f5f7f8",
+                        "background-dark": "#101a22",
+                        "navy-overlay": "#0F0F1E",
+                        "accent-purple": "#9C27B0"
+                    },
+                    fontFamily: {
+                        "display": ["Plus Jakarta Sans", "sans-serif"],
+                        "poppins": ["Poppins", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "24px": "24px",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+<style>
+        .glass-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .mic-gradient {
+            background: linear-gradient(135deg, #2196F3 0%, #9C27B0 100%);
+        }
+        .ripple {
+            position: absolute;
+            border-radius: 50%;
+            border: 2px solid rgba(33, 150, 243, 0.3);
+            width: 120px;
+            height: 120px;
+        }
+        .waveform-bar {
+            width: 6px;
+            background: linear-gradient(to top, #1e94f6, #9C27B0);
+            border-radius: 3px;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100 min-h-screen flex flex-col">
+<!-- Mock Background Content (Main App) -->
+<div class="fixed inset-0 z-0 overflow-hidden opacity-40 grayscale pointer-events-none">
+<div class="p-6 grid grid-cols-2 gap-4">
+<div class="aspect-[2/3] bg-slate-800 rounded-xl"></div>
+<div class="aspect-[2/3] bg-slate-800 rounded-xl"></div>
+<div class="aspect-[2/3] bg-slate-800 rounded-xl"></div>
+<div class="aspect-[2/3] bg-slate-800 rounded-xl"></div>
+</div>
+</div>
+<!-- Voice Search Overlay -->
+<div class="fixed inset-0 z-50 flex items-center justify-center bg-navy-overlay/80 backdrop-blur-md">
+<!-- Content Card -->
+<div class="glass-card w-[340px] rounded-24px p-6 flex flex-col items-center relative shadow-2xl overflow-hidden">
+<!-- Header -->
+<div class="w-full flex justify-between items-center mb-10">
+<h2 class="font-poppins text-[22px] font-bold text-white tracking-tight">Voice Search</h2>
+<button class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-white/10 transition-colors text-white">
+<span class="material-symbols-outlined text-2xl">close</span>
+</button>
+</div>
+<!-- Interaction Zone (Microphone) -->
+<div class="relative flex items-center justify-center mb-8 h-48">
+<!-- Visual Ripples -->
+<div class="ripple scale-125 opacity-40"></div>
+<div class="ripple scale-[1.6] opacity-20"></div>
+<!-- Pulsing Mic Button -->
+<button class="mic-gradient size-[120px] rounded-full flex items-center justify-center shadow-[0_0_40px_rgba(33,150,243,0.5)] relative z-10 hover:scale-105 transition-transform">
+<span class="material-symbols-outlined text-white text-[56px]" style="font-variation-settings: 'FILL' 1">mic</span>
+</button>
+</div>
+<!-- Feedback Zone -->
+<div class="text-center space-y-2 mb-10">
+<p class="font-poppins text-lg font-medium text-white tracking-wide">Listening...</p>
+<p class="text-[#B4B4C8] text-sm font-medium">Try saying <span class="text-primary italic">"Inception"</span></p>
+</div>
+<!-- Dynamic Waveform Visualizer -->
+<div class="flex items-end justify-center gap-2 h-16 w-full mb-4">
+<div class="waveform-bar h-8"></div>
+<div class="waveform-bar h-12"></div>
+<div class="waveform-bar h-16"></div>
+<div class="waveform-bar h-10"></div>
+<div class="waveform-bar h-14"></div>
+<div class="waveform-bar h-8"></div>
+<div class="waveform-bar h-12"></div>
+</div>
+<!-- Decorative Glow -->
+<div class="absolute -bottom-24 left-1/2 -translate-x-1/2 w-64 h-64 bg-primary/20 blur-[80px] rounded-full pointer-events-none"></div>
+</div>
+</div>
+<!-- Background Navigation Component (Reference to bottom nav style) -->
+<div class="mt-auto border-t border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-background-dark/50 backdrop-blur-xl px-4 pb-8 pt-4 flex justify-around">
+<a class="flex flex-col items-center gap-1 text-slate-400" href="#">
+<span class="material-symbols-outlined">home</span>
+<span class="text-[10px] font-medium uppercase tracking-widest">Home</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-primary" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1">search</span>
+<span class="text-[10px] font-medium uppercase tracking-widest">Search</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-slate-400" href="#">
+<span class="material-symbols-outlined">movie</span>
+<span class="text-[10px] font-medium uppercase tracking-widest">Movies</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-slate-400" href="#">
+<span class="material-symbols-outlined">person</span>
+<span class="text-[10px] font-medium uppercase tracking-widest">Profile</span>
+</a>
+</div>
+</body></html>

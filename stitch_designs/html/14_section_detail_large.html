@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Action &amp; Adventure - MovieHub</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/><link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#1e94f6",
+                        "background-light": "#f5f7f8",
+                        "background-dark": "#0F0F1E",
+                    },
+                    fontFamily: {
+                        "display": ["Plus Jakarta Sans", "sans-serif"],
+                        "poppins": ["Poppins", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "2xl": "1rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+<style>
+        .glass-header {
+            background: rgba(15, 15, 30, 0.8);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .movie-card-ripple:active {
+            transform: scale(0.97);
+            transition: transform 0.1s ease-out;
+        }
+        .line-clamp-2 {
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100 antialiased">
+<!-- Sticky Header -->
+<header class="sticky top-0 z-50 glass-header">
+<div class="flex items-center justify-between px-4 h-16 max-w-2xl mx-auto">
+<button class="flex items-center justify-center size-10 rounded-full hover:bg-white/10 transition-colors">
+<span class="material-symbols-outlined text-2xl">arrow_back</span>
+</button>
+<h1 class="text-lg font-bold tracking-tight">Action &amp; Adventure</h1>
+<button class="flex items-center justify-center size-10 rounded-full hover:bg-white/10 transition-colors">
+<span class="material-symbols-outlined text-2xl">tune</span>
+</button>
+</div>
+</header>
+<main class="max-w-2xl mx-auto pb-24">
+<!-- Category Filter Chips (Optional sub-navigation) -->
+<div class="flex gap-3 overflow-x-auto px-4 py-4 no-scrollbar">
+<button class="bg-primary text-white px-5 py-2 rounded-full text-sm font-semibold whitespace-nowrap">All Items</button>
+<button class="bg-white/5 border border-white/10 text-slate-300 px-5 py-2 rounded-full text-sm font-semibold whitespace-nowrap">Trending</button>
+<button class="bg-white/5 border border-white/10 text-slate-300 px-5 py-2 rounded-full text-sm font-semibold whitespace-nowrap">Newest</button>
+<button class="bg-white/5 border border-white/10 text-slate-300 px-5 py-2 rounded-full text-sm font-semibold whitespace-nowrap">Top Rated</button>
+</div>
+<!-- Movie Grid -->
+<div class="grid grid-cols-2 px-2 gap-x-2 gap-y-3">
+<!-- Movie Card 1 -->
+<div class="movie-card-ripple group cursor-pointer">
+<div class="relative aspect-[2/3] rounded-2xl overflow-hidden bg-slate-800 shadow-lg border border-white/10">
+<img alt="Movie Poster" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" src="{{DATA:IMAGE:ID_placeholder_1}}"/>
+<!-- Gradient Overlay -->
+<div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent"></div>
+<!-- Rating Badge -->
+<div class="absolute top-2 left-2 bg-white/10 backdrop-blur-xl border border-white/20 px-2 py-1 rounded-lg flex items-center gap-1 shadow-xl">
+<span class="material-symbols-outlined text-yellow-500 text-[14px] fill-1">star</span>
+<span class="text-xs font-bold text-white">8.9</span>
+</div>
+<!-- Quality Badge -->
+<div class="absolute top-2 right-2 bg-white/10 backdrop-blur-xl border border-white/20 px-2 py-1 rounded-lg shadow-xl">
+<span class="text-[10px] font-black text-white tracking-wider">4K</span>
+</div>
+<!-- Title & Info Overlay -->
+<div class="absolute bottom-0 left-0 right-0 p-3 space-y-1">
+<h3 class="text-[14px] font-poppins font-semibold leading-tight text-white line-clamp-2 uppercase tracking-wide">The Dark Knight</h3>
+<p class="text-[11px] text-slate-300 font-medium opacity-80">2008 • 2h 32m</p>
+</div>
+</div>
+</div>
+<!-- Movie Card 2 -->
+<div class="movie-card-ripple group cursor-pointer">
+<div class="relative aspect-[2/3] rounded-2xl overflow-hidden bg-slate-800 shadow-lg border border-white/10">
+<img alt="Movie Poster" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" src="{{DATA:IMAGE:ID_placeholder_2}}"/>
+<div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent"></div>
+<div class="absolute top-2 left-2 bg-white/10 backdrop-blur-xl border border-white/20 px-2 py-1 rounded-lg flex items-center gap-1 shadow-xl">
+<span class="material-symbols-outlined text-yellow-500 text-[14px] fill-1">star</span>
+<span class="text-xs font-bold text-white">8.5</span>
+</div>
+<div class="absolute top-2 right-2 bg-white/10 backdrop-blur-xl border border-white/20 px-2 py-1 rounded-lg shadow-xl">
+<span class="text-[10px] font-black text-white tracking-wider">4K</span>
+</div>
+<div class="absolute bottom-0 left-0 right-0 p-3 space-y-1">
+<h3 class="text-[14px] font-poppins font-semibold leading-tight text-white line-clamp-2 uppercase tracking-wide">John Wick: Chapter 4</h3>
+<p class="text-[11px] text-slate-300 font-medium opacity-80">2023 • 2h 49m</p>
+</div>
+</div>
+</div>
+<!-- Movie Card 3 -->
+<div class="movie-card-ripple group cursor-pointer">
+<div class="relative aspect-[2/3] rounded-2xl overflow-hidden bg-slate-800 shadow-lg border border-white/10">
+<img alt="Movie Poster" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" src="{{DATA:IMAGE:ID_placeholder_3}}"/>
+<div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent"></div>
+<div class="absolute top-2 left-2 bg-white/10 backdrop-blur-xl border border-white/20 px-2 py-1 rounded-lg flex items-center gap-1 shadow-xl">
+<span class="material-symbols-outlined text-yellow-500 text-[14px] fill-1">star</span>
+<span class="text-xs font-bold text-white">8.8</span>
+</div>
+<div class="absolute top-2 right-2 bg-white/10 backdrop-blur-xl border border-white/20 px-2 py-1 rounded-lg shadow-xl">
+<span class="text-[10px] font-black text-white tracking-wider">HD</span>
+</div>
+<div class="absolute bottom-0 left-0 right-0 p-3 space-y-1">
+<h3 class="text-[14px] font-poppins font-semibold leading-tight text-white line-clamp-2 uppercase tracking-wide">Inception</h3>
+<p class="text-[11px] text-slate-300 font-medium opacity-80">2010 • 2h 28m</p>
+</div>
+</div>
+</div>
+<!-- Movie Card 4 -->
+<div class="movie-card-ripple group cursor-pointer">
+<div class="relative aspect-[2/3] rounded-2xl overflow-hidden bg-slate-800 shadow-lg border border-white/10">
+<img alt="Movie Poster" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" src="{{DATA:IMAGE:ID_placeholder_4}}"/>
+<div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent"></div>
+<div class="absolute top-2 left-2 bg-white/10 backdrop-blur-xl border border-white/20 px-2 py-1 rounded-lg flex items-center gap-1 shadow-xl">
+<span class="material-symbols-outlined text-yellow-500 text-[14px] fill-1">star</span>
+<span class="text-xs font-bold text-white">8.1</span>
+</div>
+<div class="absolute top-2 right-2 bg-white/10 backdrop-blur-xl border border-white/20 px-2 py-1 rounded-lg shadow-xl">
+<span class="text-[10px] font-black text-white tracking-wider">4K</span>
+</div>
+<div class="absolute bottom-0 left-0 right-0 p-3 space-y-1">
+<h3 class="text-[14px] font-poppins font-semibold leading-tight text-white line-clamp-2 uppercase tracking-wide">Mad Max: Fury Road</h3>
+<p class="text-[11px] text-slate-300 font-medium opacity-80">2015 • 2h 0m</p>
+</div>
+</div>
+</div>
+<!-- Movie Card 5 -->
+<div class="movie-card-ripple group cursor-pointer">
+<div class="relative aspect-[2/3] rounded-2xl overflow-hidden bg-slate-800 shadow-lg border border-white/10">
+<img alt="Movie Poster" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" src="{{DATA:IMAGE:ID_placeholder_5}}"/>
+<div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent"></div>
+<div class="absolute top-2 left-2 bg-white/10 backdrop-blur-xl border border-white/20 px-2 py-1 rounded-lg flex items-center gap-1 shadow-xl">
+<span class="material-symbols-outlined text-yellow-500 text-[14px] fill-1">star</span>
+<span class="text-xs font-bold text-white">9.0</span>
+</div>
+<div class="absolute top-2 right-2 bg-white/10 backdrop-blur-xl border border-white/20 px-2 py-1 rounded-lg shadow-xl">
+<span class="text-[10px] font-black text-white tracking-wider">4K</span>
+</div>
+<div class="absolute bottom-0 left-0 right-0 p-3 space-y-1">
+<h3 class="text-[14px] font-poppins font-semibold leading-tight text-white line-clamp-2 uppercase tracking-wide">Spider-Man: Across the Spider-Verse</h3>
+<p class="text-[11px] text-slate-300 font-medium opacity-80">2023 • 2h 20m</p>
+</div>
+</div>
+</div>
+<!-- Movie Card 6 -->
+<div class="movie-card-ripple group cursor-pointer">
+<div class="relative aspect-[2/3] rounded-2xl overflow-hidden bg-slate-800 shadow-lg border border-white/10">
+<img alt="Movie Poster" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" src="{{DATA:IMAGE:ID_placeholder_6}}"/>
+<div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent"></div>
+<div class="absolute top-2 left-2 bg-white/10 backdrop-blur-xl border border-white/20 px-2 py-1 rounded-lg flex items-center gap-1 shadow-xl">
+<span class="material-symbols-outlined text-yellow-500 text-[14px] fill-1">star</span>
+<span class="text-xs font-bold text-white">8.3</span>
+</div>
+<div class="absolute top-2 right-2 bg-white/10 backdrop-blur-xl border border-white/20 px-2 py-1 rounded-lg shadow-xl">
+<span class="text-[10px] font-black text-white tracking-wider">4K</span>
+</div>
+<div class="absolute bottom-0 left-0 right-0 p-3 space-y-1">
+<h3 class="text-[14px] font-poppins font-semibold leading-tight text-white line-clamp-2 uppercase tracking-wide">Top Gun: Maverick</h3>
+<p class="text-[11px] text-slate-300 font-medium opacity-80">2022 • 2h 10m</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Infinite Scroll Indicator -->
+<div class="flex flex-col items-center justify-center py-10 gap-3">
+<div class="size-8 border-4 border-primary/20 border-t-primary rounded-full animate-spin"></div>
+<p class="text-sm text-slate-500 font-medium">Loading more movies...</p>
+</div>
+</main>
+<!-- Navigation Bar (Reused component from list) -->
+<nav class="fixed bottom-0 left-0 right-0 z-50 glass-header border-t border-white/5">
+<div class="flex max-w-2xl mx-auto px-4 pb-6 pt-2 h-20 items-center">
+<a class="flex flex-1 flex-col items-center justify-center gap-1 text-primary" href="#">
+<span class="material-symbols-outlined text-[26px] fill-1">house</span>
+<p class="text-[10px] font-bold">Home</p>
+</a>
+<a class="flex flex-1 flex-col items-center justify-center gap-1 text-slate-400" href="#">
+<span class="material-symbols-outlined text-[26px]">explore</span>
+<p class="text-[10px] font-bold">Explore</p>
+</a>
+<a class="flex flex-1 flex-col items-center justify-center gap-1 text-slate-400" href="#">
+<span class="material-symbols-outlined text-[26px]">search</span>
+<p class="text-[10px] font-bold">Search</p>
+</a>
+<a class="flex flex-1 flex-col items-center justify-center gap-1 text-slate-400" href="#">
+<span class="material-symbols-outlined text-[26px]">bookmarks</span>
+<p class="text-[10px] font-bold">My List</p>
+</a>
+<a class="flex flex-1 flex-col items-center justify-center gap-1 text-slate-400" href="#">
+<span class="material-symbols-outlined text-[26px]">account_circle</span>
+<p class="text-[10px] font-bold">Profile</p>
+</a>
+</div>
+</nav>
+<!-- Decorative Bottom Spacer for Nav -->
+<div class="h-20 bg-background-dark"></div>
+</body></html>

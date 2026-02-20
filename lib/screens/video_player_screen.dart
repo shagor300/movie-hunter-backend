@@ -3,12 +3,12 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:better_player_enhanced/better_player.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../controllers/video_player_controller.dart';
 import '../services/api_service.dart';
+import '../utils/stitch_design_system.dart';
 
 class VideoPlayerScreen extends StatefulWidget {
   final String videoUrl;
@@ -262,22 +262,19 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
             enableRetry: true,
             skipBackIcon: Icons.replay_10,
             skipForwardIcon: Icons.forward_10,
-            progressBarPlayedColor: Colors.blueAccent,
-            progressBarHandleColor: Colors.blueAccent,
-            progressBarBufferedColor: Colors.white24,
-            progressBarBackgroundColor: Colors.white12,
+            progressBarPlayedColor: StitchColors.emerald,
+            progressBarHandleColor: StitchColors.emerald,
+            progressBarBufferedColor: StitchColors.slateChipBorder,
+            progressBarBackgroundColor: StitchColors.slateChip,
             controlBarHeight: 48,
             iconsColor: Colors.white,
             loadingWidget: Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const CircularProgressIndicator(color: Colors.blueAccent),
+                  const CircularProgressIndicator(color: StitchColors.emerald),
                   const SizedBox(height: 16),
-                  Text(
-                    'Loading video...',
-                    style: GoogleFonts.inter(color: Colors.white54),
-                  ),
+                  Text('Loading video...', style: StitchText.caption()),
                 ],
               ),
             ),
@@ -427,25 +424,21 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const CircularProgressIndicator(color: Colors.blueAccent),
+          const CircularProgressIndicator(color: StitchColors.emerald),
           const SizedBox(height: 20),
-          Text(
-            'Preparing Video...',
-            style: GoogleFonts.poppins(
-              color: Colors.white,
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
+          Text('Preparing Video...', style: StitchText.heading(fontSize: 18)),
           const SizedBox(height: 8),
           Text(
             'Resolving stream link, please wait',
-            style: GoogleFonts.inter(color: Colors.white54, fontSize: 14),
+            style: StitchText.caption(fontSize: 14),
           ),
           const SizedBox(height: 4),
           Text(
             'This may take up to 60 seconds',
-            style: GoogleFonts.inter(color: Colors.white30, fontSize: 12),
+            style: StitchText.caption(
+              fontSize: 12,
+              color: StitchColors.textTertiary,
+            ),
           ),
         ],
       ),
@@ -457,12 +450,9 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const CircularProgressIndicator(color: Colors.blueAccent),
+          const CircularProgressIndicator(color: StitchColors.emerald),
           const SizedBox(height: 20),
-          Text(
-            'Loading video...',
-            style: GoogleFonts.inter(color: Colors.white54),
-          ),
+          Text('Loading video...', style: StitchText.caption()),
         ],
       ),
     );
@@ -481,18 +471,14 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
           children: [
             const Icon(Icons.error_outline, color: Colors.redAccent, size: 80),
             const SizedBox(height: 20),
-            Text(
-              'Cannot Play Video',
-              style: GoogleFonts.poppins(
-                color: Colors.white,
-                fontSize: 22,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
+            Text('Cannot Play Video', style: StitchText.heading(fontSize: 22)),
             const SizedBox(height: 12),
             Text(
               _errorMessage!,
-              style: GoogleFonts.inter(color: Colors.white54, fontSize: 14),
+              style: StitchText.body(
+                color: StitchColors.textSecondary,
+                fontSize: 14,
+              ),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 24),
@@ -517,7 +503,7 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
                   icon: const Icon(Icons.refresh),
                   label: const Text('Retry'),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.blueAccent,
+                    backgroundColor: StitchColors.emerald,
                     padding: const EdgeInsets.symmetric(
                       horizontal: 20,
                       vertical: 12,
@@ -548,8 +534,8 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
                 OutlinedButton(
                   onPressed: () => Navigator.pop(context),
                   style: OutlinedButton.styleFrom(
-                    foregroundColor: Colors.white70,
-                    side: const BorderSide(color: Colors.white24),
+                    foregroundColor: StitchColors.textSecondary,
+                    side: const BorderSide(color: StitchColors.slateChipBorder),
                     padding: const EdgeInsets.symmetric(
                       horizontal: 20,
                       vertical: 12,

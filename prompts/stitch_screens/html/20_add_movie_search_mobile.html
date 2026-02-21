@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Add Movie - Search</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#6961ff",
+                        "background-light": "#f5f5f8",
+                        "background-dark": "#100f23",
+                    },
+                    fontFamily: {
+                        "display": ["Inter"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+<style>
+        .glass {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .glass-input {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100 antialiased">
+<!-- Full Screen Modal Overlay -->
+<div class="fixed inset-0 z-50 flex flex-col bg-background-dark/95 backdrop-blur-xl">
+<!-- Header Section -->
+<header class="relative flex items-center justify-between px-6 py-5 border-b border-white/5">
+<div class="w-10"></div> <!-- Spacer for centering title -->
+<h1 class="text-lg font-semibold tracking-tight">Add New Movie</h1>
+<button class="flex items-center justify-center w-10 h-10 rounded-full hover:bg-white/10 transition-colors">
+<span class="material-symbols-outlined text-2xl">close</span>
+</button>
+</header>
+<!-- Progress Indicator -->
+<div class="flex items-center justify-center gap-3 py-6">
+<div class="h-2.5 w-2.5 rounded-full bg-primary shadow-[0_0_10px_rgba(105,97,255,0.5)]"></div>
+<div class="h-2 w-2 rounded-full bg-slate-700"></div>
+<div class="h-2 w-2 rounded-full bg-slate-700"></div>
+</div>
+<!-- Search Input Area -->
+<div class="px-6 pb-4">
+<div class="relative group">
+<div class="absolute inset-y-0 left-4 flex items-center pointer-events-none">
+<!-- TMDB Icon Placeholder / Search Icon -->
+<span class="material-symbols-outlined text-primary">search</span>
+</div>
+<input class="w-full h-14 pl-12 pr-4 glass-input rounded-xl focus:ring-2 focus:ring-primary/50 focus:border-primary border-transparent text-base placeholder-slate-500 transition-all outline-none" placeholder="Search by title, actor, or director..." type="text"/>
+<div class="absolute inset-y-0 right-4 flex items-center">
+<div class="px-2 py-0.5 rounded bg-primary/20 text-[10px] font-bold text-primary tracking-widest border border-primary/30">TMDB</div>
+</div>
+</div>
+</div>
+<!-- Search Results List -->
+<div class="flex-1 overflow-y-auto px-6 py-2 space-y-3">
+<p class="text-xs font-semibold uppercase tracking-wider text-slate-500 ml-1 mb-4">Top Matches</p>
+<!-- Result Item 1 -->
+<div class="glass p-3 rounded-xl flex items-center gap-4 group active:scale-[0.98] transition-transform">
+<div class="relative h-20 w-14 flex-shrink-0 overflow-hidden rounded-lg shadow-lg">
+<img alt="Inception Movie Poster" class="h-full w-full object-cover" data-alt="Cinematic movie poster with blue highlights" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBaA9ZAfJSphXGgcMyOLwpmJJW6pYgGcEKBpG9GT3eFlRbiA6xKAuz-C1dZRy7amPmLDmYT5F1QSK-pFB3K-qqJrYTLV6EiBRC-UDODI6A34-dzGVV5GplZS3TCD-U8jdE95MZIsCFMYHNbcPbnX_dWWvSCBr7vUY-vFs45iziiDJFB8xfdEKU_esgMUnMeK6GtOvcO1-sKYGtXo7rSw8073GdX2F_comufI2feqSytaWGLWoXEia3SuJ2LgJ95AvmDZuqyjluTPmM"/>
+</div>
+<div class="flex-1 min-w-0">
+<h4 class="text-base font-medium truncate">Inception</h4>
+<p class="text-sm text-slate-400 font-light mt-0.5">2010 • Christopher Nolan</p>
+</div>
+<button class="bg-primary hover:bg-primary/90 text-white px-5 py-2 rounded-lg text-sm font-semibold transition-all">
+                    Select
+                </button>
+</div>
+<!-- Result Item 2 -->
+<div class="glass p-3 rounded-xl flex items-center gap-4 group active:scale-[0.98] transition-transform">
+<div class="relative h-20 w-14 flex-shrink-0 overflow-hidden rounded-lg shadow-lg">
+<img alt="The Dark Knight Movie Poster" class="h-full w-full object-cover" data-alt="Action movie poster with dark gritty aesthetic" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCKz26VtuC_qYnN2b6Zh1nEnLY6r4d3lRhOL4eeOyKGybKc5nJnierkaMjLpnTOyaz9vvHpu6gFU6qG9u6-cDCxJ6N3UJMiCjnm2mkjvO10Voc0gDihOsaOQKIiDMskv4hI2ZQInWrtwFSQPGaqP8917rrv8945JA5Rxjn7b2DVEk4pmTkkelt2kmuCmN40J75qe45soE83osJ5O99AiKqeVRdW7C7beIuWveV5zbYr_wuQCLitbGq3id8B3TbkoyTKV1L8lRMjOXo"/>
+</div>
+<div class="flex-1 min-w-0">
+<h4 class="text-base font-medium truncate">The Dark Knight</h4>
+<p class="text-sm text-slate-400 font-light mt-0.5">2008 • Action, Drama</p>
+</div>
+<button class="bg-primary hover:bg-primary/90 text-white px-5 py-2 rounded-lg text-sm font-semibold transition-all">
+                    Select
+                </button>
+</div>
+<!-- Result Item 3 -->
+<div class="glass p-3 rounded-xl flex items-center gap-4 group active:scale-[0.98] transition-transform">
+<div class="relative h-20 w-14 flex-shrink-0 overflow-hidden rounded-lg shadow-lg">
+<img alt="Interstellar Movie Poster" class="h-full w-full object-cover" data-alt="Sci-fi space exploration movie poster" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCHAvadZOpHi3mzD186wpulJ4x7zlqyTPBIfVUgxOgOxwuHtfn7zjpj_nMJwVFARi5s9ILplOkiLaNpBWMV9x4vnRT3ANZSYOTf2znIZPBUBdlt9QFSZTIok1e0IGqF6I2ePvimzGsTkEueVbB5vWkEzFg3C7Sdff_XkVNfZ5NwFiL0rf-LzS21iDbIe6ME0mji_jDrwwOaHAvpuODPuDnbIT75s_9j5kSdCQokrN6rgbutEIaka39rzG0I1BWj0STwmyCHfs0DSnk"/>
+</div>
+<div class="flex-1 min-w-0">
+<h4 class="text-base font-medium truncate">Interstellar</h4>
+<p class="text-sm text-slate-400 font-light mt-0.5">2014 • Sci-Fi, Adventure</p>
+</div>
+<button class="bg-primary hover:bg-primary/90 text-white px-5 py-2 rounded-lg text-sm font-semibold transition-all">
+                    Select
+                </button>
+</div>
+<!-- Result Item 4 (Partial/Scrolled) -->
+<div class="glass p-3 rounded-xl flex items-center gap-4 group opacity-60">
+<div class="relative h-20 w-14 flex-shrink-0 overflow-hidden rounded-lg shadow-lg bg-slate-800 flex items-center justify-center">
+<span class="material-symbols-outlined text-slate-600">movie</span>
+</div>
+<div class="flex-1 min-w-0">
+<h4 class="text-base font-medium truncate">Tenet</h4>
+<p class="text-sm text-slate-400 font-light mt-0.5">2020 • Sci-Fi, Action</p>
+</div>
+<button class="bg-primary/50 text-white px-5 py-2 rounded-lg text-sm font-semibold cursor-not-allowed">
+                    Select
+                </button>
+</div>
+</div>
+<!-- Sticky Footer -->
+<footer class="p-6 border-t border-white/5 bg-background-dark/80 backdrop-blur-sm">
+<div class="flex flex-col items-center gap-4">
+<p class="text-sm text-slate-400">Can't find the movie you're looking for?</p>
+<button class="flex items-center gap-2 text-primary font-semibold hover:text-primary/80 transition-colors">
+<span class="material-symbols-outlined text-xl">edit_note</span>
+<span>Add Manually</span>
+</button>
+</div>
+<!-- Safe Area Spacer for Mobile -->
+<div class="h-4"></div>
+</footer>
+</div>
+</body></html>

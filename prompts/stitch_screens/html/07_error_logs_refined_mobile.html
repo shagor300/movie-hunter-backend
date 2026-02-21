@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>MovieHub Admin - System Error Logs</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#6961ff",
+                        "background-light": "#f5f5f8",
+                        "background-dark": "#100f23",
+                    },
+                    fontFamily: {
+                        "display": ["Inter"]
+                    },
+                    borderRadius: { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" },
+                },
+            },
+        }
+    </script>
+<style>
+        .glass {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .hide-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100 antialiased">
+<!-- Mobile Frame Simulation (Centered) -->
+<div class="relative mx-auto min-h-screen max-w-[430px] bg-background-light dark:bg-background-dark shadow-2xl flex flex-col overflow-hidden border-x border-slate-200 dark:border-slate-800">
+<!-- Top Header -->
+<header class="sticky top-0 z-50 flex items-center justify-between px-4 py-3 bg-background-light/80 dark:bg-background-dark/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800">
+<div class="flex items-center gap-3">
+<button class="p-2 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-lg transition-colors">
+<span class="material-symbols-outlined text-slate-600 dark:text-slate-400">menu</span>
+</button>
+<div class="flex items-center gap-2">
+<div class="w-8 h-8 bg-primary rounded flex items-center justify-center">
+<span class="material-symbols-outlined text-white text-xl">movie</span>
+</div>
+<h1 class="font-bold text-lg tracking-tight">MovieHub</h1>
+</div>
+</div>
+<div class="flex items-center gap-2">
+<div class="w-9 h-9 rounded-full overflow-hidden border-2 border-primary/30">
+<img alt="Admin Avatar" class="w-full h-full object-cover" data-alt="Portrait of a smiling male admin professional" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAwzstjHbg_ukF1wUlfjUHIDWA1u5HmqVtE18OBTTMIZdlwe-ljfKRwAI0QqLeY5H4JUXf77dYNGMicjlUhLytSVtTNLUTVqQvInxzDIdwMMGak_wdE4VnaDGJqNiFVvAhOriiMbnOA1E0MyZpI3zVYcJQzkVqlktEmECo3qwUWjgcodh13b7FMqjtCWiXH2KAVTHqDEHSQ1jqrYGu6peb2E0ZT7H6s-FK9YnydAtcRZJbHe1aFifa1jAYpj2Xo3fnlumLccnrOGEM"/>
+</div>
+</div>
+</header>
+<!-- Main Content Area (Scrollable) -->
+<main class="flex-1 overflow-y-auto px-4 py-6 hide-scrollbar">
+<!-- Page Title -->
+<div class="mb-6">
+<h2 class="text-2xl font-bold dark:text-white">System Error Logs</h2>
+<p class="text-sm text-slate-500 dark:text-slate-400">Real-time infrastructure health monitoring</p>
+</div>
+<!-- Summary Statistics Cards -->
+<div class="space-y-3 mb-8">
+<!-- Critical -->
+<div class="glass p-4 rounded-xl flex items-center justify-between">
+<div class="flex items-center gap-4">
+<div class="w-1.5 h-10 bg-red-500 rounded-full"></div>
+<div>
+<p class="text-xs font-medium text-slate-500 uppercase tracking-wider">Critical Errors</p>
+<p class="text-2xl font-bold">12</p>
+</div>
+</div>
+<div class="text-right">
+<span class="text-red-500 text-xs font-bold flex items-center justify-end">
+<span class="material-symbols-outlined text-sm">trending_up</span> +5%
+                        </span>
+<p class="text-[10px] text-slate-500">vs last hour</p>
+</div>
+</div>
+<!-- Warnings -->
+<div class="glass p-4 rounded-xl flex items-center justify-between">
+<div class="flex items-center gap-4">
+<div class="w-1.5 h-10 bg-amber-500 rounded-full"></div>
+<div>
+<p class="text-xs font-medium text-slate-500 uppercase tracking-wider">Warnings</p>
+<p class="text-2xl font-bold">45</p>
+</div>
+</div>
+<div class="text-right">
+<span class="text-amber-500 text-xs font-bold flex items-center justify-end">
+<span class="material-symbols-outlined text-sm">trending_flat</span> 0%
+                        </span>
+<p class="text-[10px] text-slate-500">Stable</p>
+</div>
+</div>
+<!-- Info Logs -->
+<div class="glass p-4 rounded-xl flex items-center justify-between">
+<div class="flex items-center gap-4">
+<div class="w-1.5 h-10 bg-blue-500 rounded-full"></div>
+<div>
+<p class="text-xs font-medium text-slate-500 uppercase tracking-wider">Info Logs</p>
+<p class="text-2xl font-bold">128</p>
+</div>
+</div>
+<div class="text-right">
+<span class="text-blue-500 text-xs font-bold flex items-center justify-end">
+<span class="material-symbols-outlined text-sm">trending_up</span> +10%
+                        </span>
+<p class="text-[10px] text-slate-500">Increased activity</p>
+</div>
+</div>
+<!-- Resolved Today -->
+<div class="glass p-4 rounded-xl flex items-center justify-between">
+<div class="flex items-center gap-4">
+<div class="w-1.5 h-10 bg-emerald-500 rounded-full"></div>
+<div>
+<p class="text-xs font-medium text-slate-500 uppercase tracking-wider">Resolved Today</p>
+<p class="text-2xl font-bold">84</p>
+</div>
+</div>
+<div class="text-right">
+<span class="text-emerald-500 text-xs font-bold flex items-center justify-end">
+<span class="material-symbols-outlined text-sm">check_circle</span> 92%
+                        </span>
+<p class="text-[10px] text-slate-500">Recovery rate</p>
+</div>
+</div>
+</div>
+<!-- Filter Section -->
+<div class="space-y-4 mb-6">
+<!-- Search -->
+<div class="relative group">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary transition-colors">search</span>
+<input class="w-full pl-10 pr-4 py-3 glass rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 placeholder-slate-500" placeholder="Search error logs..." type="text"/>
+</div>
+<!-- Pills and Time -->
+<div class="flex flex-col gap-3">
+<div class="flex overflow-x-auto gap-2 hide-scrollbar pb-1">
+<button class="px-5 py-2 rounded-full bg-primary text-white text-xs font-semibold whitespace-nowrap">All Logs</button>
+<button class="px-5 py-2 rounded-full glass text-red-500 text-xs font-semibold whitespace-nowrap border-red-500/20">Critical</button>
+<button class="px-5 py-2 rounded-full glass text-amber-500 text-xs font-semibold whitespace-nowrap border-amber-500/20">Warning</button>
+<button class="px-5 py-2 rounded-full glass text-blue-500 text-xs font-semibold whitespace-nowrap border-blue-500/20">Info</button>
+</div>
+<div class="flex items-center justify-between glass px-4 py-2 rounded-xl">
+<span class="text-xs text-slate-400 flex items-center gap-2">
+<span class="material-symbols-outlined text-sm">schedule</span> Time Range
+                        </span>
+<select class="bg-transparent border-none text-xs font-bold text-primary focus:ring-0 cursor-pointer">
+<option>Last 24 Hours</option>
+<option>Last 7 Days</option>
+<option>Last Month</option>
+</select>
+</div>
+</div>
+</div>
+<!-- Error Log List -->
+<div class="space-y-4 pb-20"><!-- Log Card 1 (Critical) -->
+<div class="glass rounded-xl overflow-hidden border-l-4 border-l-red-500 mb-4">
+<div class="p-4 space-y-3">
+<div class="flex justify-between items-center mb-1">
+<div class="flex items-center gap-2">
+<span class="px-2 py-0.5 rounded bg-red-500 text-white text-[10px] font-bold uppercase tracking-tight">Critical</span>
+<span class="text-[11px] text-slate-500 font-medium">2 mins ago</span>
+</div>
+<button class="text-slate-400 hover:text-primary transition-colors">
+<span class="material-symbols-outlined text-sm">more_vert</span>
+</button>
+</div>
+<p class="text-sm font-bold leading-tight dark:text-white">Database connection timeout: master_node_01 failed to acknowledge handshake.</p>
+<div class="mt-3">
+<div class="flex items-center justify-between mb-2">
+<span class="text-[10px] uppercase font-bold text-slate-500 tracking-widest">Stack Trace</span>
+<button class="flex items-center gap-1 text-[10px] font-bold text-primary bg-primary/10 px-2 py-1 rounded hover:bg-primary/20 transition-colors">
+<span class="material-symbols-outlined text-[12px]">content_copy</span> Copy
+                </button>
+</div>
+<div class="bg-black/40 rounded-lg p-3 border border-white/5 font-mono text-[11px] text-red-200/80 break-all leading-relaxed">
+                Error: ConnectionTimeout [ETIMEDOUT]: Connection attempt to master_node_01 (10.0.4.22:5432) timed out after 5000ms at Socket.connect_timeout_err
+            </div>
+</div>
+<div class="flex items-center justify-between pt-3 border-t border-white/5">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-xs text-slate-500">source</span>
+<span class="text-[11px] text-slate-400">Main API Gateway</span>
+</div>
+<a class="text-xs font-bold text-primary flex items-center gap-1 hover:underline" href="#">
+                Full Report <span class="material-symbols-outlined text-xs">open_in_new</span>
+</a>
+</div>
+</div>
+</div>
+<!-- Log Card 2 (Warning) -->
+<div class="glass rounded-xl overflow-hidden border-l-4 border-l-amber-500 mb-4">
+<div class="p-4 space-y-3">
+<div class="flex justify-between items-center mb-1">
+<div class="flex items-center gap-2">
+<span class="px-2 py-0.5 rounded bg-amber-500 text-white text-[10px] font-bold uppercase tracking-tight">Warning</span>
+<span class="text-[11px] text-slate-500 font-medium">15 mins ago</span>
+</div>
+<button class="text-slate-400 hover:text-primary transition-colors">
+<span class="material-symbols-outlined text-sm">more_vert</span>
+</button>
+</div>
+<p class="text-sm font-bold leading-tight dark:text-white">Scraper throttled: HDHub4u Scraper received 429 Too Many Requests from source.</p>
+<div class="mt-3">
+<div class="flex items-center justify-between mb-2">
+<span class="text-[10px] uppercase font-bold text-slate-500 tracking-widest">Context Log</span>
+<button class="flex items-center gap-1 text-[10px] font-bold text-primary bg-primary/10 px-2 py-1 rounded hover:bg-primary/20 transition-colors">
+<span class="material-symbols-outlined text-[12px]">content_copy</span> Copy
+                </button>
+</div>
+<div class="bg-black/40 rounded-lg p-3 border border-white/5 font-mono text-[11px] text-amber-200/80 leading-relaxed">
+                [HTTP] GET /v1/movies/search?q=avatar - Status: 429
+                Retry-After: 3600
+                X-RateLimit-Limit: 1000
+            </div>
+</div>
+<div class="flex items-center justify-between pt-3 border-t border-white/5">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-xs text-slate-500">source</span>
+<span class="text-[11px] text-slate-400">HDHub4u Scraper</span>
+</div>
+<a class="text-xs font-bold text-primary flex items-center gap-1 hover:underline" href="#">
+                Details <span class="material-symbols-outlined text-xs">arrow_forward</span>
+</a>
+</div>
+</div>
+</div>
+<!-- Log Card 3 (Info) -->
+<div class="glass rounded-xl overflow-hidden border-l-4 border-l-blue-500 mb-4">
+<div class="p-4 space-y-3">
+<div class="flex justify-between items-center mb-1">
+<div class="flex items-center gap-2">
+<span class="px-2 py-0.5 rounded bg-blue-500 text-white text-[10px] font-bold uppercase tracking-tight">Info</span>
+<span class="text-[11px] text-slate-500 font-medium">42 mins ago</span>
+</div>
+<button class="text-slate-400 hover:text-primary transition-colors">
+<span class="material-symbols-outlined text-sm">more_vert</span>
+</button>
+</div>
+<p class="text-sm font-bold leading-tight dark:text-white">Backup completed successfully: 4.2GB compressed to S3 bucket 'mh-backups-us'.</p>
+<div class="mt-3">
+<div class="flex items-center justify-between mb-2">
+<span class="text-[10px] uppercase font-bold text-slate-500 tracking-widest">Output Log</span>
+<button class="flex items-center gap-1 text-[10px] font-bold text-primary bg-primary/10 px-2 py-1 rounded hover:bg-primary/20 transition-colors">
+<span class="material-symbols-outlined text-[12px]">content_copy</span> Copy
+                </button>
+</div>
+<div class="bg-black/40 rounded-lg p-3 border border-white/5 font-mono text-[11px] text-blue-200/80 leading-relaxed">
+                Syncing 42 files... OK
+                Finalizing multipart upload... OK
+                Bucket: s3://mh-backups-us/2023-10-27/db_dump.tar.gz
+            </div>
+</div>
+<div class="flex items-center justify-between pt-3 border-t border-white/5">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-xs text-slate-500">source</span>
+<span class="text-[11px] text-slate-400">System Scheduler</span>
+</div>
+<a class="text-xs font-bold text-primary flex items-center gap-1 hover:underline" href="#">
+                Details <span class="material-symbols-outlined text-xs">arrow_forward</span>
+</a>
+</div>
+</div>
+</div></div>
+</main>
+<!-- Bottom Navigation Bar -->
+<nav class="sticky bottom-0 z-50 bg-background-light dark:bg-background-dark border-t border-slate-200 dark:border-slate-800 px-2 pb-6 pt-2">
+<div class="flex items-center justify-around">
+<a class="flex flex-col items-center gap-1 p-2 text-slate-400 hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined">home</span>
+<span class="text-[10px] font-medium">Home</span>
+</a>
+<a class="flex flex-col items-center gap-1 p-2 text-slate-400 hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined">movie</span>
+<span class="text-[10px] font-medium">Movies</span>
+</a>
+<a class="flex flex-col items-center gap-1 p-2 text-primary" href="#">
+<span class="material-symbols-outlined fill-1">analytics</span>
+<span class="text-[10px] font-bold">Analytics</span>
+<div class="w-1 h-1 bg-primary rounded-full mt-0.5"></div>
+</a>
+<a class="flex flex-col items-center gap-1 p-2 text-slate-400 hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="text-[10px] font-medium">Settings</span>
+</a>
+</div>
+</nav>
+</div>
+</body></html>

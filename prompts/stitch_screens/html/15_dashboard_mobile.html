@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#6961ff",
+                        "background-light": "#f5f5f8",
+                        "background-dark": "#0F0F23",
+                    },
+                    fontFamily: {
+                        "display": ["Inter"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+<style>
+        .glass-card {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .header-glass {
+            background: rgba(15, 15, 35, 0.8);
+            backdrop-filter: blur(16px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100 antialiased overflow-x-hidden">
+<!-- Header -->
+<header class="fixed top-0 left-0 right-0 z-50 header-glass h-16 flex items-center justify-between px-4">
+<button class="size-10 flex items-center justify-center rounded-lg hover:bg-white/5 active:scale-95 transition-all">
+<span class="material-symbols-outlined text-slate-100">menu</span>
+</button>
+<div class="flex items-center gap-2">
+<div class="size-8 bg-primary rounded flex items-center justify-center">
+<span class="material-symbols-outlined text-white text-xl">movie</span>
+</div>
+<h1 class="text-lg font-bold tracking-tight text-slate-100">MovieHub</h1>
+</div>
+<div class="size-9 rounded-full overflow-hidden border border-white/10">
+<img alt="User Profile Avatar" class="w-full h-full object-cover" data-alt="User profile photo avatar" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDOZgzxWA5B9i-vtWfIUvfdoIxFx4Wx2ITYCevvjjhDwIxMeWypDQLW_FV6ms1DYpzQ4Ymge3R5LD00APSo2wtQEDLGK7EjZE4aZDbKpGT0ITrNafMJfej9puQCEo87QkS8rDvYfFzOnT6fP4mi2WYek051W5GxCARO06ENgrvboSNIIBB4pXhwUsiWzo1ePmrfq-kt-chm7jFMeOt0AJW6v4tCKQFBaZg3wrRz1YxzvdMQ92tbngMaERyNUMvHsbu9GgUylCXCGYI"/>
+</div>
+</header>
+<main class="pt-20 pb-24 px-4 flex flex-col gap-6">
+<!-- Welcome Message -->
+<section>
+<h2 class="text-xl font-bold">Dashboard Overview</h2>
+<p class="text-slate-400 text-sm">Welcome back, Admin</p>
+</section>
+<!-- Stats Grid (2x2) -->
+<section class="grid grid-cols-2 gap-3">
+<div class="glass-card p-4 rounded-xl flex flex-col gap-1">
+<p class="text-slate-400 text-xs font-medium uppercase tracking-wider">Total Movies</p>
+<div class="flex items-end justify-between">
+<span class="text-xl font-bold">12,450</span>
+<span class="text-emerald-400 text-[10px] font-bold">+5.2%</span>
+</div>
+</div>
+<div class="glass-card p-4 rounded-xl flex flex-col gap-1">
+<p class="text-slate-400 text-xs font-medium uppercase tracking-wider">Today's Searches</p>
+<div class="flex items-end justify-between">
+<span class="text-xl font-bold">3,240</span>
+<span class="text-emerald-400 text-[10px] font-bold">+12.8%</span>
+</div>
+</div>
+<div class="glass-card p-4 rounded-xl flex flex-col gap-1">
+<p class="text-slate-400 text-xs font-medium uppercase tracking-wider">Downloads</p>
+<div class="flex items-end justify-between">
+<span class="text-xl font-bold">850</span>
+<span class="text-rose-400 text-[10px] font-bold">-2.4%</span>
+</div>
+</div>
+<div class="glass-card p-4 rounded-xl flex flex-col gap-1">
+<p class="text-slate-400 text-xs font-medium uppercase tracking-wider">Active Sources</p>
+<div class="flex items-end justify-between">
+<span class="text-xl font-bold">42</span>
+<span class="text-emerald-400 text-[10px] font-bold">+0.5%</span>
+</div>
+</div>
+</section>
+<!-- Analytics Chart Section -->
+<section class="glass-card p-4 rounded-xl">
+<div class="flex items-center justify-between mb-6">
+<div>
+<h3 class="text-sm font-semibold">Activity Graph</h3>
+<p class="text-[10px] text-slate-400">Last 7 Days Usage</p>
+</div>
+<span class="text-primary font-bold text-lg">24.5k</span>
+</div>
+<div class="w-full h-32 relative">
+<svg class="w-full h-full" preserveaspectratio="none" viewbox="0 0 100 40">
+<defs>
+<lineargradient id="grad" x1="0%" x2="0%" y1="0%" y2="100%">
+<stop offset="0%" style="stop-color:rgba(105, 97, 255, 0.4); stop-opacity:1"></stop>
+<stop offset="100%" style="stop-color:rgba(105, 97, 255, 0); stop-opacity:0"></stop>
+</lineargradient>
+</defs>
+<path d="M0,35 Q10,10 20,25 T40,15 T60,20 T80,5 T100,10 L100,40 L0,40 Z" fill="url(#grad)"></path>
+<path d="M0,35 Q10,10 20,25 T40,15 T60,20 T80,5 T100,10" fill="none" stroke="#6961ff" stroke-width="2"></path>
+</svg>
+</div>
+<div class="flex justify-between mt-2 px-1">
+<span class="text-[10px] text-slate-500 font-medium">Mon</span>
+<span class="text-[10px] text-slate-500 font-medium">Wed</span>
+<span class="text-[10px] text-slate-500 font-medium">Fri</span>
+<span class="text-[10px] text-slate-500 font-medium">Sun</span>
+</div>
+</section>
+<!-- Top Downloads -->
+<section>
+<div class="flex items-center justify-between mb-3">
+<h3 class="font-semibold text-sm">Top Downloads</h3>
+<button class="text-primary text-[11px] font-bold uppercase tracking-tight">View All</button>
+</div>
+<div class="flex flex-col gap-2">
+<div class="glass-card flex items-center gap-3 p-3 rounded-lg">
+<div class="size-10 rounded bg-slate-800 flex-shrink-0 flex items-center justify-center overflow-hidden">
+<img alt="Movie Poster" class="w-full h-full object-cover" data-alt="Action movie poster illustration" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAiFL2aTkgwZYTYo-SSOt5uPzC_mK2v5dPgZphmpBwcZifKxCA2liocNRTflS9-Yc-rwn_PCRCi-wnwMIoY0DpZ7fAzP-PiMJx6rKhKw6HIycUeJIZxcv5JPYeMUTPYf0cRB9xp5E_vjGwMVE9dZw3MaUqKzNaAcJvmwNhc7wpiXmcJ2r3jvrAT_1ibV8lzlzqldH073TClcYB75Nc4u_V1Pr0hYa3SSOidppuEU38T-2opuL5swRA-Ep4CuZqLUtjXJdmAxUDWet4"/>
+</div>
+<div class="flex-1 min-w-0">
+<p class="text-sm font-medium truncate">Interstellar</p>
+<p class="text-[10px] text-slate-400">Sci-Fi • 4.2k DLs</p>
+</div>
+<span class="material-symbols-outlined text-slate-500 text-lg">chevron_right</span>
+</div>
+<div class="glass-card flex items-center gap-3 p-3 rounded-lg">
+<div class="size-10 rounded bg-slate-800 flex-shrink-0 flex items-center justify-center overflow-hidden">
+<img alt="Movie Poster" class="w-full h-full object-cover" data-alt="Classic cinema movie poster" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDI6kzxkdEDv2h9EuhvXENPgBuLPOEZX9ikjna1MP_9WbRtcfKROfd2vzcuVBq7vpD9wshK4KXnNatJwE4Cup1YGYNbMfo_iBDp0u-nuYs23hm4RjiOGaa2KKPaLs9W73AfxkDokkw_--Wh_2GXujFHApAKEFaqaHgUN70MjTZ7KoDPlhopfAw_Jmv9nLBidz4GdwBM8IFHLmjF5J0lPRf3PnSr0aqfdVvprPbXz0J5Wy-LvC99cS1h9AVaB9qOKo1E6y_NMWMceLM"/>
+</div>
+<div class="flex-1 min-w-0">
+<p class="text-sm font-medium truncate">The Godfather</p>
+<p class="text-[10px] text-slate-400">Crime • 3.8k DLs</p>
+</div>
+<span class="material-symbols-outlined text-slate-500 text-lg">chevron_right</span>
+</div>
+<div class="glass-card flex items-center gap-3 p-3 rounded-lg">
+<div class="size-10 rounded bg-slate-800 flex-shrink-0 flex items-center justify-center overflow-hidden">
+<img alt="Movie Poster" class="w-full h-full object-cover" data-alt="Colorful movie scene poster" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDQWb_5JuqCbJUViSEuHy-aAYwcCrxWVhDD06TiXpV366Ol-30g9FM_RpTTC9RTQtAJ_DfubudFjI2idHSZq8Uv4I5MgGLYXf-wL9Epu40zX2BDnReiRYnwtuvqb3h-Qc6nEVHSQY3xxjkZrMifBd5YP31C3mcqRUFhxvgxRI42lWGnPpFwLXUWTTJopgvB8Prrut47zFiZBq5-amCFOPp_nMDrAmpVJf6gTpb2VHsIjT6O1Fcp5S6ZHyT6PCgQ3TCO8h3hQoIXkv0"/>
+</div>
+<div class="flex-1 min-w-0">
+<p class="text-sm font-medium truncate">Spider-Man: Across the Universe</p>
+<p class="text-[10px] text-slate-400">Animation • 3.5k DLs</p>
+</div>
+<span class="material-symbols-outlined text-slate-500 text-lg">chevron_right</span>
+</div>
+</div>
+</section>
+<!-- Trending Searches -->
+<section>
+<h3 class="font-semibold text-sm mb-3">Trending Searches</h3>
+<div class="flex flex-wrap gap-2">
+<div class="bg-primary/20 text-primary px-3 py-1.5 rounded-full text-xs font-medium border border-primary/30 flex items-center gap-1">
+<span class="material-symbols-outlined text-xs">trending_up</span>
+                    Oppenheimer
+                </div>
+<div class="glass-card text-slate-300 px-3 py-1.5 rounded-full text-xs font-medium border border-white/5 flex items-center gap-1">
+<span class="material-symbols-outlined text-xs">search</span>
+                    The Bear S3
+                </div>
+<div class="glass-card text-slate-300 px-3 py-1.5 rounded-full text-xs font-medium border border-white/5 flex items-center gap-1">
+<span class="material-symbols-outlined text-xs">search</span>
+                    John Wick 4
+                </div>
+<div class="glass-card text-slate-300 px-3 py-1.5 rounded-full text-xs font-medium border border-white/5 flex items-center gap-1">
+<span class="material-symbols-outlined text-xs">search</span>
+                    Netflix Series
+                </div>
+<div class="glass-card text-slate-300 px-3 py-1.5 rounded-full text-xs font-medium border border-white/5 flex items-center gap-1">
+<span class="material-symbols-outlined text-xs">search</span>
+                    Avatar
+                </div>
+</div>
+</section>
+</main>
+<!-- Bottom Navigation Bar -->
+<nav class="fixed bottom-0 left-0 right-0 header-glass flex items-center justify-around h-20 pb-4">
+<a class="flex flex-col items-center gap-1 text-primary" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1">dashboard</span>
+<span class="text-[10px] font-semibold">Home</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-slate-500" href="#">
+<span class="material-symbols-outlined">movie</span>
+<span class="text-[10px] font-semibold">Movies</span>
+</a>
+<div class="relative -top-4">
+<button class="size-14 bg-primary rounded-full shadow-lg shadow-primary/30 flex items-center justify-center active:scale-90 transition-transform">
+<span class="material-symbols-outlined text-white text-3xl">add</span>
+</button>
+</div>
+<a class="flex flex-col items-center gap-1 text-slate-500" href="#">
+<span class="material-symbols-outlined">analytics</span>
+<span class="text-[10px] font-semibold">Stats</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-slate-500" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="text-[10px] font-semibold">Settings</span>
+</a>
+</nav>
+</body></html>

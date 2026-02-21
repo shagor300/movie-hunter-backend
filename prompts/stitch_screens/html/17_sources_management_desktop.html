@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>MovieHub Admin - Sources Management</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#6961ff",
+                        "background-light": "#f5f5f8",
+                        "background-dark": "#0F0F23",
+                        "panel-dark": "#1A1A2E",
+                        "glass": "rgba(22, 33, 62, 0.6)",
+                    },
+                    fontFamily: {
+                        "display": ["Inter", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+<style>
+        .glass-panel {
+            background: rgba(22, 33, 62, 0.6);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(105, 97, 255, 0.1);
+        }
+        .sidebar-gradient {
+            background: linear-gradient(180deg, #100f23 0%, #1a1a2e 100%);
+        }
+        .sparkline-container {
+            height: 40px;
+            width: 100%;
+        }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100 antialiased overflow-x-hidden">
+<div class="flex min-h-screen">
+<!-- Sidebar -->
+<aside class="w-[280px] fixed h-screen sidebar-gradient border-r border-primary/10 hidden lg:flex flex-col z-50">
+<div class="p-6">
+<div class="flex items-center gap-3 mb-10">
+<div class="size-10 rounded-lg bg-primary flex items-center justify-center shadow-lg shadow-primary/20">
+<span class="material-symbols-outlined text-white">movie</span>
+</div>
+<div>
+<h1 class="text-lg font-bold tracking-tight">MovieHub <span class="text-primary text-xs uppercase ml-1">Admin</span></h1>
+<p class="text-slate-500 text-[10px] uppercase tracking-widest font-bold">System Management</p>
+</div>
+</div>
+<nav class="space-y-1">
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-400 hover:text-white transition-all group" href="#">
+<span class="material-symbols-outlined group-hover:scale-110 transition-transform">dashboard</span>
+<span class="text-sm font-medium">Dashboard</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl bg-primary/10 text-primary border border-primary/20 shadow-sm shadow-primary/10" href="#">
+<span class="material-symbols-outlined">database</span>
+<span class="text-sm font-semibold">Sources</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-400 hover:text-white transition-all group" href="#">
+<span class="material-symbols-outlined group-hover:scale-110 transition-transform">movie_filter</span>
+<span class="text-sm font-medium">Movies</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-400 hover:text-white transition-all group" href="#">
+<span class="material-symbols-outlined group-hover:scale-110 transition-transform">group</span>
+<span class="text-sm font-medium">Users</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-400 hover:text-white transition-all group" href="#">
+<span class="material-symbols-outlined group-hover:scale-110 transition-transform">monitoring</span>
+<span class="text-sm font-medium">Analytics</span>
+</a>
+<div class="pt-8 pb-4">
+<p class="px-4 text-[10px] font-bold text-slate-600 uppercase tracking-widest">Configuration</p>
+</div>
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-400 hover:text-white transition-all group" href="#">
+<span class="material-symbols-outlined group-hover:scale-110 transition-transform">settings</span>
+<span class="text-sm font-medium">System Settings</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-400 hover:text-white transition-all group" href="#">
+<span class="material-symbols-outlined group-hover:scale-110 transition-transform">shield_person</span>
+<span class="text-sm font-medium">API Keys</span>
+</a>
+</nav>
+</div>
+<div class="mt-auto p-6">
+<div class="glass-panel p-4 rounded-2xl flex items-center gap-3">
+<div class="size-10 rounded-full bg-slate-800 border-2 border-primary/40 overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="Admin user avatar" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC9AN4viWUAb79nBee0xxPSIas1PtAncBy9PH6D8Lp9qRIj-bDdPEpz3W-x6kI3s7Au6WEeYSdoSm1R0E4cHsQ5UCOW7pAoTJekOI34ID6wVbCUdWIuFwQY87Cwmmf-r8DUv1X-6X8wBUZbz1ztBxFQJtSXIP7uH-ZYNXl8Jmly2UcHjKqJI1pyLUVwGq6GZtTpTfnTrrW2IPE-XAVTdqWz2D_hicCxgXBYfaEQfw2DRc6JKFGe-v_DpPWyPU_3OZj_56nKehnJCcM"/>
+</div>
+<div class="flex-1 min-w-0">
+<p class="text-sm font-bold truncate">Alex Morgan</p>
+<p class="text-[10px] text-slate-500 font-medium">Super Admin</p>
+</div>
+<button class="text-slate-500 hover:text-red-400 transition-colors">
+<span class="material-symbols-outlined text-sm">logout</span>
+</button>
+</div>
+</div>
+</aside>
+<!-- Main Content -->
+<main class="flex-1 lg:ml-[280px]">
+<!-- Navbar -->
+<header class="h-[72px] sticky top-0 glass-panel border-b border-white/5 flex items-center justify-between px-8 z-40">
+<div class="flex items-center gap-2 text-sm">
+<span class="text-slate-500 font-medium tracking-tight">Dashboard</span>
+<span class="material-symbols-outlined text-slate-600 text-xs">chevron_right</span>
+<span class="text-white font-semibold">Sources Management</span>
+</div>
+<div class="flex items-center gap-6">
+<div class="hidden md:flex items-center gap-2 bg-panel-dark/50 border border-white/10 rounded-lg px-3 py-1.5">
+<span class="material-symbols-outlined text-slate-500 text-xl">search</span>
+<input class="bg-transparent border-none text-xs focus:ring-0 text-white w-48 placeholder:text-slate-600" placeholder="Search provider..." type="text"/>
+</div>
+<div class="flex items-center gap-3">
+<button class="size-10 rounded-xl bg-panel-dark border border-white/10 flex items-center justify-center text-slate-400 hover:bg-primary/20 hover:text-primary transition-all relative">
+<span class="material-symbols-outlined">notifications</span>
+<span class="absolute top-2 right-2 size-2 bg-primary rounded-full border-2 border-background-dark"></span>
+</button>
+<button class="size-10 rounded-xl bg-panel-dark border border-white/10 flex items-center justify-center text-slate-400 hover:bg-primary/20 hover:text-primary transition-all">
+<span class="material-symbols-outlined">sync</span>
+</button>
+</div>
+</div>
+</header>
+<div class="p-8 space-y-8">
+<!-- Page Title Area -->
+<div class="flex flex-col md:flex-row md:items-end justify-between gap-4">
+<div>
+<h2 class="text-3xl font-black text-white tracking-tighter">Data Providers</h2>
+<p class="text-slate-400 mt-1 max-w-lg">Manage real-time scraping and synchronization tasks from your primary movie data sources.</p>
+</div>
+<div class="flex gap-3">
+<button class="px-5 py-2.5 rounded-xl bg-panel-dark border border-white/10 text-white text-sm font-bold hover:bg-panel-dark/80 transition-all flex items-center gap-2">
+<span class="material-symbols-outlined text-sm">history</span> History
+                        </button>
+<button class="px-5 py-2.5 rounded-xl bg-primary text-white text-sm font-bold hover:bg-primary/90 transition-all shadow-lg shadow-primary/25 flex items-center gap-2">
+<span class="material-symbols-outlined text-sm">add</span> New Source
+                        </button>
+</div>
+</div>
+<!-- Sources Grid -->
+<div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
+<!-- Card 1: HDHub4u -->
+<div class="glass-panel p-6 rounded-2xl flex flex-col gap-6 relative overflow-hidden group">
+<div class="absolute -right-4 -top-4 opacity-[0.03] group-hover:scale-110 transition-transform">
+<span class="material-symbols-outlined text-[120px]">cloud_sync</span>
+</div>
+<div class="flex justify-between items-start">
+<div class="flex items-center gap-4">
+<div class="size-14 rounded-2xl bg-gradient-to-br from-primary/30 to-primary/10 border border-primary/20 flex items-center justify-center">
+<span class="material-symbols-outlined text-primary text-3xl">storage</span>
+</div>
+<div>
+<h3 class="text-xl font-extrabold text-white tracking-tight">HDHub4u</h3>
+<div class="flex items-center gap-2 mt-1">
+<span class="flex size-2 rounded-full bg-green-500 shadow-sm shadow-green-500/50"></span>
+<span class="text-[10px] font-bold uppercase text-green-500 tracking-wider">Online</span>
+<span class="text-slate-600 text-[10px]">•</span>
+<span class="text-[10px] text-slate-500 font-medium">Last sync 2m ago</span>
+</div>
+</div>
+</div>
+<div class="flex items-center gap-3">
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox"/>
+<div class="w-11 h-6 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+</label>
+<button class="size-9 rounded-lg border border-white/10 flex items-center justify-center text-slate-400 hover:text-white hover:bg-white/5">
+<span class="material-symbols-outlined text-xl">settings</span>
+</button>
+</div>
+</div>
+<div class="grid grid-cols-3 gap-4 bg-black/20 p-4 rounded-xl border border-white/5">
+<div class="text-center">
+<p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Total Movies</p>
+<p class="text-lg font-black text-white lining-nums">12,402</p>
+</div>
+<div class="text-center border-x border-white/5 px-2">
+<p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Success Rate</p>
+<p class="text-lg font-black text-green-400 lining-nums">98.4%</p>
+</div>
+<div class="text-center">
+<p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Avg. Res</p>
+<p class="text-lg font-black text-white lining-nums">1.2s</p>
+</div>
+</div>
+<button class="w-full py-3 rounded-xl bg-primary/20 border border-primary/30 text-primary text-sm font-bold hover:bg-primary hover:text-white transition-all">
+                            Force Sync Now
+                        </button>
+</div>
+<!-- Card 2: SkyMoviesHD -->
+<div class="glass-panel p-6 rounded-2xl flex flex-col gap-6 relative overflow-hidden group">
+<div class="absolute -right-4 -top-4 opacity-[0.03] group-hover:scale-110 transition-transform">
+<span class="material-symbols-outlined text-[120px]">speed</span>
+</div>
+<div class="flex justify-between items-start">
+<div class="flex items-center gap-4">
+<div class="size-14 rounded-2xl bg-gradient-to-br from-amber-500/30 to-amber-500/10 border border-amber-500/20 flex items-center justify-center">
+<span class="material-symbols-outlined text-amber-500 text-3xl">satellite_alt</span>
+</div>
+<div>
+<h3 class="text-xl font-extrabold text-white tracking-tight">SkyMoviesHD</h3>
+<div class="flex items-center gap-2 mt-1">
+<span class="flex size-2 rounded-full bg-amber-500 shadow-sm shadow-amber-500/50"></span>
+<span class="text-[10px] font-bold uppercase text-amber-500 tracking-wider">Slow</span>
+<span class="text-slate-600 text-[10px]">•</span>
+<span class="text-[10px] text-slate-500 font-medium">Last sync 5m ago</span>
+</div>
+</div>
+</div>
+<div class="flex items-center gap-3">
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox"/>
+<div class="w-11 h-6 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+</label>
+<button class="size-9 rounded-lg border border-white/10 flex items-center justify-center text-slate-400 hover:text-white hover:bg-white/5">
+<span class="material-symbols-outlined text-xl">settings</span>
+</button>
+</div>
+</div>
+<div class="grid grid-cols-3 gap-4 bg-black/20 p-4 rounded-xl border border-white/5">
+<div class="text-center">
+<p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Total Movies</p>
+<p class="text-lg font-black text-white lining-nums">8,211</p>
+</div>
+<div class="text-center border-x border-white/5 px-2">
+<p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Success Rate</p>
+<p class="text-lg font-black text-amber-500 lining-nums">72.1%</p>
+</div>
+<div class="text-center">
+<p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Avg. Res</p>
+<p class="text-lg font-black text-white lining-nums">4.8s</p>
+</div>
+</div>
+<button class="w-full py-3 rounded-xl bg-amber-500/20 border border-amber-500/30 text-amber-500 text-sm font-bold hover:bg-amber-500 hover:text-white transition-all">
+                            Check Connection
+                        </button>
+</div>
+<!-- Card 3: 123Movies -->
+<div class="glass-panel p-6 rounded-2xl flex flex-col gap-6 relative overflow-hidden group">
+<div class="absolute -right-4 -top-4 opacity-[0.03] group-hover:scale-110 transition-transform">
+<span class="material-symbols-outlined text-[120px]">cloud_off</span>
+</div>
+<div class="flex justify-between items-start">
+<div class="flex items-center gap-4">
+<div class="size-14 rounded-2xl bg-gradient-to-br from-red-500/30 to-red-500/10 border border-red-500/20 flex items-center justify-center">
+<span class="material-symbols-outlined text-red-500 text-3xl">api</span>
+</div>
+<div>
+<h3 class="text-xl font-extrabold text-white tracking-tight">123Movies</h3>
+<div class="flex items-center gap-2 mt-1">
+<span class="flex size-2 rounded-full bg-red-500 shadow-sm shadow-red-500/50"></span>
+<span class="text-[10px] font-bold uppercase text-red-500 tracking-wider">Offline</span>
+<span class="text-slate-600 text-[10px]">•</span>
+<span class="text-[10px] text-slate-500 font-medium">Failed 12m ago</span>
+</div>
+</div>
+</div>
+<div class="flex items-center gap-3">
+<label class="relative inline-flex items-center cursor-pointer">
+<input class="sr-only peer" type="checkbox"/>
+<div class="w-11 h-6 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+</label>
+<button class="size-9 rounded-lg border border-white/10 flex items-center justify-center text-slate-400 hover:text-white hover:bg-white/5">
+<span class="material-symbols-outlined text-xl">settings</span>
+</button>
+</div>
+</div>
+<div class="grid grid-cols-3 gap-4 bg-black/20 p-4 rounded-xl border border-white/5">
+<div class="text-center">
+<p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Total Movies</p>
+<p class="text-lg font-black text-white lining-nums">15,029</p>
+</div>
+<div class="text-center border-x border-white/5 px-2">
+<p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Success Rate</p>
+<p class="text-lg font-black text-red-500 lining-nums">0.0%</p>
+</div>
+<div class="text-center">
+<p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Avg. Res</p>
+<p class="text-lg font-black text-white lining-nums">N/A</p>
+</div>
+</div>
+<button class="w-full py-3 rounded-xl bg-red-500/20 border border-red-500/30 text-red-500 text-sm font-bold hover:bg-red-500 hover:text-white transition-all">
+                            Diagnostic Run
+                        </button>
+</div>
+<!-- Card 4: VegaMovies -->
+<div class="glass-panel p-6 rounded-2xl flex flex-col gap-6 relative overflow-hidden group">
+<div class="absolute -right-4 -top-4 opacity-[0.03] group-hover:scale-110 transition-transform">
+<span class="material-symbols-outlined text-[120px]">hub</span>
+</div>
+<div class="flex justify-between items-start">
+<div class="flex items-center gap-4">
+<div class="size-14 rounded-2xl bg-gradient-to-br from-primary/30 to-primary/10 border border-primary/20 flex items-center justify-center">
+<span class="material-symbols-outlined text-primary text-3xl">stream</span>
+</div>
+<div>
+<h3 class="text-xl font-extrabold text-white tracking-tight">VegaMovies</h3>
+<div class="flex items-center gap-2 mt-1">
+<span class="flex size-2 rounded-full bg-green-500 shadow-sm shadow-green-500/50"></span>
+<span class="text-[10px] font-bold uppercase text-green-500 tracking-wider">Online</span>
+<span class="text-slate-600 text-[10px]">•</span>
+<span class="text-[10px] text-slate-500 font-medium">Last sync 1m ago</span>
+</div>
+</div>
+</div>
+<div class="flex items-center gap-3">
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox"/>
+<div class="w-11 h-6 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+</label>
+<button class="size-9 rounded-lg border border-white/10 flex items-center justify-center text-slate-400 hover:text-white hover:bg-white/5">
+<span class="material-symbols-outlined text-xl">settings</span>
+</button>
+</div>
+</div>
+<div class="grid grid-cols-3 gap-4 bg-black/20 p-4 rounded-xl border border-white/5">
+<div class="text-center">
+<p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Total Movies</p>
+<p class="text-lg font-black text-white lining-nums">9,443</p>
+</div>
+<div class="text-center border-x border-white/5 px-2">
+<p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Success Rate</p>
+<p class="text-lg font-black text-green-400 lining-nums">99.1%</p>
+</div>
+<div class="text-center">
+<p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Avg. Res</p>
+<p class="text-lg font-black text-white lining-nums">0.9s</p>
+</div>
+</div>
+<button class="w-full py-3 rounded-xl bg-primary/20 border border-primary/30 text-primary text-sm font-bold hover:bg-primary hover:text-white transition-all">
+                            Force Sync Now
+                        </button>
+</div>
+</div>
+<!-- Health History Section -->
+<div class="glass-panel p-8 rounded-2xl">
+<div class="flex items-center justify-between mb-8">
+<div>
+<h3 class="text-xl font-extrabold text-white tracking-tight">Source Health (Last 24 Hours)</h3>
+<p class="text-slate-500 text-sm mt-1">Real-time performance metrics tracking provider stability.</p>
+</div>
+<div class="flex items-center gap-4">
+<div class="flex items-center gap-2">
+<span class="size-3 rounded-full bg-primary/40"></span>
+<span class="text-xs text-slate-400 font-medium">Success Rate</span>
+</div>
+</div>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+<!-- Sparkline 1 -->
+<div class="space-y-4">
+<div class="flex justify-between items-center">
+<span class="text-xs font-bold text-slate-400 uppercase tracking-widest">HDHub4u</span>
+<span class="text-xs font-black text-white">98%</span>
+</div>
+<div class="sparkline-container bg-primary/5 rounded border border-primary/10 flex items-end px-1 gap-px">
+<div class="w-full bg-primary h-[80%] opacity-40 rounded-t-sm"></div>
+<div class="w-full bg-primary h-[85%] opacity-50 rounded-t-sm"></div>
+<div class="w-full bg-primary h-[90%] opacity-60 rounded-t-sm"></div>
+<div class="w-full bg-primary h-[82%] opacity-40 rounded-t-sm"></div>
+<div class="w-full bg-primary h-[95%] opacity-80 rounded-t-sm"></div>
+<div class="w-full bg-primary h-[98%] opacity-100 rounded-t-sm shadow-[0_0_8px_rgba(105,97,255,0.4)]"></div>
+</div>
+</div>
+<!-- Sparkline 2 -->
+<div class="space-y-4">
+<div class="flex justify-between items-center">
+<span class="text-xs font-bold text-slate-400 uppercase tracking-widest">SkyMoviesHD</span>
+<span class="text-xs font-black text-amber-500">72%</span>
+</div>
+<div class="sparkline-container bg-amber-500/5 rounded border border-amber-500/10 flex items-end px-1 gap-px">
+<div class="w-full bg-amber-500 h-[70%] opacity-40 rounded-t-sm"></div>
+<div class="w-full bg-amber-500 h-[65%] opacity-50 rounded-t-sm"></div>
+<div class="w-full bg-amber-500 h-[75%] opacity-60 rounded-t-sm"></div>
+<div class="w-full bg-amber-500 h-[72%] opacity-100 rounded-t-sm shadow-[0_0_8px_rgba(245,158,11,0.4)]"></div>
+<div class="w-full bg-amber-500 h-[60%] opacity-40 rounded-t-sm"></div>
+<div class="w-full bg-amber-500 h-[72%] opacity-80 rounded-t-sm"></div>
+</div>
+</div>
+<!-- Sparkline 3 -->
+<div class="space-y-4">
+<div class="flex justify-between items-center">
+<span class="text-xs font-bold text-slate-400 uppercase tracking-widest">123Movies</span>
+<span class="text-xs font-black text-red-500">0%</span>
+</div>
+<div class="sparkline-container bg-red-500/5 rounded border border-red-500/10 flex items-center justify-center">
+<div class="w-4/5 h-[2px] bg-red-500/30 rounded-full relative">
+<div class="absolute inset-0 bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.5)] w-1/12 animate-pulse"></div>
+</div>
+</div>
+</div>
+<!-- Sparkline 4 -->
+<div class="space-y-4">
+<div class="flex justify-between items-center">
+<span class="text-xs font-bold text-slate-400 uppercase tracking-widest">VegaMovies</span>
+<span class="text-xs font-black text-white">99%</span>
+</div>
+<div class="sparkline-container bg-primary/5 rounded border border-primary/10 flex items-end px-1 gap-px">
+<div class="w-full bg-primary h-[95%] opacity-40 rounded-t-sm"></div>
+<div class="w-full bg-primary h-[97%] opacity-50 rounded-t-sm"></div>
+<div class="w-full bg-primary h-[96%] opacity-60 rounded-t-sm"></div>
+<div class="w-full bg-primary h-[98%] opacity-40 rounded-t-sm"></div>
+<div class="w-full bg-primary h-[99%] opacity-100 rounded-t-sm shadow-[0_0_8px_rgba(105,97,255,0.4)]"></div>
+<div class="w-full bg-primary h-[99%] opacity-80 rounded-t-sm"></div>
+</div>
+</div>
+</div>
+</div>
+<!-- Footer Stats -->
+<div class="flex flex-wrap gap-8 py-10 border-t border-white/5">
+<div class="flex items-center gap-4">
+<div class="p-3 bg-primary/10 rounded-xl">
+<span class="material-symbols-outlined text-primary">cloud_done</span>
+</div>
+<div>
+<p class="text-slate-400 text-xs font-bold uppercase tracking-wider">Total Stored</p>
+<p class="text-xl font-black text-white">45,085 <span class="text-primary text-xs ml-1">+2.4%</span></p>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<div class="p-3 bg-green-500/10 rounded-xl">
+<span class="material-symbols-outlined text-green-500">bolt</span>
+</div>
+<div>
+<p class="text-slate-400 text-xs font-bold uppercase tracking-wider">Global Latency</p>
+<p class="text-xl font-black text-white">1.4s <span class="text-green-500 text-xs ml-1">-0.3s</span></p>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<div class="p-3 bg-amber-500/10 rounded-xl">
+<span class="material-symbols-outlined text-amber-500">warning</span>
+</div>
+<div>
+<p class="text-slate-400 text-xs font-bold uppercase tracking-wider">Incidents (24h)</p>
+<p class="text-xl font-black text-white">2 <span class="text-slate-500 text-xs ml-1">Resolved</span></p>
+</div>
+</div>
+</div>
+</div>
+</main>
+</div>
+</body></html>

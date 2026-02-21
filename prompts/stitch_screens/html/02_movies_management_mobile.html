@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>MovieHub - Movies Management</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#6961ff",
+                        "background-light": "#f5f5f8",
+                        "background-dark": "#0F0F23",
+                    },
+                    fontFamily: {
+                        "display": ["Inter", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+<style>
+        .glass {
+            background: rgba(105, 97, 255, 0.05);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(105, 97, 255, 0.1);
+        }
+        .glass-darker {
+            background: rgba(15, 15, 35, 0.6);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(105, 97, 255, 0.15);
+        }
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .hide-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100 min-h-screen pb-24">
+<!-- Header -->
+<header class="sticky top-0 z-50 glass-darker px-4 py-3 flex items-center justify-between">
+<button class="flex items-center justify-center w-10 h-10 rounded-lg hover:bg-primary/10 transition-colors">
+<span class="material-symbols-outlined">menu</span>
+</button>
+<div class="flex items-center gap-2">
+<div class="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
+<span class="material-symbols-outlined text-white text-xl">movie</span>
+</div>
+<h1 class="text-lg font-bold tracking-tight">MovieHub</h1>
+</div>
+<div class="w-10 h-10 rounded-full border-2 border-primary/30 p-0.5 overflow-hidden">
+<img alt="User Avatar" class="w-full h-full object-cover rounded-full" data-alt="Close up portrait of a male user" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDGpA0XvDtQYcfDrJxJmhkQNo2_8dPsHDcgYoGHPh_YiOQjvLI7UJ8Z1--uA3s2GT_uT6HAEN-rI-s1gWpmk3wVItf5ZeTAPyraLVEfg78F_I1l2rXF6xdaJxefcNZtY3APzf73yC_rQy8RxU4ypct0nj_xCBloDWC8ocLHjrT7w16xajjhfSqos1olepYOeMQHcGBcN0VEOApkWtqoCa2aPhwmn07DYlBdtVLXDasouKi_dvZJ4oFZo3H3Xjoan9arMGcYJYnYr7U"/>
+</div>
+</header>
+<main class="px-4 py-6 max-w-md mx-auto">
+<!-- Title -->
+<h2 class="text-2xl font-bold mb-6">Movies</h2>
+<!-- Search Bar (Glassmorphism) -->
+<div class="mb-6">
+<label class="relative flex items-center">
+<span class="material-symbols-outlined absolute left-4 text-slate-400">search</span>
+<input class="w-full h-12 pl-12 pr-4 glass rounded-[12px] border-none focus:ring-2 focus:ring-primary/50 text-base placeholder:text-slate-500" placeholder="Search movies..." type="text"/>
+</label>
+</div>
+<!-- Filters (Horizontal Scroll) -->
+<div class="flex gap-3 overflow-x-auto hide-scrollbar mb-8 pb-1">
+<button class="flex h-9 shrink-0 items-center justify-center gap-x-2 rounded-full bg-primary px-5">
+<span class="text-sm font-semibold text-white">All Genres</span>
+</button>
+<button class="flex h-9 shrink-0 items-center justify-center gap-x-2 rounded-full glass px-5">
+<span class="text-sm font-medium">Action</span>
+</button>
+<button class="flex h-9 shrink-0 items-center justify-center gap-x-2 rounded-full glass px-5">
+<span class="text-sm font-medium">Sci-Fi</span>
+</button>
+<button class="flex h-9 shrink-0 items-center justify-center gap-x-2 rounded-full glass px-5">
+<span class="text-sm font-medium">Drama</span>
+</button>
+<button class="flex h-9 shrink-0 items-center justify-center gap-x-2 rounded-full glass px-5">
+<span class="text-sm font-medium">Comedy</span>
+</button>
+<button class="flex h-9 shrink-0 items-center justify-center gap-x-2 rounded-full glass px-5">
+<span class="text-sm font-medium italic">Sort By</span>
+<span class="material-symbols-outlined text-sm">expand_more</span>
+</button>
+</div>
+<!-- Movie List Stack -->
+<div class="space-y-4 mb-10">
+<!-- Movie Card 1 -->
+<div class="glass p-3 rounded-xl flex flex-col gap-3">
+<div class="flex gap-4">
+<div class="w-20 h-28 shrink-0 rounded-lg overflow-hidden bg-slate-800">
+<img alt="Movie Poster" class="w-full h-full object-cover" data-alt="Dark dramatic movie poster with neon highlights" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBHNsohUu6ioBi5i2pQ_61IUFTBi2AwVWM54DJahKVDizBZIkX7UlWx0J6L_jB4slKNmCyyVl4gu6oi51ibwnZEm8bL9LQ2g8fQzlSECxx8gqzm6Y6wrfquVTQEdDYa6rIo68o6N0EEd7Rdx0dmXv6HHJEkUgrTaf5hvPT-GBDkt4jD38B2ogjXKUDnRAkVKWhzIvFQr8D3kAxypaeaff5vRSMBDsicUQiQdHIMgLoqoKKXtm-vk-eG86gNCtkq5C5-DzPi7C-OZtU"/>
+</div>
+<div class="flex flex-col justify-between py-1 flex-1">
+<div>
+<h3 class="font-bold text-base leading-tight mb-1">Inception</h3>
+<p class="text-sm text-slate-400">2010 • Sci-Fi</p>
+<div class="mt-2 inline-flex items-center bg-primary/20 text-primary text-[10px] font-bold px-2 py-0.5 rounded-full border border-primary/30 uppercase tracking-wider">
+                                TMDB ID: 27205
+                            </div>
+</div>
+<div class="flex items-center gap-1 text-amber-400">
+<span class="material-symbols-outlined text-sm fill-1">star</span>
+<span class="material-symbols-outlined text-sm fill-1">star</span>
+<span class="material-symbols-outlined text-sm fill-1">star</span>
+<span class="material-symbols-outlined text-sm fill-1">star</span>
+<span class="material-symbols-outlined text-sm">star_half</span>
+<span class="text-xs text-slate-400 ml-1 font-medium">4.8</span>
+</div>
+</div>
+</div>
+<div class="flex items-center justify-end gap-2 border-t border-primary/10 pt-2">
+<button class="w-10 h-10 rounded-lg glass flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-xl">visibility</span>
+</button>
+<button class="w-10 h-10 rounded-lg glass flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-xl">edit</span>
+</button>
+<button class="w-10 h-10 rounded-lg glass flex items-center justify-center text-red-400">
+<span class="material-symbols-outlined text-xl">delete</span>
+</button>
+</div>
+</div>
+<!-- Movie Card 2 -->
+<div class="glass p-3 rounded-xl flex flex-col gap-3">
+<div class="flex gap-4">
+<div class="w-20 h-28 shrink-0 rounded-lg overflow-hidden bg-slate-800">
+<img alt="Movie Poster" class="w-full h-full object-cover" data-alt="Cinematic abstract movie poster with blue tones" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC072VMQcB_Id6AK0g5w226PTl5RFNT_k3bhAVE-XijOMtZbDRLVHG4hxip0-iLicIV9oM1u_FdsN-ZzNppix-uWHtlMNYfLHV57bi2P_Xw38_8o_UDKwVVPfMUzfFNa4oaqy-8bKhkzIMyqLI5LC6a5Fq6hfc6sCi8BSVEyGVLPolGsKQYLpAVA8sOQa637QTkEFqyEuSG_4xlLj2hszB_bEUhe9CrdHq5Ft0BAmiYI4Nx8cwpHptkz_R-NQPZSGVEGEf8bPgVu9E"/>
+</div>
+<div class="flex flex-col justify-between py-1 flex-1">
+<div>
+<h3 class="font-bold text-base leading-tight mb-1">The Dark Knight</h3>
+<p class="text-sm text-slate-400">2008 • Action</p>
+<div class="mt-2 inline-flex items-center bg-primary/20 text-primary text-[10px] font-bold px-2 py-0.5 rounded-full border border-primary/30 uppercase tracking-wider">
+                                TMDB ID: 155
+                            </div>
+</div>
+<div class="flex items-center gap-1 text-amber-400">
+<span class="material-symbols-outlined text-sm fill-1">star</span>
+<span class="material-symbols-outlined text-sm fill-1">star</span>
+<span class="material-symbols-outlined text-sm fill-1">star</span>
+<span class="material-symbols-outlined text-sm fill-1">star</span>
+<span class="material-symbols-outlined text-sm fill-1">star</span>
+<span class="text-xs text-slate-400 ml-1 font-medium">5.0</span>
+</div>
+</div>
+</div>
+<div class="flex items-center justify-end gap-2 border-t border-primary/10 pt-2">
+<button class="w-10 h-10 rounded-lg glass flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-xl">visibility</span>
+</button>
+<button class="w-10 h-10 rounded-lg glass flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-xl">edit</span>
+</button>
+<button class="w-10 h-10 rounded-lg glass flex items-center justify-center text-red-400">
+<span class="material-symbols-outlined text-xl">delete</span>
+</button>
+</div>
+</div>
+<!-- Movie Card 3 -->
+<div class="glass p-3 rounded-xl flex flex-col gap-3">
+<div class="flex gap-4">
+<div class="w-20 h-28 shrink-0 rounded-lg overflow-hidden bg-slate-800">
+<img alt="Movie Poster" class="w-full h-full object-cover" data-alt="Vintage black and white movie scene" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDFOznSu6Oi7OuffTN16rb8XgigPhm7ulEp21G1tDYTgJ4hpYPLK3RKA2mXZg2DK4ZS_jL3WOnGWwmHEYiOhKiGFeMDrOPkOa3RtIRzrQfZAIoRyEdZjyRITGpurSmc_S_DqsPLi3P72Zdrjgi5y0JyiRlmZFN5JOCtjRIDY9gU-GWIwUyUoLW_C0puX9N6hlJIg2HXzzx9tdHgqVeYeI478tzuL9xejkx8H8JjOZ6_qXAVZ7Otx6adPt-bQSoE08Otn083J8y2D1E"/>
+</div>
+<div class="flex flex-col justify-between py-1 flex-1">
+<div>
+<h3 class="font-bold text-base leading-tight mb-1">Pulp Fiction</h3>
+<p class="text-sm text-slate-400">1994 • Crime</p>
+<div class="mt-2 inline-flex items-center bg-primary/20 text-primary text-[10px] font-bold px-2 py-0.5 rounded-full border border-primary/30 uppercase tracking-wider">
+                                TMDB ID: 680
+                            </div>
+</div>
+<div class="flex items-center gap-1 text-amber-400">
+<span class="material-symbols-outlined text-sm fill-1">star</span>
+<span class="material-symbols-outlined text-sm fill-1">star</span>
+<span class="material-symbols-outlined text-sm fill-1">star</span>
+<span class="material-symbols-outlined text-sm fill-1">star</span>
+<span class="material-symbols-outlined text-sm">star</span>
+<span class="text-xs text-slate-400 ml-1 font-medium">4.5</span>
+</div>
+</div>
+</div>
+<div class="flex items-center justify-end gap-2 border-t border-primary/10 pt-2">
+<button class="w-10 h-10 rounded-lg glass flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-xl">visibility</span>
+</button>
+<button class="w-10 h-10 rounded-lg glass flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-xl">edit</span>
+</button>
+<button class="w-10 h-10 rounded-lg glass flex items-center justify-center text-red-400">
+<span class="material-symbols-outlined text-xl">delete</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Pagination -->
+<div class="flex flex-col items-center gap-4">
+<div class="flex items-center gap-2">
+<button class="w-10 h-10 rounded-lg glass flex items-center justify-center text-slate-400 disabled:opacity-50" disabled="">
+<span class="material-symbols-outlined">chevron_left</span>
+</button>
+<div class="px-4 h-10 rounded-lg glass flex items-center justify-center gap-2">
+<span class="text-primary font-bold">1</span>
+<span class="text-slate-500">of</span>
+<span class="font-medium">24</span>
+</div>
+<button class="w-10 h-10 rounded-lg glass flex items-center justify-center text-primary">
+<span class="material-symbols-outlined">chevron_right</span>
+</button>
+</div>
+<p class="text-xs text-slate-500">Showing 1-10 of 238 movies</p>
+</div>
+</main>
+<!-- FAB -->
+<button class="fixed bottom-24 right-6 w-14 h-14 rounded-full bg-gradient-to-br from-primary to-[#8a84ff] shadow-lg shadow-primary/40 flex items-center justify-center text-white transition-transform active:scale-90 z-40">
+<span class="material-symbols-outlined text-3xl">add</span>
+</button>
+<!-- Bottom Nav Bar -->
+<nav class="fixed bottom-0 left-0 right-0 glass-darker px-4 pb-4 pt-2 flex justify-around items-center z-50">
+<a class="flex flex-col items-center gap-1 text-primary" href="#">
+<span class="material-symbols-outlined fill-1">grid_view</span>
+<span class="text-[10px] font-medium uppercase tracking-tighter">Dashboard</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-slate-500" href="#">
+<span class="material-symbols-outlined">movie</span>
+<span class="text-[10px] font-medium uppercase tracking-tighter">Movies</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-slate-500" href="#">
+<span class="material-symbols-outlined">group</span>
+<span class="text-[10px] font-medium uppercase tracking-tighter">Users</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-slate-500" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="text-[10px] font-medium uppercase tracking-tighter">Settings</span>
+</a>
+</nav>
+</body></html>

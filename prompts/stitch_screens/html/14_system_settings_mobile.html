@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#6961ff",
+                        "background-light": "#f5f5f8",
+                        "background-dark": "#0a0a0f",
+                    },
+                    fontFamily: {
+                        "display": ["Inter", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+<style>
+        .glass-card {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .glass-nav {
+            background: rgba(10, 10, 15, 0.8);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-top: 1px solid rgba(255, 255, 255, 0.08);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100 min-h-screen pb-24">
+<!-- Header -->
+<header class="sticky top-0 z-50 flex items-center justify-between p-4 glass-nav">
+<div class="flex items-center gap-3">
+<div class="p-2 rounded-lg bg-primary/10 text-primary">
+<span class="material-symbols-outlined block">settings</span>
+</div>
+<h1 class="text-xl font-bold tracking-tight">Admin Settings</h1>
+</div>
+<button class="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center overflow-hidden border border-white/10">
+<img alt="Admin Avatar" class="w-full h-full object-cover" data-alt="Admin user profile picture circular" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB42FO-eTuWBN5uofaWxmpoyqnprt4NCLTDd76neg0CttAQJ4M_L5EFxS5RWRukXvuV4mGqNmIiixexo3_GEoQIIztKRDWn1YMZwjcoL2_psjTs3UbPiQ2w1C5sb7Wi_1Uidkmhw6AaSLEjdZarEJyzIWhKYUCjgPo9G6V2ee3bbmft_IwXo2k4G5ghFpZY-lWnwl5_H6MoyUQ8D1MUr2j0ZFy2t2cD_gwuAPnlZohyDuXkan67JX9pEDScAf4m_YXXp-Rb_EX9HCk"/>
+</button>
+</header>
+<main class="p-4 space-y-6 max-w-md mx-auto">
+<!-- App Identity Section -->
+<section class="space-y-4">
+<div class="flex items-center gap-2 px-1">
+<span class="material-symbols-outlined text-primary text-sm">badge</span>
+<h2 class="text-sm font-semibold uppercase tracking-wider text-slate-400">App Identity</h2>
+</div>
+<div class="glass-card rounded-xl p-6 flex flex-col items-center gap-6">
+<div class="relative group">
+<div class="w-24 h-24 rounded-2xl bg-primary/20 flex items-center justify-center overflow-hidden border-2 border-dashed border-primary/40">
+<span class="material-symbols-outlined text-4xl text-primary/60">image</span>
+<img alt="MovieHub Logo" class="absolute inset-0 w-full h-full object-cover opacity-90" data-alt="Modern minimalist movie app logo" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBDUSvdmoCxuzobYj0EYC_R0irZEcumfPy0tMdAxQAUujU7ispGDCZ2BfX9K9pGPXbjsHdzZaLU1xAeFKMWjfNeEp3q7HnnNkLITIA0D6Z1TIKjKDh7gL6or-VW1qNOwcCxwVq2eCzuEaLDD2db3pNUbFrFzuJhUeNe0dUklt-h20POeRvHRFtzfOZFFOCZvbwgmN4_nYtBfJSncuhCBruzFMKDpZWBwFOwKXmqpIR5SiNS8WtpUtZat9VP9Yzt6VrmgkQHmeEvph8"/>
+</div>
+<button class="absolute -bottom-2 -right-2 bg-primary text-white p-2 rounded-lg shadow-lg hover:scale-105 transition-transform min-w-[44px] min-h-[44px] flex items-center justify-center">
+<span class="material-symbols-outlined text-xl">edit</span>
+</button>
+</div>
+<div class="w-full space-y-4">
+<div class="space-y-2">
+<label class="text-sm font-medium text-slate-400 ml-1">Application Name</label>
+<input class="w-full h-12 bg-white/5 border border-white/10 rounded-lg px-4 focus:ring-2 focus:ring-primary focus:border-transparent transition-all outline-none" type="text" value="MovieHub Premium"/>
+</div>
+</div>
+</div>
+</section>
+<!-- Scraper Configuration -->
+<section class="space-y-4">
+<div class="flex items-center gap-2 px-1">
+<span class="material-symbols-outlined text-primary text-sm">database</span>
+<h2 class="text-sm font-semibold uppercase tracking-wider text-slate-400">Scraper Configuration</h2>
+</div>
+<div class="glass-card rounded-xl p-5 space-y-5">
+<div class="space-y-2">
+<label class="text-sm font-medium text-slate-400 ml-1">Sync Interval</label>
+<div class="relative">
+<select class="w-full h-12 bg-white/5 border border-white/10 rounded-lg px-4 appearance-none focus:ring-2 focus:ring-primary focus:border-transparent outline-none">
+<option>Every 6 Hours</option>
+<option selected="">Every 12 Hours</option>
+<option>Every 24 Hours</option>
+<option>Manual Only</option>
+</select>
+<span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500">expand_more</span>
+</div>
+</div>
+<div class="space-y-2">
+<label class="text-sm font-medium text-slate-400 ml-1">Max Concurrent Threads</label>
+<div class="flex items-center gap-3">
+<input class="flex-1 h-12 bg-white/5 border border-white/10 rounded-lg px-4 focus:ring-2 focus:ring-primary focus:border-transparent outline-none" type="number" value="8"/>
+<div class="flex gap-1">
+<button class="h-12 w-12 flex items-center justify-center bg-white/5 rounded-lg border border-white/10 active:bg-primary/20">
+<span class="material-symbols-outlined">remove</span>
+</button>
+<button class="h-12 w-12 flex items-center justify-center bg-white/5 rounded-lg border border-white/10 active:bg-primary/20">
+<span class="material-symbols-outlined">add</span>
+</button>
+</div>
+</div>
+<p class="text-[11px] text-slate-500 mt-1 italic">Higher values increase speed but use more CPU.</p>
+</div>
+</div>
+</section>
+<!-- Version Control -->
+<section class="space-y-4">
+<div class="flex items-center gap-2 px-1">
+<span class="material-symbols-outlined text-primary text-sm">history</span>
+<h2 class="text-sm font-semibold uppercase tracking-wider text-slate-400">Version Control</h2>
+</div>
+<div class="glass-card rounded-xl overflow-hidden">
+<div class="p-5 flex items-center justify-between border-b border-white/5">
+<div>
+<p class="font-medium">Maintenance Mode</p>
+<p class="text-xs text-slate-500">Disable public access temporarily</p>
+</div>
+<label class="relative inline-flex items-center cursor-pointer min-h-[44px]">
+<input class="sr-only peer" type="checkbox"/>
+<div class="w-11 h-6 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[11px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+</label>
+</div>
+<div class="p-5 flex items-center justify-between">
+<p class="text-sm">Current Version</p>
+<span class="px-3 py-1 bg-primary/20 text-primary text-xs font-bold rounded-full">v4.2.0-stable</span>
+</div>
+</div>
+</section>
+<!-- Feature Toggles -->
+<section class="space-y-4">
+<div class="flex items-center gap-2 px-1">
+<span class="material-symbols-outlined text-primary text-sm">toggle_on</span>
+<h2 class="text-sm font-semibold uppercase tracking-wider text-slate-400">Feature Toggles</h2>
+</div>
+<div class="glass-card rounded-xl divide-y divide-white/5">
+<div class="p-5 flex items-center justify-between">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-slate-400">notifications</span>
+<p class="text-sm font-medium">Push Notifications</p>
+</div>
+<label class="relative inline-flex items-center cursor-pointer min-h-[44px]">
+<input checked="" class="sr-only peer" type="checkbox"/>
+<div class="w-11 h-6 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[11px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+</label>
+</div>
+<div class="p-5 flex items-center justify-between">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-slate-400">warning</span>
+<p class="text-sm font-medium">System Alerts</p>
+</div>
+<label class="relative inline-flex items-center cursor-pointer min-h-[44px]">
+<input checked="" class="sr-only peer" type="checkbox"/>
+<div class="w-11 h-6 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[11px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+</label>
+</div>
+<div class="p-5 flex items-center justify-between">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-slate-400">analytics</span>
+<p class="text-sm font-medium">Auto-Analytics</p>
+</div>
+<label class="relative inline-flex items-center cursor-pointer min-h-[44px]">
+<input class="sr-only peer" type="checkbox"/>
+<div class="w-11 h-6 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[11px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+</label>
+</div>
+</div>
+</section>
+<!-- Save Button -->
+<div class="pt-4 pb-8">
+<button class="w-full h-14 bg-primary text-white font-bold rounded-xl shadow-lg shadow-primary/20 flex items-center justify-center gap-2 active:scale-[0.98] transition-all">
+<span class="material-symbols-outlined">save</span>
+                Save Changes
+            </button>
+</div>
+</main>
+<!-- Success Toast (Hidden by default, used for design visualization) -->
+<div class="fixed bottom-24 left-1/2 -translate-x-1/2 glass-card border-green-500/30 px-6 py-3 rounded-full flex items-center gap-3 shadow-2xl z-50 pointer-events-none opacity-0">
+<span class="material-symbols-outlined text-green-500">check_circle</span>
+<span class="text-sm font-medium">Settings saved successfully</span>
+</div>
+<!-- Bottom Navigation Bar -->
+<nav class="fixed bottom-0 left-0 right-0 glass-nav h-20 px-6 flex items-center justify-between z-50">
+<a class="flex flex-col items-center gap-1 text-slate-500 min-w-[64px]" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="text-[10px] font-medium">Dashboard</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-slate-500 min-w-[64px]" href="#">
+<span class="material-symbols-outlined">movie</span>
+<span class="text-[10px] font-medium">Content</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-slate-500 min-w-[64px]" href="#">
+<span class="material-symbols-outlined">group</span>
+<span class="text-[10px] font-medium">Users</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-primary min-w-[64px] relative" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="text-[10px] font-bold">Settings</span>
+<div class="absolute -top-1 w-1 h-1 bg-primary rounded-full"></div>
+</a>
+</nav>
+</body></html>

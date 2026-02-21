@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>MovieHub | Admin Dashboard</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#6961ff",
+                        "background-light": "#f5f5f8",
+                        "background-dark": "#0a0a1a",
+                        "navy-muted": "#16162d",
+                        "glass-border": "rgba(255, 255, 255, 0.1)",
+                        "glass-bg": "rgba(255, 255, 255, 0.03)"
+                    },
+                    fontFamily: {
+                        "display": ["Inter", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+<style>
+        .glass-card {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+        }
+        .sidebar-item-active {
+            background: linear-gradient(90deg, rgba(105, 97, 255, 0.2) 0%, rgba(105, 97, 255, 0) 100%);
+            border-left: 3px solid #6961ff;
+        }
+    </style>
+</head>
+<body class="font-display bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 antialiased overflow-x-hidden">
+<div class="flex h-screen overflow-hidden">
+<!-- Sidebar (280px) -->
+<aside class="w-[280px] h-full flex flex-col bg-navy-muted border-r border-glass-border">
+<div class="h-[72px] flex items-center px-8 gap-3">
+<div class="w-8 h-8 bg-primary rounded flex items-center justify-center">
+<span class="material-symbols-outlined text-white text-xl">movie</span>
+</div>
+<h1 class="text-xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white to-primary/80">MovieHub</h1>
+</div>
+<nav class="flex-1 px-4 py-6 space-y-2">
+<div class="sidebar-item-active flex items-center gap-4 px-4 py-3 rounded text-primary">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="font-medium">Dashboard</span>
+</div>
+<div class="flex items-center gap-4 px-4 py-3 rounded text-slate-400 hover:text-slate-100 hover:bg-glass-bg transition-colors cursor-pointer">
+<span class="material-symbols-outlined">movie_filter</span>
+<span class="font-medium">Movies</span>
+</div>
+<div class="flex items-center gap-4 px-4 py-3 rounded text-slate-400 hover:text-slate-100 hover:bg-glass-bg transition-colors cursor-pointer">
+<span class="material-symbols-outlined">group</span>
+<span class="font-medium">Users</span>
+</div>
+<div class="flex items-center gap-4 px-4 py-3 rounded text-slate-400 hover:text-slate-100 hover:bg-glass-bg transition-colors cursor-pointer">
+<span class="material-symbols-outlined">monitoring</span>
+<span class="font-medium">Analytics</span>
+</div>
+<div class="flex items-center gap-4 px-4 py-3 rounded text-slate-400 hover:text-slate-100 hover:bg-glass-bg transition-colors cursor-pointer">
+<span class="material-symbols-outlined">payments</span>
+<span class="font-medium">Revenue</span>
+</div>
+</nav>
+<div class="p-6 border-t border-glass-border">
+<div class="flex items-center gap-4 px-4 py-3 rounded text-slate-400 hover:text-slate-100 hover:bg-glass-bg transition-colors cursor-pointer">
+<span class="material-symbols-outlined">settings</span>
+<span class="font-medium">Settings</span>
+</div>
+<div class="flex items-center gap-4 px-4 py-3 rounded text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 transition-colors cursor-pointer">
+<span class="material-symbols-outlined">logout</span>
+<span class="font-medium">Logout</span>
+</div>
+</div>
+</aside>
+<!-- Main Content -->
+<main class="flex-1 flex flex-col overflow-y-auto">
+<!-- Header (72px) -->
+<header class="h-[72px] min-h-[72px] flex items-center justify-between px-8 border-b border-glass-border bg-background-dark/50 backdrop-blur-md sticky top-0 z-10">
+<h2 class="text-xl font-semibold">Dashboard Overview</h2>
+<div class="flex items-center gap-6">
+<div class="relative">
+<span class="material-symbols-outlined text-slate-400 hover:text-white cursor-pointer">notifications</span>
+<div class="absolute -top-1 -right-1 w-2 h-2 bg-primary rounded-full ring-2 ring-background-dark"></div>
+</div>
+<div class="flex items-center gap-3 pl-6 border-l border-glass-border">
+<div class="text-right">
+<p class="text-sm font-semibold">Alex Thompson</p>
+<p class="text-xs text-slate-400">System Admin</p>
+</div>
+<div class="w-10 h-10 rounded-lg overflow-hidden border border-glass-border">
+<img class="w-full h-full object-cover" data-alt="Admin profile portrait with a neutral background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBrBxEojAiYGzdHVMBVeGEO8dWL1gCcAGWt7JJfqcUPdNSFn3jgRzLWCusqo_mQaEbAZKCjLAGxGITMND3P0leGNuaLTqFYPUkAGLb_indmrlPzsWsn-InNshcWx4jTVzApgz2UJnEKJd3e67qdrturJvdWGL66DyDUXGh9W1G4uJM_qkhvoDFttQfap6eEPweiWf3XJAkJbcSDRzR5W8vz1bGrpFrOB9KFnCqXLqWuGxk0PuQ8345jrMYMvfsAG64H5VRSM2SetCI"/>
+</div>
+</div>
+</div>
+</header>
+<div class="p-8 space-y-8">
+<!-- Stats Grid -->
+<div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
+<div class="glass-card p-6 rounded-xl flex flex-col gap-4">
+<div class="flex justify-between items-start">
+<div class="p-2 bg-primary/10 rounded-lg">
+<span class="material-symbols-outlined text-primary">video_library</span>
+</div>
+<span class="text-emerald-400 text-xs font-bold flex items-center gap-1">
+<span class="material-symbols-outlined text-sm">trending_up</span> +5.2%
+                            </span>
+</div>
+<div>
+<p class="text-slate-400 text-sm font-medium">Total Movies</p>
+<h3 class="text-2xl font-bold mt-1 tracking-tight">12,450</h3>
+</div>
+</div>
+<div class="glass-card p-6 rounded-xl flex flex-col gap-4">
+<div class="flex justify-between items-start">
+<div class="p-2 bg-primary/10 rounded-lg">
+<span class="material-symbols-outlined text-primary">search</span>
+</div>
+<span class="text-emerald-400 text-xs font-bold flex items-center gap-1">
+<span class="material-symbols-outlined text-sm">trending_up</span> +12.8%
+                            </span>
+</div>
+<div>
+<p class="text-slate-400 text-sm font-medium">Today's Searches</p>
+<h3 class="text-2xl font-bold mt-1 tracking-tight">3,240</h3>
+</div>
+</div>
+<div class="glass-card p-6 rounded-xl flex flex-col gap-4">
+<div class="flex justify-between items-start">
+<div class="p-2 bg-primary/10 rounded-lg">
+<span class="material-symbols-outlined text-primary">download</span>
+</div>
+<span class="text-rose-400 text-xs font-bold flex items-center gap-1">
+<span class="material-symbols-outlined text-sm">trending_down</span> -2.4%
+                            </span>
+</div>
+<div>
+<p class="text-slate-400 text-sm font-medium">Downloads</p>
+<h3 class="text-2xl font-bold mt-1 tracking-tight">850</h3>
+</div>
+</div>
+<div class="glass-card p-6 rounded-xl flex flex-col gap-4">
+<div class="flex justify-between items-start">
+<div class="p-2 bg-primary/10 rounded-lg">
+<span class="material-symbols-outlined text-primary">hub</span>
+</div>
+<span class="text-emerald-400 text-xs font-bold flex items-center gap-1">
+<span class="material-symbols-outlined text-sm">trending_up</span> +0.5%
+                            </span>
+</div>
+<div>
+<p class="text-slate-400 text-sm font-medium">Active Sources</p>
+<h3 class="text-2xl font-bold mt-1 tracking-tight">42</h3>
+</div>
+</div>
+</div>
+<!-- Activity Chart Card -->
+<div class="glass-card p-6 rounded-xl">
+<div class="flex items-center justify-between mb-8">
+<div>
+<h4 class="text-lg font-bold">Last 7 Days Activity</h4>
+<p class="text-sm text-slate-400">Interaction data across all movie sources</p>
+</div>
+<div class="flex gap-2">
+<button class="px-4 py-2 text-xs font-bold bg-primary text-white rounded-lg">Weekly</button>
+<button class="px-4 py-2 text-xs font-bold bg-glass-bg border border-glass-border hover:bg-glass-border transition-colors rounded-lg">Monthly</button>
+</div>
+</div>
+<div class="h-64 w-full relative">
+<svg class="w-full h-full" preserveaspectratio="none" viewbox="0 0 1000 200">
+<defs>
+<lineargradient id="gradient" x1="0%" x2="0%" y1="0%" y2="100%">
+<stop offset="0%" stop-color="rgba(105, 97, 255, 0.4)"></stop>
+<stop offset="100%" stop-color="rgba(105, 97, 255, 0)"></stop>
+</lineargradient>
+</defs>
+<path d="M0,150 C100,120 150,180 250,140 C350,100 450,100 550,60 C650,20 750,80 850,40 C950,0 1000,20 1000,20 L1000,200 L0,200 Z" fill="url(#gradient)"></path>
+<path d="M0,150 C100,120 150,180 250,140 C350,100 450,100 550,60 C650,20 750,80 850,40 C950,0 1000,20 1000,20" fill="none" stroke="#6961ff" stroke-width="3"></path>
+</svg>
+<div class="absolute bottom-0 left-0 right-0 flex justify-between px-2 pt-4 text-xs font-medium text-slate-500">
+<span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span>
+</div>
+</div>
+</div>
+<!-- Two Column Section -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+<!-- Top Downloads List -->
+<div class="glass-card rounded-xl overflow-hidden flex flex-col">
+<div class="p-6 border-b border-glass-border flex justify-between items-center">
+<h4 class="font-bold">Top Downloads</h4>
+<button class="text-primary text-sm font-semibold hover:underline">View All</button>
+</div>
+<div class="p-4 space-y-1">
+<div class="grid grid-cols-12 gap-4 px-4 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider">
+<div class="col-span-1">#</div>
+<div class="col-span-6">Movie Title</div>
+<div class="col-span-3">Category</div>
+<div class="col-span-2 text-right">Downloads</div>
+</div>
+<div class="grid grid-cols-12 gap-4 items-center px-4 py-3 bg-glass-bg rounded-lg hover:bg-glass-border transition-colors cursor-pointer">
+<div class="col-span-1 text-slate-400 font-bold">1</div>
+<div class="col-span-6 flex items-center gap-3">
+<div class="w-10 h-14 bg-slate-800 rounded shadow-sm overflow-hidden flex-shrink-0">
+<img class="w-full h-full object-cover" data-alt="Cinematic movie poster with neon highlights" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDJzWHX9T4V-98A5Cyj1SOWvuAJUcGuqMjGHsuwzgoqV5BbX_jGdDFPE7MJA0tmt-AdMYiaghLcjO5lVenaixNanbS-1ISkgs1L1ARw3vXt2A8oNBoXgoqHnRzwmHOW8bVH0Fx38wM2AIg5sNHef0-DFC_b8CXqY7wrDGmvSQUj2WKUUdm8t-Ms_0kWAPdsA6JWWxnxCKd_GKYuxRWOhk0qBQBBhtUW2x2tUTp8K0kIlP-VQGEHls1kGRWTKW3GLeipHcjW2TVeTzE"/>
+</div>
+<span class="font-medium text-sm truncate">Inception: Remastered</span>
+</div>
+<div class="col-span-3">
+<span class="px-2 py-1 bg-primary/20 text-primary text-[10px] font-bold rounded">SCI-FI</span>
+</div>
+<div class="col-span-2 text-right font-bold text-sm">1,200</div>
+</div>
+<div class="grid grid-cols-12 gap-4 items-center px-4 py-3 rounded-lg hover:bg-glass-border transition-colors cursor-pointer">
+<div class="col-span-1 text-slate-400 font-bold">2</div>
+<div class="col-span-6 flex items-center gap-3">
+<div class="w-10 h-14 bg-slate-800 rounded shadow-sm overflow-hidden flex-shrink-0">
+<img class="w-full h-full object-cover" data-alt="Classic film reel and movie projector" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBweuIVe03WkCgB6R25GQ9Uq9ac8_PcTlHIx1m0nbgV8pOI3nl8QDgZgUzcAMS1cFRWabZE9KWQe2GcIbAs9yOc937qC-TtL-D0IQbBVgeu9SN3Pju6Ph-W4-vCxT3DcRptdAils8knGtdqpKZx9bVOu_mP7rsmjN9Ro9WlJ0exsHC2goNBeaI-kScWLqOIpF0aomJdv5NsPzevtBiZyhjjnx7lzwiOlGHuFZF4fGHufY_9uDYhMWy_ChglVaIbaThsy8lpxo47Nn8"/>
+</div>
+<span class="font-medium text-sm truncate">The Dark Knight</span>
+</div>
+<div class="col-span-3">
+<span class="px-2 py-1 bg-primary/20 text-primary text-[10px] font-bold rounded">ACTION</span>
+</div>
+<div class="col-span-2 text-right font-bold text-sm">950</div>
+</div>
+<div class="grid grid-cols-12 gap-4 items-center px-4 py-3 rounded-lg hover:bg-glass-border transition-colors cursor-pointer">
+<div class="col-span-1 text-slate-400 font-bold">3</div>
+<div class="col-span-6 flex items-center gap-3">
+<div class="w-10 h-14 bg-slate-800 rounded shadow-sm overflow-hidden flex-shrink-0">
+<img class="w-full h-full object-cover" data-alt="Sci-fi space station docking bay" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB1mO2ph5QTcoUGWqOPO_RkGjf7fpDSRoG2qD9WO4Atin1pUe6e6tY901_1VwnE6FKJitGxLTXUp1Io56EaVeyiwIBSAUX2ZcO6ZbbTpZ9VbW5aeOBzEeD9BtEuGqC8TE_Q6TTw973xklZgeTCs8fLrubEYGTma4pR7fwy7EucEQKkbkP34WbDY8EyHtiCt1HSXvhFnSgaR3LY1_m_hZSU2HrhOe9vx6YkUT_I-mXptLswb7xMba4Emz1CcuWKvkw3QtTWgPoZYYkQ"/>
+</div>
+<span class="font-medium text-sm truncate">Interstellar</span>
+</div>
+<div class="col-span-3">
+<span class="px-2 py-1 bg-primary/20 text-primary text-[10px] font-bold rounded">SCI-FI</span>
+</div>
+<div class="col-span-2 text-right font-bold text-sm">820</div>
+</div>
+</div>
+</div>
+<!-- Top Searches List -->
+<div class="glass-card rounded-xl overflow-hidden flex flex-col">
+<div class="p-6 border-b border-glass-border flex justify-between items-center">
+<h4 class="font-bold">Trending Searches</h4>
+<div class="flex items-center gap-2 text-xs text-slate-400">
+<span class="material-symbols-outlined text-sm">history</span> Last 24h
+                            </div>
+</div>
+<div class="p-6 space-y-4">
+<div class="flex items-center justify-between p-4 border border-glass-border rounded-lg bg-glass-bg">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary">search</span>
+<div>
+<p class="font-semibold text-sm">Dune: Part Two</p>
+<p class="text-xs text-slate-500">In Sci-Fi &amp; Adventure</p>
+</div>
+</div>
+<div class="text-right">
+<p class="font-bold text-sm">4,520</p>
+<p class="text-[10px] text-emerald-400 font-bold">+18% spike</p>
+</div>
+</div>
+<div class="flex items-center justify-between p-4 border border-glass-border rounded-lg bg-glass-bg">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary">search</span>
+<div>
+<p class="font-semibold text-sm">Oppenheimer 4K</p>
+<p class="text-xs text-slate-500">In History &amp; Drama</p>
+</div>
+</div>
+<div class="text-right">
+<p class="font-bold text-sm">3,110</p>
+<p class="text-[10px] text-emerald-400 font-bold">+5% steady</p>
+</div>
+</div>
+<div class="flex items-center justify-between p-4 border border-glass-border rounded-lg bg-glass-bg">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary">search</span>
+<div>
+<p class="font-semibold text-sm">Succession Finale</p>
+<p class="text-xs text-slate-500">In Series</p>
+</div>
+</div>
+<div class="text-right">
+<p class="font-bold text-sm">2,890</p>
+<p class="text-[10px] text-rose-400 font-bold">-2% drop</p>
+</div>
+</div>
+<div class="flex items-center justify-between p-4 border border-glass-border rounded-lg bg-glass-bg">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary">search</span>
+<div>
+<p class="font-semibold text-sm">Avatar: The Way of Water</p>
+<p class="text-xs text-slate-500">In Action &amp; Fantasy</p>
+</div>
+</div>
+<div class="text-right">
+<p class="font-bold text-sm">2,450</p>
+<p class="text-[10px] text-slate-500 font-bold">Stable</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<footer class="mt-auto p-8 border-t border-glass-border text-center text-slate-500 text-xs">
+                © 2024 MovieHub Inc. All rights reserved. Professional Admin Console v2.4.1
+            </footer>
+</main>
+</div>
+</body></html>

@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>MovieHub Admin - Search Insights</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#6961ff",
+                        "background-light": "#f5f5f8",
+                        "background-dark": "#100f23",
+                        "glass": "rgba(22, 33, 62, 0.6)",
+                    },
+                    fontFamily: {
+                        "display": ["Inter", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            font-family: 'Inter', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .glass-card {
+            background: rgba(22, 33, 62, 0.6);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(105, 97, 255, 0.1);
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            height: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: rgba(105, 97, 255, 0.05);
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #6961ff;
+            border-radius: 10px;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 font-display">
+<!-- Mobile Header -->
+<header class="sticky top-0 z-50 flex items-center justify-between px-6 py-4 bg-background-dark/80 backdrop-blur-md border-b border-primary/10">
+<div class="flex items-center gap-4">
+<button class="p-2 -ml-2 text-slate-100 hover:bg-primary/10 rounded-lg transition-colors">
+<span class="material-symbols-outlined">menu</span>
+</button>
+<h1 class="text-lg font-bold tracking-tight text-slate-100">Search Insights</h1>
+</div>
+<div class="flex items-center gap-2">
+<button class="p-2 text-slate-100 hover:bg-primary/10 rounded-lg transition-colors relative">
+<span class="material-symbols-outlined">notifications</span>
+<span class="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-background-dark"></span>
+</button>
+<div class="w-8 h-8 rounded-full bg-primary/20 border border-primary/30 overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="Admin user profile avatar" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBYY_3uh04T1mDTvLHOe0hR8dVm63UGIHqaubZbALiyMtcgwH0LUmClQO0vZcrsnFBengoX0nmLwAoHLOFDgfXNmf-1wYiN3SbCs9zYjUh-aVVond4AOGzCAgxO-_74Fd8fYbVlih8I4xxKreOB6CyJdb6Cgq2dbAax0fl0B_uRUFtXYb3vDuB7inRkqjX_7H-OJxXKSMUUGkG6v4LAZJPl3QmKCyJMxrttZqrO9lM82KQ33YgIO0nqwV0i3tmaYc7hR-RU7gcCQLg"/>
+</div>
+</div>
+</header>
+<main class="p-6 space-y-6 pb-24">
+<!-- KPI Metrics Section - Stacking Vertically for Mobile -->
+<section class="grid grid-cols-1 gap-4">
+<!-- Metric 1 -->
+<div class="glass-card rounded-xl p-5 flex flex-col gap-1">
+<div class="flex justify-between items-center mb-1">
+<span class="text-sm font-medium text-slate-400">Total Searches</span>
+<span class="flex items-center text-xs font-bold text-emerald-400 bg-emerald-400/10 px-2 py-0.5 rounded-full">
+<span class="material-symbols-outlined text-sm mr-0.5">trending_up</span>12.5%
+                    </span>
+</div>
+<div class="text-3xl font-bold text-slate-100 tracking-tight">124.5k</div>
+<div class="text-xs text-slate-500 mt-1">vs. last 30 days</div>
+</div>
+<!-- Metric 2 -->
+<div class="glass-card rounded-xl p-5 flex flex-col gap-1">
+<div class="flex justify-between items-center mb-1">
+<span class="text-sm font-medium text-slate-400">Avg. Searches/Day</span>
+<span class="flex items-center text-xs font-bold text-emerald-400 bg-emerald-400/10 px-2 py-0.5 rounded-full">
+<span class="material-symbols-outlined text-sm mr-0.5">trending_up</span>5.2%
+                    </span>
+</div>
+<div class="text-3xl font-bold text-slate-100 tracking-tight">4.2k</div>
+<div class="text-xs text-slate-500 mt-1">Daily engagement rate</div>
+</div>
+<!-- Metric 3 -->
+<div class="glass-card rounded-xl p-5 flex flex-col gap-1 border-red-500/20">
+<div class="flex justify-between items-center mb-1">
+<span class="text-sm font-medium text-slate-400">Zero-Result Searches</span>
+<span class="flex items-center text-xs font-bold text-orange-400 bg-orange-400/10 px-2 py-0.5 rounded-full">
+<span class="material-symbols-outlined text-sm mr-0.5">trending_down</span>2.4%
+                    </span>
+</div>
+<div class="text-3xl font-bold text-slate-100 tracking-tight">842</div>
+<div class="text-xs text-slate-500 mt-1">Content gaps detected</div>
+</div>
+</section>
+<!-- Search Trends Chart - Scrollable Container -->
+<section class="glass-card rounded-xl p-5">
+<div class="flex items-center justify-between mb-6">
+<h2 class="text-base font-bold text-slate-100">Search Trends</h2>
+<span class="text-xs text-slate-400 flex items-center gap-1">
+<span class="material-symbols-outlined text-sm">calendar_today</span> Last 14 Days
+                </span>
+</div>
+<div class="overflow-x-auto custom-scrollbar pb-4">
+<div class="flex items-end gap-3 h-40 min-w-[500px]">
+<!-- Chart Bars -->
+<div class="flex-1 flex flex-col items-center gap-2 group">
+<div class="w-full bg-primary/20 rounded-t-sm relative flex items-end overflow-hidden" style="height: 60%">
+<div class="w-full bg-primary h-1/2 group-active:opacity-80 transition-all"></div>
+</div>
+<span class="text-[10px] text-slate-500 font-bold uppercase">Oct 1</span>
+</div>
+<div class="flex-1 flex flex-col items-center gap-2 group">
+<div class="w-full bg-primary/20 rounded-t-sm relative flex items-end overflow-hidden" style="height: 75%">
+<div class="w-full bg-primary h-1/2 group-active:opacity-80 transition-all"></div>
+</div>
+<span class="text-[10px] text-slate-500 font-bold uppercase">Oct 2</span>
+</div>
+<div class="flex-1 flex flex-col items-center gap-2 group">
+<div class="w-full bg-primary/20 rounded-t-sm relative flex items-end overflow-hidden" style="height: 45%">
+<div class="w-full bg-primary h-1/2 group-active:opacity-80 transition-all"></div>
+</div>
+<span class="text-[10px] text-slate-500 font-bold uppercase">Oct 3</span>
+</div>
+<div class="flex-1 flex flex-col items-center gap-2 group">
+<div class="w-full bg-primary/20 rounded-t-sm relative flex items-end overflow-hidden" style="height: 90%">
+<div class="w-full bg-primary h-1/2 group-active:opacity-80 transition-all"></div>
+</div>
+<span class="text-[10px] text-slate-500 font-bold uppercase">Oct 4</span>
+</div>
+<div class="flex-1 flex flex-col items-center gap-2 group">
+<div class="w-full bg-primary/20 rounded-t-sm relative flex items-end overflow-hidden" style="height: 65%">
+<div class="w-full bg-primary h-1/2 group-active:opacity-80 transition-all"></div>
+</div>
+<span class="text-[10px] text-slate-500 font-bold uppercase">Oct 5</span>
+</div>
+<div class="flex-1 flex flex-col items-center gap-2 group">
+<div class="w-full bg-primary/20 rounded-t-sm relative flex items-end overflow-hidden" style="height: 80%">
+<div class="w-full bg-primary h-1/2 group-active:opacity-80 transition-all"></div>
+</div>
+<span class="text-[10px] text-slate-500 font-bold uppercase">Oct 6</span>
+</div>
+<div class="flex-1 flex flex-col items-center gap-2 group">
+<div class="w-full bg-primary/20 rounded-t-sm relative flex items-end overflow-hidden" style="height: 30%">
+<div class="w-full bg-primary h-1/2 group-active:opacity-80 transition-all"></div>
+</div>
+<span class="text-[10px] text-slate-500 font-bold uppercase">Oct 7</span>
+</div>
+<div class="flex-1 flex flex-col items-center gap-2 group">
+<div class="w-full bg-primary/20 rounded-t-sm relative flex items-end overflow-hidden" style="height: 55%">
+<div class="w-full bg-primary h-1/2 group-active:opacity-80 transition-all"></div>
+</div>
+<span class="text-[10px] text-slate-500 font-bold uppercase">Oct 8</span>
+</div>
+</div>
+</div>
+<p class="text-[10px] text-slate-500 mt-2 text-center flex items-center justify-center gap-1 italic">
+<span class="material-symbols-outlined text-xs">swipe</span> Swipe to see more trends
+            </p>
+</section>
+<!-- Top 50 Searches - List View -->
+<section class="space-y-4">
+<div class="flex items-center justify-between">
+<h2 class="text-base font-bold text-slate-100">Top Searches</h2>
+<button class="text-xs text-primary font-bold">View All</button>
+</div>
+<div class="glass-card rounded-xl overflow-hidden divide-y divide-primary/5">
+<!-- Item 1 -->
+<div class="p-4 flex flex-col gap-2">
+<div class="flex justify-between items-center">
+<div class="flex items-center gap-3">
+<span class="text-xs font-bold text-primary/60">#1</span>
+<span class="text-sm font-semibold text-slate-100">Oppenheimer</span>
+</div>
+<span class="text-xs font-medium text-slate-400">12,402 searches</span>
+</div>
+<div class="w-full h-1.5 bg-primary/10 rounded-full overflow-hidden">
+<div class="h-full bg-primary w-[95%]"></div>
+</div>
+</div>
+<!-- Item 2 -->
+<div class="p-4 flex flex-col gap-2">
+<div class="flex justify-between items-center">
+<div class="flex items-center gap-3">
+<span class="text-xs font-bold text-primary/60">#2</span>
+<span class="text-sm font-semibold text-slate-100">Dune: Part Two</span>
+</div>
+<span class="text-xs font-medium text-slate-400">9,850 searches</span>
+</div>
+<div class="w-full h-1.5 bg-primary/10 rounded-full overflow-hidden">
+<div class="h-full bg-primary w-[75%]"></div>
+</div>
+</div>
+<!-- Item 3 -->
+<div class="p-4 flex flex-col gap-2">
+<div class="flex justify-between items-center">
+<div class="flex items-center gap-3">
+<span class="text-xs font-bold text-primary/60">#3</span>
+<span class="text-sm font-semibold text-slate-100">Barbie</span>
+</div>
+<span class="text-xs font-medium text-slate-400">8,122 searches</span>
+</div>
+<div class="w-full h-1.5 bg-primary/10 rounded-full overflow-hidden">
+<div class="h-full bg-primary w-[62%]"></div>
+</div>
+</div>
+</div>
+</section>
+<!-- Zero Result Queries - Card List -->
+<section class="space-y-4">
+<div class="flex items-center justify-between">
+<h2 class="text-base font-bold text-slate-100">Zero Result Queries</h2>
+<span class="text-[10px] text-orange-400 bg-orange-400/10 px-2 py-0.5 rounded uppercase font-bold tracking-widest">Urgent</span>
+</div>
+<div class="space-y-3">
+<!-- Zero Result Card 1 -->
+<div class="glass-card rounded-xl p-4 flex flex-col gap-4">
+<div class="flex justify-between items-start">
+<div>
+<p class="text-xs text-slate-400 mb-1">Search Term</p>
+<h3 class="text-base font-bold text-slate-100">"Killers of the Flower Moon"</h3>
+</div>
+<div class="text-right">
+<p class="text-xs text-slate-400 mb-1">Missed</p>
+<span class="text-sm font-bold text-slate-100">1,204 times</span>
+</div>
+</div>
+<button class="w-full h-12 bg-primary hover:bg-primary/90 text-white font-bold rounded-lg flex items-center justify-center gap-2 transition-all active:scale-[0.98]">
+<span class="material-symbols-outlined">add_circle</span>
+                        Add Movie Content
+                    </button>
+</div>
+<!-- Zero Result Card 2 -->
+<div class="glass-card rounded-xl p-4 flex flex-col gap-4">
+<div class="flex justify-between items-start">
+<div>
+<p class="text-xs text-slate-400 mb-1">Search Term</p>
+<h3 class="text-base font-bold text-slate-100">"The Creator 2023"</h3>
+</div>
+<div class="text-right">
+<p class="text-xs text-slate-400 mb-1">Missed</p>
+<span class="text-sm font-bold text-slate-100">845 times</span>
+</div>
+</div>
+<button class="w-full h-12 bg-primary/20 hover:bg-primary/30 text-primary border border-primary/30 font-bold rounded-lg flex items-center justify-center gap-2 transition-all active:scale-[0.98]">
+<span class="material-symbols-outlined">add_circle</span>
+                        Add Movie Content
+                    </button>
+</div>
+</div>
+</section>
+</main>
+<!-- Bottom Navigation Bar (Mobile) -->
+<nav class="fixed bottom-0 left-0 right-0 z-50 bg-background-dark/95 backdrop-blur-lg border-t border-primary/10 px-4 pb-6 pt-2">
+<div class="max-w-md mx-auto flex justify-around items-center">
+<a class="flex flex-col items-center gap-1 p-2 text-slate-500" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="text-[10px] font-medium uppercase tracking-tight">Home</span>
+</a>
+<a class="flex flex-col items-center gap-1 p-2 text-primary" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1">query_stats</span>
+<span class="text-[10px] font-medium uppercase tracking-tight">Insights</span>
+</a>
+<a class="flex flex-col items-center gap-1 p-2 text-slate-500" href="#">
+<span class="material-symbols-outlined">movie</span>
+<span class="text-[10px] font-medium uppercase tracking-tight">Movies</span>
+</a>
+<a class="flex flex-col items-center gap-1 p-2 text-slate-500" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="text-[10px] font-medium uppercase tracking-tight">Settings</span>
+</a>
+</div>
+</nav>
+</body></html>

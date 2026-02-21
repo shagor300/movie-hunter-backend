@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Add Movie - Step 3: Links</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#6961ff",
+                        "background-light": "#f5f5f8",
+                        "background-dark": "#100f23",
+                    },
+                    fontFamily: {
+                        "display": ["Inter", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+<style>
+        .glass-modal {
+            background: rgba(24, 23, 54, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(105, 97, 255, 0.2);
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: rgba(105, 97, 255, 0.3);
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark font-display min-h-screen flex items-center justify-center p-4 selection:bg-primary/30">
+<!-- Overlay / Background -->
+<div class="fixed inset-0 z-0 bg-background-dark/80 backdrop-blur-sm"></div>
+<!-- Modal Container -->
+<div class="relative z-10 w-full max-w-[800px] glass-modal rounded-xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+<!-- Header & Step Indicator -->
+<div class="px-8 pt-8 pb-6 border-b border-primary/10">
+<div class="flex items-center justify-between mb-8">
+<h2 class="text-slate-900 dark:text-slate-100 text-2xl font-bold tracking-tight flex items-center gap-2">
+<span class="material-symbols-outlined text-primary">movie</span>
+                    Add New Movie
+                </h2>
+<button class="text-slate-400 hover:text-white transition-colors">
+<span class="material-symbols-outlined">close</span>
+</button>
+</div>
+<!-- Stepper -->
+<div class="flex items-center justify-between w-full max-w-md mx-auto">
+<div class="flex flex-col items-center gap-2">
+<div class="size-8 rounded-full bg-primary flex items-center justify-center text-white">
+<span class="material-symbols-outlined text-sm">check</span>
+</div>
+<span class="text-xs font-medium text-slate-400">Basic Info</span>
+</div>
+<div class="h-0.5 flex-1 bg-primary mx-4 -mt-6"></div>
+<div class="flex flex-col items-center gap-2">
+<div class="size-8 rounded-full bg-primary flex items-center justify-center text-white">
+<span class="material-symbols-outlined text-sm">check</span>
+</div>
+<span class="text-xs font-medium text-slate-400">Media Assets</span>
+</div>
+<div class="h-0.5 flex-1 bg-primary/30 mx-4 -mt-6"></div>
+<div class="flex flex-col items-center gap-2">
+<div class="size-8 rounded-full bg-primary flex items-center justify-center text-white ring-4 ring-primary/20">
+<span class="text-sm font-bold">3</span>
+</div>
+<span class="text-xs font-bold text-primary">Links</span>
+</div>
+</div>
+</div>
+<!-- Scrollable Content -->
+<div class="flex-1 overflow-y-auto custom-scrollbar px-8 py-6">
+<!-- Movie Summary Card -->
+<div class="flex items-center gap-4 bg-primary/5 border border-primary/10 rounded-lg p-3 mb-8">
+<div class="size-16 rounded-md overflow-hidden bg-slate-800 shrink-0">
+<img class="w-full h-full object-cover" data-alt="Cinematic movie poster with vibrant colors" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCazXD5ri2HDZAI1vrkTYr-VHNGFiGO4KWXArLJKuUf1N0O0iqEah5puU9Tn4PNe7dcpfpSclKIwPNyOSvXG5kqxMKU4CfpJnYHwZjVA8cg0_B00kj_iivQqvGRf8s9tZW5NuxW_VKRbmQuJQmEZRKvrEy17WafI6N-NYa9YexTp35kfwyI6axbhSQdq4JFbreDzkbE4jM-am_hy0yUr6T7cd-XH18GsNwSYrtuhC_TwZYywldyMBC6gsLAc_ljVkqG87uVZkO8EYk"/>
+</div>
+<div>
+<h3 class="text-white font-bold text-lg">Interstellar</h3>
+<p class="text-slate-400 text-sm">2014 • Directed by Christopher Nolan</p>
+</div>
+<div class="ml-auto flex items-center gap-2 text-xs font-medium text-primary bg-primary/10 px-3 py-1 rounded-full">
+<span class="material-symbols-outlined text-sm">info</span>
+                    STEP 3 OF 3
+                </div>
+</div>
+<!-- Dynamic Link List Section -->
+<div class="space-y-6">
+<div class="flex items-center justify-between">
+<h4 class="text-slate-100 font-semibold flex items-center gap-2">
+                        Streaming &amp; Information Links
+                    </h4>
+<span class="text-slate-400 text-xs">At least one link is recommended</span>
+</div>
+<!-- Link Group Rows -->
+<div class="space-y-4">
+<!-- Row 1 -->
+<div class="grid grid-cols-12 gap-3 items-end group">
+<div class="col-span-3">
+<label class="block text-slate-400 text-xs font-medium mb-1.5 ml-1 uppercase tracking-wider">Source</label>
+<select class="w-full bg-background-dark/50 border-primary/20 rounded-lg text-slate-100 focus:ring-primary focus:border-primary transition-all">
+<option>Netflix</option>
+<option>Amazon Prime</option>
+<option>Disney+</option>
+<option>Apple TV</option>
+<option>IMDb</option>
+</select>
+</div>
+<div class="col-span-6">
+<label class="block text-slate-400 text-xs font-medium mb-1.5 ml-1 uppercase tracking-wider">URL</label>
+<input class="w-full bg-background-dark/50 border-primary/20 rounded-lg text-slate-100 focus:ring-primary focus:border-primary placeholder:text-slate-600 transition-all" placeholder="https://..." type="url"/>
+</div>
+<div class="col-span-2">
+<label class="block text-slate-400 text-xs font-medium mb-1.5 ml-1 uppercase tracking-wider">Priority</label>
+<input class="w-full bg-background-dark/50 border-primary/20 rounded-lg text-slate-100 focus:ring-primary focus:border-primary transition-all" type="number" value="1"/>
+</div>
+<div class="col-span-1 pb-1 flex justify-center">
+<button class="p-2 text-slate-500 hover:text-rose-400 transition-colors">
+<span class="material-symbols-outlined">delete</span>
+</button>
+</div>
+</div>
+<!-- Row 2 -->
+<div class="grid grid-cols-12 gap-3 items-end group">
+<div class="col-span-3">
+<select class="w-full bg-background-dark/50 border-primary/20 rounded-lg text-slate-100 focus:ring-primary focus:border-primary transition-all">
+<option>IMDb</option>
+<option>Netflix</option>
+<option>Amazon Prime</option>
+<option>Disney+</option>
+<option>Apple TV</option>
+</select>
+</div>
+<div class="col-span-6">
+<input class="w-full bg-background-dark/50 border-primary/20 rounded-lg text-slate-100 focus:ring-primary focus:border-primary placeholder:text-slate-600 transition-all" type="url" value="https://www.imdb.com/title/tt0816692/"/>
+</div>
+<div class="col-span-2">
+<input class="w-full bg-background-dark/50 border-primary/20 rounded-lg text-slate-100 focus:ring-primary focus:border-primary transition-all" type="number" value="2"/>
+</div>
+<div class="col-span-1 pb-1 flex justify-center">
+<button class="p-2 text-slate-500 hover:text-rose-400 transition-colors">
+<span class="material-symbols-outlined">delete</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Add Button -->
+<button class="w-full py-3 border-2 border-dashed border-primary/30 rounded-xl text-primary font-bold flex items-center justify-center gap-2 hover:bg-primary/5 hover:border-primary/50 transition-all">
+<span class="material-symbols-outlined">add_circle</span>
+                    Add Another Link
+                </button>
+</div>
+<!-- Guidelines -->
+<div class="mt-8 p-4 rounded-lg bg-slate-900/40 border border-slate-800">
+<h5 class="text-slate-300 text-sm font-semibold mb-2 flex items-center gap-2">
+<span class="material-symbols-outlined text-sm">lightbulb</span>
+                    Quick Tips
+                </h5>
+<ul class="text-xs text-slate-500 space-y-1.5 list-disc ml-4">
+<li>Links with higher priority (lower numbers) will appear first in the movie details page.</li>
+<li>Ensure all streaming links are direct links to the movie page.</li>
+<li>Verify that the URLs are active and not broken before submitting.</li>
+</ul>
+</div>
+</div>
+<!-- Footer Actions -->
+<div class="px-8 py-6 bg-background-dark/40 border-t border-primary/10 flex items-center justify-between">
+<button class="px-6 py-2.5 rounded-lg border border-slate-700 text-slate-300 font-bold flex items-center gap-2 hover:bg-slate-800 transition-all">
+<span class="material-symbols-outlined text-lg">arrow_back</span>
+                Back
+            </button>
+<div class="flex items-center gap-4">
+<button class="text-slate-400 text-sm font-medium hover:text-slate-200">Save as Draft</button>
+<button class="px-8 py-2.5 rounded-lg bg-gradient-to-r from-primary to-[#8a84ff] text-white font-bold shadow-lg shadow-primary/20 hover:shadow-primary/40 hover:-translate-y-0.5 transition-all flex items-center gap-2">
+                    Submit Movie
+                    <span class="material-symbols-outlined text-lg">rocket_launch</span>
+</button>
+</div>
+</div>
+</div>
+</body></html>

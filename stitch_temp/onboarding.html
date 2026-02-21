@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>MovieHub Onboarding</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#1e94f6",
+                        "background-light": "#f5f7f8",
+                        "background-dark": "#0a0a0a",
+                    },
+                    fontFamily: {
+                        "display": ["Plus Jakarta Sans", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+<style>
+        .glass {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .hero-gradient {
+            background: radial-gradient(circle at 50% 50%, rgba(30, 148, 246, 0.15) 0%, rgba(10, 10, 10, 0) 70%);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100 min-h-screen flex flex-col overflow-hidden">
+<!-- Top Navigation Bar -->
+<div class="flex items-center justify-end p-6 z-10">
+<button class="text-slate-500 dark:text-slate-400 font-semibold text-sm hover:text-primary transition-colors tracking-wide">
+            Skip
+        </button>
+</div>
+<!-- Main Content Area -->
+<div class="flex-grow flex flex-col items-center justify-center px-6 relative">
+<!-- Background Glow -->
+<div class="absolute inset-0 hero-gradient pointer-events-none"></div>
+<!-- Illustration/Visual Area -->
+<div class="w-full max-w-sm aspect-square relative flex items-center justify-center mb-12">
+<!-- Decorative Glass Circles -->
+<div class="absolute w-64 h-64 rounded-full bg-primary/10 blur-3xl"></div>
+<!-- Main Content Container -->
+<div class="glass w-full h-full rounded-xl flex flex-col items-center justify-center p-8 shadow-2xl relative overflow-hidden">
+<!-- Abstract UI Representation -->
+<div class="w-full space-y-4">
+<div class="h-8 w-3/4 bg-primary/20 rounded-lg animate-pulse"></div>
+<div class="grid grid-cols-3 gap-3">
+<div class="aspect-video bg-white/5 rounded-lg border border-white/10" data-alt="Abstract movie poster card placeholder"></div>
+<div class="aspect-video bg-white/5 rounded-lg border border-white/10" data-alt="Abstract movie poster card placeholder"></div>
+<div class="aspect-video bg-white/5 rounded-lg border border-white/10" data-alt="Abstract movie poster card placeholder"></div>
+</div>
+<div class="h-32 w-full bg-primary/10 rounded-xl border border-primary/20 flex items-center justify-center">
+<span class="material-symbols-outlined text-primary text-5xl">search</span>
+</div>
+<div class="h-8 w-1/2 bg-white/5 rounded-lg"></div>
+</div>
+<!-- Floating Decorative Elements -->
+<div class="absolute -top-4 -right-4 w-16 h-16 glass rounded-full flex items-center justify-center text-primary shadow-lg">
+<span class="material-symbols-outlined">movie</span>
+</div>
+<div class="absolute -bottom-2 -left-2 w-12 h-12 glass rounded-full flex items-center justify-center text-primary/60 shadow-lg">
+<span class="material-symbols-outlined">star</span>
+</div>
+</div>
+</div>
+<!-- Text Content -->
+<div class="text-center max-w-xs space-y-4 z-10">
+<h1 class="text-3xl md:text-4xl font-extrabold tracking-tight text-slate-900 dark:text-white">
+                Search &amp; <span class="text-primary">Discover</span>
+</h1>
+<p class="text-slate-600 dark:text-slate-400 text-base leading-relaxed">
+                Find your next favorite movie from a library of over 20,000 titles and counting.
+            </p>
+</div>
+</div>
+<!-- Navigation Footer -->
+<div class="p-10 flex flex-col items-center space-y-8 z-10">
+<!-- Page Indicators -->
+<div class="flex items-center gap-2">
+<div class="h-2 w-6 rounded-full bg-primary transition-all duration-300"></div>
+<div class="h-2 w-2 rounded-full bg-slate-300 dark:bg-slate-800 transition-all duration-300"></div>
+<div class="h-2 w-2 rounded-full bg-slate-300 dark:bg-slate-800 transition-all duration-300"></div>
+</div>
+<!-- Circular Next Button -->
+<button class="group relative flex items-center justify-center">
+<!-- Outer Glow -->
+<div class="absolute inset-0 bg-primary/30 blur-xl rounded-full group-hover:bg-primary/50 transition-all duration-300"></div>
+<!-- Button Body -->
+<div class="relative w-20 h-20 rounded-full bg-gradient-to-br from-primary to-blue-700 flex items-center justify-center shadow-lg shadow-primary/20 hover:scale-105 active:scale-95 transition-transform duration-200 border border-white/10">
+<span class="material-symbols-outlined text-white text-3xl">chevron_right</span>
+</div>
+<!-- Progress Ring (Stylized) -->
+<svg class="absolute -inset-2 w-24 h-24 -rotate-90 pointer-events-none opacity-20">
+<circle class="text-primary" cx="48" cy="48" fill="transparent" r="44" stroke="currentColor" stroke-dasharray="276" stroke-dashoffset="184" stroke-width="2"></circle>
+</svg>
+</button>
+</div>
+<!-- Background Decorative Gradient -->
+<div class="fixed top-[-10%] left-[-10%] w-[40%] h-[40%] bg-primary/5 rounded-full blur-[120px] pointer-events-none"></div>
+<div class="fixed bottom-[-5%] right-[-5%] w-[30%] h-[30%] bg-primary/10 rounded-full blur-[100px] pointer-events-none"></div>
+</body></html>

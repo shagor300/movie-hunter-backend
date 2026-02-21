@@ -386,27 +386,6 @@ class _DetailsScreenState extends State<DetailsScreen> {
     );
   }
 
-  // Stage icons mapped to LinkController loading messages
-  static const List<IconData> _stageIcons = [
-    Icons.language, // Connecting
-    Icons.search, // Searching HDHub4u
-    Icons.security, // Bypassing ads
-    Icons.cloud_download, // Extracting links
-    Icons.stream, // Scanning streams
-    Icons.tune, // Optimizing
-    Icons.check_circle, // Finalizing
-  ];
-
-  static const List<Color> _stageColors = [
-    Color(0xFF13ECC8), // emerald
-    Color(0xFF06B6D4), // cyan
-    Color(0xFF13ECC8), // emerald
-    Color(0xFF06B6D4), // cyan
-    Color(0xFF13ECC8), // emerald
-    Color(0xFF06B6D4), // cyan
-    Color(0xFF34D399), // emerald-400
-  ];
-
   Widget _buildLoadingOverlay() {
     return BackdropFilter(
       filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
@@ -417,50 +396,91 @@ class _DetailsScreenState extends State<DetailsScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            if (_linkController.isLoading.value) ...[
-              // ── Animated Stage Icon ──
-              Obx(() {
-                final idx =
-                    (_linkController.currentProgress.value *
-                            (_stageIcons.length - 1))
-                        .round()
-                        .clamp(0, _stageIcons.length - 1);
-                final color = _stageColors[idx];
-                return TweenAnimationBuilder<double>(
-                  key: ValueKey(idx),
-                  tween: Tween(begin: 0.7, end: 1.0),
-                  duration: const Duration(milliseconds: 600),
-                  curve: Curves.easeOutBack,
-                  builder: (_, scale, child) =>
-                      Transform.scale(scale: scale, child: child),
-                  child: Container(
-                    width: 80,
-                    height: 80,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      gradient: RadialGradient(
-                        colors: [
-                          color.withValues(alpha: 0.3),
-                          Colors.transparent,
-                        ],
-                        radius: 0.8,
+            if (_linkController.isSuccess.value) ...[
+              // ── Success Animation ──
+              TweenAnimationBuilder<double>(
+                tween: Tween(begin: 0.0, end: 1.0),
+                duration: const Duration(milliseconds: 600),
+                curve: Curves.elasticOut,
+                builder: (_, scale, child) =>
+                    Transform.scale(scale: scale, child: child),
+                child: Container(
+                  width: 100,
+                  height: 100,
+                  decoration: BoxDecoration(
+                    color: AppColors.success.withValues(alpha: 0.15),
+                    shape: BoxShape.circle,
+                    border: Border.all(color: AppColors.success, width: 2),
+                  ),
+                  child: const Icon(
+                    Icons.check_rounded,
+                    color: AppColors.success,
+                    size: 54,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 32),
+              AnimatedOpacity(
+                opacity: 1.0,
+                duration: const Duration(milliseconds: 400),
+                child: Text(
+                  "Links Generated Successfully!",
+                  style: AppTextStyles.headingLarge.copyWith(
+                    color: AppColors.success,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+            ] else if (_linkController.isLoading.value) ...[
+              // ── Continuous Searching Animation ──
+              Stack(
+                alignment: Alignment.center,
+                children: [
+                  SizedBox(
+                    width: 110,
+                    height: 110,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 3,
+                      valueColor: const AlwaysStoppedAnimation<Color>(
+                        AppColors.primary,
+                      ),
+                      backgroundColor: AppColors.primary.withValues(alpha: 0.1),
+                    ),
+                  ),
+                  TweenAnimationBuilder<double>(
+                    tween: Tween(begin: 0.8, end: 1.1),
+                    duration: const Duration(milliseconds: 1000),
+                    curve: Curves.easeInOutSine,
+                    builder: (_, scale, child) =>
+                        Transform.scale(scale: scale, child: child),
+                    child: Container(
+                      width: 70,
+                      height: 70,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: AppColors.primary.withValues(alpha: 0.15),
+                      ),
+                      child: const Icon(
+                        Icons.satellite_alt_rounded,
+                        color: AppColors.primary,
+                        size: 32,
                       ),
                     ),
-                    child: Icon(_stageIcons[idx], color: color, size: 44),
                   ),
-                );
-              }),
+                ],
+              ),
 
-              const SizedBox(height: 28),
+              const SizedBox(height: 32),
 
               // ── Stage Message ──
               AnimatedSwitcher(
-                duration: const Duration(milliseconds: 500),
+                duration: const Duration(milliseconds: 400),
                 transitionBuilder: (child, anim) => FadeTransition(
                   opacity: anim,
                   child: SlideTransition(
                     position: Tween(
-                      begin: const Offset(0, 0.3),
+                      begin: const Offset(0, 0.2),
                       end: Offset.zero,
                     ).animate(anim),
                     child: child,
@@ -481,82 +501,20 @@ class _DetailsScreenState extends State<DetailsScreen> {
 
               const SizedBox(height: 24),
 
-              // ── Gradient Progress Bar + Percentage ──
+              // ── Indeterminate Pulse Line ──
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 50),
-                child: Obx(() {
-                  final progress = _linkController.currentProgress.value;
-                  final pct = (progress * 100).round();
-                  return Column(
-                    children: [
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(6),
-                        child: SizedBox(
-                          height: 6,
-                          child: Stack(
-                            children: [
-                              // Background
-                              Container(color: AppColors.surfaceLight),
-                              // Gradient fill
-                              FractionallySizedBox(
-                                widthFactor: progress,
-                                child: Container(
-                                  decoration: const BoxDecoration(
-                                    gradient: AppColors.primaryGradient,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 10),
-                      Text(
-                        '$pct%',
-                        style: AppTextStyles.bodySmall.copyWith(
-                          fontSize: 13,
-                          color: AppColors.textMuted,
-                        ),
-                      ),
-                    ],
-                  );
-                }),
+                padding: const EdgeInsets.symmetric(horizontal: 60),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(4),
+                  child: const LinearProgressIndicator(
+                    minHeight: 4,
+                    backgroundColor: AppColors.surfaceLight,
+                    valueColor: AlwaysStoppedAnimation<Color>(
+                      AppColors.primary,
+                    ),
+                  ),
+                ),
               ),
-
-              const SizedBox(height: 20),
-
-              // ── Stage Dots ──
-              Obx(() {
-                final total = _stageIcons.length;
-                final activeIdx =
-                    (_linkController.currentProgress.value * (total - 1))
-                        .round()
-                        .clamp(0, total - 1);
-                return Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: List.generate(total, (i) {
-                    final isActive = i <= activeIdx;
-                    return AnimatedContainer(
-                      duration: const Duration(milliseconds: 300),
-                      margin: const EdgeInsets.symmetric(horizontal: 4),
-                      width: isActive ? 10 : 8,
-                      height: isActive ? 10 : 8,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: isActive ? _stageColors[i] : Colors.white24,
-                        boxShadow: isActive
-                            ? [
-                                BoxShadow(
-                                  color: _stageColors[i].withValues(alpha: 0.5),
-                                  blurRadius: 6,
-                                ),
-                              ]
-                            : null,
-                      ),
-                    );
-                  }),
-                );
-              }),
             ] else if (_linkController.hasError.value) ...[
               const Icon(
                 Icons.error_outline,

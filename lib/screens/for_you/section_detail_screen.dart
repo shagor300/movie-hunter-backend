@@ -70,9 +70,9 @@ class SectionDetailScreen extends StatelessWidget {
               physics: const BouncingScrollPhysics(),
               gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                 crossAxisCount: 2,
-                childAspectRatio: 0.65,
+                childAspectRatio: 0.58,
                 crossAxisSpacing: 12,
-                mainAxisSpacing: 16,
+                mainAxisSpacing: 20,
               ),
               itemCount: movies.length,
               itemBuilder: (context, index) {

@@ -66,9 +66,14 @@ class ThemeController extends GetxController {
       )];
 
   ThemeData get currentTheme {
-    // The Stitch design uses a strict Dark Theme with specific tokens
-    // We return the pre-configured AppTheme.darkTheme
-    return AppTheme.darkTheme;
+    switch (preferences.value.themeMode) {
+      case AppThemeMode.light:
+        return AppTheme.lightTheme;
+      case AppThemeMode.amoled:
+        return AppTheme.amoledTheme;
+      default:
+        return AppTheme.darkTheme;
+    }
   }
 
   // Setters

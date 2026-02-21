@@ -198,7 +198,7 @@ class OnboardingScreen extends StatelessWidget {
               width: 160,
               child: GradientButton(
                 text: "Get Started",
-                onPressed: () {}, // IntroductionScreen hooks this up
+                onPressed: () => _onIntroEnd(),
               ),
             ),
             curve: Curves.fastLinearToSlowEaseIn,

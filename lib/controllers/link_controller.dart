@@ -12,17 +12,18 @@ class LinkController extends GetxController {
   var links = <Map<String, String>>[].obs;
   var embedLinks = <Map<String, String>>[].obs;
   var currentProgress = 0.0.obs;
+  var isSuccess = false.obs;
 
   /// Tracks which movie's links are currently loaded.
   int? _currentTmdbId;
 
   final List<String> _loadingMessages = [
-    "Connecting to YoMovies server...",
-    "Searching HDHub4u for 4K quality...",
+    "Initializing secure connection...",
+    "Scanning databases for content...",
     "Bypassing ad-gateways...",
-    "Extracting direct download links...",
-    "Scanning for streaming sources...",
-    "Optimizing stream sources...",
+    "Extracting video streams...",
+    "Optimizing stream quality...",
+    "Verifying link health...",
     "Finalizing results...",
   ];
 
@@ -45,6 +46,7 @@ class LinkController extends GetxController {
     _currentTmdbId = tmdbId;
 
     isLoading.value = true;
+    isSuccess.value = false;
     hasError.value = false;
     errorMessage.value = "";
     links.clear();
@@ -59,9 +61,8 @@ class LinkController extends GetxController {
         _messageIndex++;
         progressText.value = _loadingMessages[_messageIndex];
         currentProgress.value = (_messageIndex + 1) / _loadingMessages.length;
-      } else {
-        timer.cancel();
       }
+      // Keeps the last message instead of canceling early
     });
 
     try {
@@ -91,6 +92,15 @@ class LinkController extends GetxController {
 
       links.assignAll(downloadLinks);
       embedLinks.assignAll(embeds);
+
+      // Trigger success animation
+      isSuccess.value = true;
+      currentProgress.value = 1.0;
+      progressText.value = "Links Generated Successfully!";
+      _messageTimer?.cancel();
+
+      // Keep loading overlay active briefly to show success animation
+      await Future.delayed(const Duration(milliseconds: 1500));
     } catch (e) {
       hasError.value = true;
       errorMessage.value = e.toString().contains("Exception:")
@@ -103,6 +113,7 @@ class LinkController extends GetxController {
         currentProgress.value = 1.0;
       }
       isLoading.value = false;
+      isSuccess.value = false;
     }
   }
 
@@ -130,6 +141,7 @@ class LinkController extends GetxController {
     embedLinks.clear();
     _currentTmdbId = null;
     hasError.value = false;
+    isSuccess.value = false;
     errorMessage.value = "";
     currentProgress.value = 0.0;
   }

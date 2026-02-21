@@ -43,31 +43,48 @@ embed_extractor = EmbedLinkExtractor()
 multi_source = MultiSourceManager()
 
 
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    """Application lifespan: start browser on startup, close on shutdown."""
-    logger.info("Starting up application...")
+_browser_ready = False
+_startup_task = None
+
+
+async def _deferred_browser_init():
+    """Initialize Playwright browser in the background so the server starts fast."""
+    global _browser_ready
     try:
+        logger.info("Background: starting Playwright browser...")
         await scraper_instance.startup()
-        # Share the browser with the download resolver
         download_resolver.set_browser(scraper_instance.browser)
-        # Initialize multi-source scrapers (share browser + HDHub4u scraper + resolver)
         multi_source.init_scrapers(
             scraper_instance.browser,
             hdhub4u_scraper=scraper_instance,
             download_resolver=download_resolver
         )
-        logger.info("HDHub4u scraper initialized (shared browser)")
-        logger.info("Download link resolver initialized (shared browser)")
-        logger.info("Multi-source manager initialized")
-        # Initialize admin panel database
+        _browser_ready = True
+        logger.info("Background: browser + scrapers fully initialized")
+    except Exception as e:
+        logger.error(f"Background browser init failed: {e}")
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Application lifespan: start server fast, defer browser init to background."""
+    global _startup_task
+    logger.info("Starting up application...")
+    try:
+        # Lightweight init first (admin DB) — fast, no blocking
         await admin_db.init_db()
         await ensure_default_admin()
         logger.info("Admin panel database initialized")
-        logger.info("Application startup complete")
+
+        # Defer heavy Playwright browser init to background
+        _startup_task = asyncio.create_task(_deferred_browser_init())
+
+        logger.info("Application startup complete (browser initializing in background)")
         yield
     finally:
         logger.info("Shutting down application...")
+        if _startup_task and not _startup_task.done():
+            _startup_task.cancel()
         await tmdb_helper.close()
         await scraper_instance.shutdown()
         logger.info("Application shutdown complete")
@@ -175,7 +192,7 @@ async def root():
     }
 
 
-@app.get("/health", response_model=HealthResponse)
+@app.get("/health", response_model=None)
 async def health_check():
     """Detailed health check."""
     return {
@@ -183,6 +200,7 @@ async def health_check():
         "message": "All systems operational",
         "tmdb_enabled": True,
         "scraper_sources": len(DOMAINS),
+        "browser_ready": _browser_ready,
     }
 
 

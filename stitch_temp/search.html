@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>MovieHub - Search &amp; Discovery</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#1e94f6",
+                        "background-light": "#f5f7f8",
+                        "background-dark": "#101a22",
+                    },
+                    fontFamily: {
+                        "display": ["Plus Jakarta Sans"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        .glass-header {
+            background: rgba(16, 26, 34, 0.8);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .hide-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600&amp;display=swap" rel="stylesheet"/></head>
+<body class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100 min-h-screen pb-24">
+<!-- Sticky Glassmorphism Header -->
+<header class="sticky top-0 z-50 glass-header px-4 pt-4 pb-2">
+<div class="flex items-center gap-3 mb-4">
+<div class="relative flex-1">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-primary">search</span>
+<input class="w-full bg-slate-800/50 border border-slate-700/50 rounded-lg py-2.5 pl-10 pr-4 focus:ring-2 focus:ring-primary focus:border-transparent outline-none text-sm transition-all" placeholder="Search movies, actors, directors..." type="text"/>
+</div>
+<button class="bg-primary/10 text-primary p-2.5 rounded-lg flex items-center justify-center">
+<span class="material-symbols-outlined">tune</span>
+</button>
+</div>
+<!-- Filter Chips -->
+<div class="flex gap-2 overflow-x-auto hide-scrollbar pb-2">
+<button class="whitespace-nowrap px-4 py-1.5 rounded-full bg-primary text-white text-xs font-semibold">All</button>
+<button class="whitespace-nowrap px-4 py-1.5 rounded-full bg-slate-800 border border-slate-700 text-slate-300 text-xs font-medium">Action</button>
+<button class="whitespace-nowrap px-4 py-1.5 rounded-full bg-slate-800 border border-slate-700 text-slate-300 text-xs font-medium">Comedy</button>
+<button class="whitespace-nowrap px-4 py-1.5 rounded-full bg-slate-800 border border-slate-700 text-slate-300 text-xs font-medium">Sci-Fi</button>
+<button class="whitespace-nowrap px-4 py-1.5 rounded-full bg-slate-800 border border-slate-700 text-slate-300 text-xs font-medium">2023</button>
+<button class="whitespace-nowrap px-4 py-1.5 rounded-full bg-slate-800 border border-slate-700 text-slate-300 text-xs font-medium">2024</button>
+<button class="whitespace-nowrap px-4 py-1.5 rounded-full bg-slate-800 border border-slate-700 text-slate-300 text-xs font-medium">Top Rated</button>
+</div>
+</header>
+<main class="px-4 py-6 space-y-8">
+<!-- Recent Searches Section -->
+<section>
+<div class="flex items-center justify-between mb-3">
+<h2 class="text-sm font-bold uppercase tracking-wider text-slate-400">Recent Searches</h2>
+<button class="text-xs text-primary font-medium">Clear All</button>
+</div>
+<div class="flex flex-wrap gap-2">
+<div class="flex items-center gap-2 px-3 py-1.5 bg-slate-800/40 border border-slate-700/50 rounded-lg text-xs">
+<span class="material-symbols-outlined text-[14px]">history</span>
+<span>Interstellar</span>
+<span class="material-symbols-outlined text-[14px] cursor-pointer">close</span>
+</div>
+<div class="flex items-center gap-2 px-3 py-1.5 bg-slate-800/40 border border-slate-700/50 rounded-lg text-xs">
+<span class="material-symbols-outlined text-[14px]">history</span>
+<span>Christopher Nolan</span>
+<span class="material-symbols-outlined text-[14px] cursor-pointer">close</span>
+</div>
+<div class="flex items-center gap-2 px-3 py-1.5 bg-slate-800/40 border border-slate-700/50 rounded-lg text-xs">
+<span class="material-symbols-outlined text-[14px]">history</span>
+<span>Dune: Part Two</span>
+<span class="material-symbols-outlined text-[14px] cursor-pointer">close</span>
+</div>
+</div>
+</section>
+<!-- Trending Movies (Horizontal Scroll) -->
+<section>
+<div class="flex items-center justify-between mb-4">
+<h2 class="text-lg font-bold">Trending Movies</h2>
+<span class="material-symbols-outlined text-slate-400">chevron_right</span>
+</div>
+<div class="flex gap-4 overflow-x-auto hide-scrollbar -mx-4 px-4">
+<!-- Trending Card 1 -->
+<div class="flex-none w-48 group">
+<div class="relative aspect-[2/3] rounded-xl overflow-hidden mb-2">
+<img class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" data-alt="Futuristic sci-fi movie poster cinematic lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDTpDowmyCNMKtbyCmFnfxX6klQcYbhbtBZ6wduJsI0d4Z-U5rC5cfrD3HpB6qAtt6S2tNLYW7D1n6XrT5UrmXAX5Lz-GLN7eCZ37dKPb7PtErj-ickQHEKDrrx9S5cBC3SFWmEyMHm5simodYF5PxC9rJqM3ucW7XE1t7YVz-sx8vCrEC5yL_ExXxcMBv5MIhPyCeipRZPP6FqnDAvdvqWD39LGbJy0ra4LfgUQUGxG6bzhVTCzeePYF8icXUpnSgqj-6M1Tq80LU"/>
+<div class="absolute top-2 right-2 bg-primary px-1.5 py-0.5 rounded text-[10px] font-bold text-white uppercase">4K</div>
+<div class="absolute bottom-2 left-2 flex items-center gap-1 bg-black/60 backdrop-blur-md px-1.5 py-0.5 rounded text-[10px] font-bold text-white">
+<span class="material-symbols-outlined text-[12px] text-yellow-400 fill-yellow-400">star</span>
+                            4.9
+                        </div>
+</div>
+<h3 class="text-sm font-semibold truncate">Galactic Horizon</h3>
+<p class="text-xs text-slate-400">Sci-Fi • 2024</p>
+</div>
+<!-- Trending Card 2 -->
+<div class="flex-none w-48 group">
+<div class="relative aspect-[2/3] rounded-xl overflow-hidden mb-2">
+<img class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" data-alt="Dramatic thriller movie poster with dark moody tones" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC3FRoCGk67yAFgGAiJYka9Ll2otNq2G01LOUT7iOqAEHGdZv7S2Zn8qltyB-IL-eVOgyTpzB2nV4IvPhuua1fRQoazCPrvA4soQ-23MdPKVwbYYRFbckMABXjl1J2JwFsxpbhKaG7Y8QANKsz-ePOtKlKrxBTEgNdu_ZRyWQyKnq65qGPXUaR_ssw63zJmzEh4AXMb2_uLJMWH-HSEJHwF-5kAb37ScEjkoV_HAOmD-G4SHt2036c0G_NUoCJYC_0Si25o670BFp8"/>
+<div class="absolute top-2 right-2 bg-slate-900/80 px-1.5 py-0.5 rounded text-[10px] font-bold text-white uppercase">HD</div>
+<div class="absolute bottom-2 left-2 flex items-center gap-1 bg-black/60 backdrop-blur-md px-1.5 py-0.5 rounded text-[10px] font-bold text-white">
+<span class="material-symbols-outlined text-[12px] text-yellow-400 fill-yellow-400">star</span>
+                            4.7
+                        </div>
+</div>
+<h3 class="text-sm font-semibold truncate">The Midnight Echo</h3>
+<p class="text-xs text-slate-400">Thriller • 2023</p>
+</div>
+<!-- Trending Card 3 -->
+<div class="flex-none w-48 group">
+<div class="relative aspect-[2/3] rounded-xl overflow-hidden mb-2">
+<img class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" data-alt="Classic black and white cinematic movie scene" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCjjeLHuB9l6lfcLVmXnnOyBsr_Hh-t4D40BNZfBRtWb5cGJWGdD8_my_ePm6KN1L8WsZ-Y-msKycw-EfjdpSb-37AZmgIet3Z3DCsQ55T03PbqH3No0USpi_H5cVre96aZ41ADVBtnvVeUMUR0_wBBgz2j5MzGjuCVaJ5hBiwLl09WfpuL9JY_5UjTf9MOLC-eBt8FHxRd5G4c9ENbEb8nCkNSI30DwUFucQExzSGIRjmKkMUMzqkQjTEchH9tkYowhjjIPVYPMtE"/>
+<div class="absolute top-2 right-2 bg-primary px-1.5 py-0.5 rounded text-[10px] font-bold text-white uppercase">4K</div>
+<div class="absolute bottom-2 left-2 flex items-center gap-1 bg-black/60 backdrop-blur-md px-1.5 py-0.5 rounded text-[10px] font-bold text-white">
+<span class="material-symbols-outlined text-[12px] text-yellow-400 fill-yellow-400">star</span>
+                            4.5
+                        </div>
+</div>
+<h3 class="text-sm font-semibold truncate">Beyond the Lens</h3>
+<p class="text-xs text-slate-400">Drama • 2024</p>
+</div>
+</div>
+</section>
+<!-- Search Results Grid -->
+<section>
+<h2 class="text-lg font-bold mb-4">Discover More</h2>
+<div class="grid grid-cols-2 gap-4">
+<!-- Grid Item 1 -->
+<div class="group">
+<div class="relative aspect-[2/3] rounded-xl overflow-hidden mb-2 border border-white/10">
+<img class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" data-alt="Abstract vibrant movie poster art" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB5kOp2L33ej3vYGT97NUfq-tAniimvfBh9eMtW88ydt8ENaVS7-Kxg9t-j1HrhrdOcOeMTUULx5-hVD1dBFGGOKQUNo316-lsHQ08defg6zxGkAAIUe3YK0u7dD02U_mYc2LciU1kZT6jCdUgkWgx6Zicud4FyeyebKLu6Hy5s11tkmD2NiYgsewcUlb5O-DzpHlhJHS1f7mDdvltSp2gimLhBBEjKU_9dez__bW5kpewUY-rngO37FhYP139w-a6APFvA4tNYtA4"/>
+<div class="absolute top-2 right-2 bg-white/10 backdrop-blur-md border border-white/20 px-1.5 py-0.5 rounded text-[10px] font-bold text-white uppercase">4K</div>
+<div class="absolute bottom-2 left-2 z-10 flex items-center gap-1 bg-white/10 backdrop-blur-md border border-white/20 px-1.5 py-0.5 rounded text-[10px] font-bold text-white">
+<span class="material-symbols-outlined text-[12px] text-yellow-400 fill-yellow-400">star</span>
+                            4.2
+                        </div>
+<div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent pointer-events-none"></div></div>
+<h3 class="text-[14px] font-['Poppins'] font-semibold text-white truncate mt-1">Vivid Reality</h3>
+<p class="text-xs text-slate-400">Animation • 1h 45m</p>
+</div>
+<!-- Grid Item 2 -->
+<div class="group">
+<div class="relative aspect-[2/3] rounded-xl overflow-hidden mb-2 border border-white/10">
+<img class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" data-alt="High speed action movie poster with sparks" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCOgNa7XhSrkhemZ3RSWPXpL7zF6fB-w_WllKGltZ5V6nQH-gbt4iSCJEkF7oPEny6BZkFzdYDcSXWOPmxCkJD32L4Uz_Mh5HcvGPbF9CG2Sydh5y6rxxeTqPYa9ZtI_3haC1n2xti4viWXMxy2dO4eeXi9pMV6WiLzEeLTOoX8WMIdlngIyd1RLcZy-L-Xflwqf73YEhn-CN25-ygYM1Xlv2kuFihL7rKZUICr5qYVcWqccLEOYFK6E0UlNlBxsjMjz8Mhgahu1Tk"/>
+<div class="absolute top-2 right-2 bg-white/10 backdrop-blur-md border border-white/20 px-1.5 py-0.5 rounded text-[10px] font-bold text-white uppercase">HD</div>
+<div class="absolute bottom-2 left-2 z-10 flex items-center gap-1 bg-white/10 backdrop-blur-md border border-white/20 px-1.5 py-0.5 rounded text-[10px] font-bold text-white">
+<span class="material-symbols-outlined text-[12px] text-yellow-400 fill-yellow-400">star</span>
+                            4.8
+                        </div>
+<div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent pointer-events-none"></div></div>
+<h3 class="text-[14px] font-['Poppins'] font-semibold text-white truncate mt-1">Velocity Prime</h3>
+<p class="text-xs text-slate-400">Action • 2h 10m</p>
+</div>
+<!-- Grid Item 3 -->
+<div class="group">
+<div class="relative aspect-[2/3] rounded-xl overflow-hidden mb-2 border border-white/10">
+<img class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" data-alt="Spooky dark horror movie poster forest theme" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDGYSlCDLII1Z3EC6fJmQK-la-LUY0sdTV53t5telU2p2Uf8Rc6kNxMBX3rPck6lKrnvFYvVH70mdcOINdybDML1H2k5DOb5sRbyKpyIZV7DkLyLT68wec3tlFcFfzdsPHaCXLt2TfotCnFVdGNWeG0Amhta_K0BSa-WoXZDm3CYqr7r7CFTlamauxEQaidZ-Zfss0UBnqmnZpnmgS6jtgFYCNmKMRQuZPlrmxweaMjbgFDHGcFz9UdhWSSYvD0MKbD-_IV_cMYiO4"/>
+<div class="absolute top-2 right-2 bg-white/10 backdrop-blur-md border border-white/20 px-1.5 py-0.5 rounded text-[10px] font-bold text-white uppercase">4K</div>
+<div class="absolute bottom-2 left-2 z-10 flex items-center gap-1 bg-white/10 backdrop-blur-md border border-white/20 px-1.5 py-0.5 rounded text-[10px] font-bold text-white">
+<span class="material-symbols-outlined text-[12px] text-yellow-400 fill-yellow-400">star</span>
+                            3.9
+                        </div>
+<div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent pointer-events-none"></div></div>
+<h3 class="text-[14px] font-['Poppins'] font-semibold text-white truncate mt-1">Shadow Woods</h3>
+<p class="text-xs text-slate-400">Horror • 1h 32m</p>
+</div>
+<!-- Grid Item 4 -->
+<div class="group">
+<div class="relative aspect-[2/3] rounded-xl overflow-hidden mb-2 border border-white/10">
+<img class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" data-alt="Old cinematic film camera close up" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCmWtUh4Bih42-jRs5edunL3Mji95qXEkrb87ViOYD3KmY2KLzOKlMS3dC01qQUwFEh6BGtFiuemLtpR1t3PJe8V5eVaKGPfj_jPg92V1xUFWG7PK1fiApcT7q9QnpZkSoLrFKENzG_0R31FiBqyWpjis9BhkoUWaVUk1iQhmBsM4Dnk_D2mI2myOQwcsOJKjJUsgd4VVh-GBwqYHrEt4604JUZpCQgwiubF09gvtWW5PyF9O--bejVNuWheA-kgpsZn0-u4Yo2Cvc"/>
+<div class="absolute top-2 right-2 bg-white/10 backdrop-blur-md border border-white/20 px-1.5 py-0.5 rounded text-[10px] font-bold text-white uppercase">HD</div>
+<div class="absolute bottom-2 left-2 z-10 flex items-center gap-1 bg-white/10 backdrop-blur-md border border-white/20 px-1.5 py-0.5 rounded text-[10px] font-bold text-white">
+<span class="material-symbols-outlined text-[12px] text-yellow-400 fill-yellow-400">star</span>
+                            4.6
+                        </div>
+<div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent pointer-events-none"></div></div>
+<h3 class="text-[14px] font-['Poppins'] font-semibold text-white truncate mt-1">Director's Cut</h3>
+<p class="text-xs text-slate-400">Documentary • 1h 55m</p>
+</div>
+</div>
+</section>
+</main>
+<!-- Bottom Navigation Bar -->
+<nav class="fixed bottom-0 left-0 right-0 z-50 bg-background-dark/95 backdrop-blur-lg border-t border-slate-800 px-4 pb-6 pt-3">
+<div class="flex items-center justify-around max-w-lg mx-auto">
+<a class="flex flex-col items-center gap-1 text-slate-500" href="#">
+<span class="material-symbols-outlined">home</span>
+<span class="text-[10px] font-medium">Home</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-primary" href="#">
+<span class="material-symbols-outlined fill-primary">search</span>
+<span class="text-[10px] font-medium">Search</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-slate-500" href="#">
+<span class="material-symbols-outlined">download</span>
+<span class="text-[10px] font-medium">Downloads</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-slate-500" href="#">
+<span class="material-symbols-outlined">person</span>
+<span class="text-[10px] font-medium">Profile</span>
+</a>
+</div>
+</nav>
+</body></html>

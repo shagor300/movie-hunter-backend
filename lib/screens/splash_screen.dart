@@ -2,11 +2,12 @@ import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:google_fonts/google_fonts.dart';
+
 import '../controllers/update_controller.dart';
 import '../services/update_service.dart';
 import '../widgets/update_dialog.dart';
-import '../utils/stitch_design_system.dart';
+import '../theme/app_colors.dart';
+import '../theme/app_text_styles.dart';
 import 'home_screen.dart';
 import 'onboarding_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -164,18 +165,10 @@ class _SplashScreenState extends State<SplashScreen>
   }
 
   @override
-  void dispose() {
-    _mainController.dispose();
-    _progressController.dispose();
-    _particleController.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: Container(
-        decoration: const BoxDecoration(gradient: StitchGradients.splash),
+        decoration: const BoxDecoration(gradient: AppColors.cinematicGradient),
         child: Stack(
           children: [
             // Floating particles
@@ -204,9 +197,9 @@ class _SplashScreenState extends State<SplashScreen>
                         children: [
                           const Spacer(flex: 3),
 
-                          // Logo container with emerald glow
+                          // Logo container
                           _buildLogoContainer(),
-                          const SizedBox(height: 32),
+                          const SizedBox(height: 24),
 
                           // App title
                           _buildTitle(),
@@ -220,12 +213,52 @@ class _SplashScreenState extends State<SplashScreen>
                           // Progress section
                           _buildProgressSection(),
 
-                          const SizedBox(height: 48),
+                          const SizedBox(height: 64),
                         ],
                       ),
                     ),
                   );
                 },
+              ),
+            ),
+
+            // Decorative Blurs (From Stitch)
+            Positioned(
+              bottom: -96,
+              left: -96,
+              child: Container(
+                width: 384,
+                height: 384,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: AppColors.primary.withValues(alpha: 0.1),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.primary.withValues(alpha: 0.1),
+                      blurRadius: 100,
+                      spreadRadius: 50,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            Positioned(
+              top: -96,
+              right: -96,
+              child: Container(
+                width: 384,
+                height: 384,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: AppColors.accentPurple.withValues(alpha: 0.1),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.accentPurple.withValues(alpha: 0.1),
+                      blurRadius: 100,
+                      spreadRadius: 50,
+                    ),
+                  ],
+                ),
               ),
             ),
           ],
@@ -236,46 +269,32 @@ class _SplashScreenState extends State<SplashScreen>
 
   Widget _buildLogoContainer() {
     return Container(
-      width: 120,
-      height: 120,
+      width: 96,
+      height: 96,
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(28),
+        color: AppColors.primary.withValues(alpha: 0.2),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: AppColors.primary.withValues(alpha: 0.3)),
         boxShadow: [
           BoxShadow(
-            color: StitchColors.emerald.withValues(alpha: 0.35),
-            blurRadius: 40,
-            spreadRadius: 5,
-          ),
-          BoxShadow(
-            color: StitchColors.emerald.withValues(alpha: 0.15),
-            blurRadius: 80,
-            spreadRadius: 20,
+            color: AppColors.primary.withValues(alpha: 0.2),
+            blurRadius: 24,
+            spreadRadius: 2,
           ),
         ],
       ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(28),
-        child: Stack(
-          alignment: Alignment.center,
-          children: [
-            // Gradient background
-            Container(
-              decoration: const BoxDecoration(gradient: StitchGradients.accent),
-            ),
-            // App logo
-            Image.asset(
-              'assets/images/moviehub_logo.png',
-              width: 80,
-              height: 80,
-              errorBuilder: (context, error, stackTrace) {
-                return const Icon(
-                  Icons.movie_rounded,
-                  size: 56,
-                  color: Colors.white,
-                );
-              },
-            ),
-          ],
+      child: Center(
+        child: Image.asset(
+          'assets/images/moviehub_logo.png',
+          width: 64,
+          height: 64,
+          errorBuilder: (context, error, stackTrace) {
+            return const Icon(
+              Icons.movie_rounded,
+              size: 56,
+              color: AppColors.primary,
+            );
+          },
         ),
       ),
     );
@@ -287,21 +306,13 @@ class _SplashScreenState extends State<SplashScreen>
       children: [
         Text(
           'Movie',
-          style: GoogleFonts.plusJakartaSans(
-            color: Colors.white,
-            fontSize: 34,
-            fontWeight: FontWeight.w800,
-            letterSpacing: -0.5,
+          style: AppTextStyles.displayLarge.copyWith(
+            color: AppColors.textPrimary,
           ),
         ),
         Text(
           'Hub',
-          style: GoogleFonts.plusJakartaSans(
-            color: StitchColors.emerald,
-            fontSize: 34,
-            fontWeight: FontWeight.w800,
-            letterSpacing: -0.5,
-          ),
+          style: AppTextStyles.displayLarge.copyWith(color: AppColors.primary),
         ),
       ],
     );
@@ -310,11 +321,9 @@ class _SplashScreenState extends State<SplashScreen>
   Widget _buildTagline() {
     return Text(
       'YOUR ULTIMATE CINEMA',
-      style: GoogleFonts.plusJakartaSans(
-        color: Colors.white.withValues(alpha: 0.35),
-        fontSize: 11,
-        fontWeight: FontWeight.w600,
-        letterSpacing: 3.0,
+      style: AppTextStyles.labelSmall.copyWith(
+        color: AppColors.textPrimary.withValues(alpha: 0.7),
+        letterSpacing: 4.0,
       ),
     );
   }
@@ -324,29 +333,15 @@ class _SplashScreenState extends State<SplashScreen>
       animation: _progressController,
       builder: (context, _) {
         return Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 64),
+          padding: const EdgeInsets.symmetric(horizontal: 48),
           child: Column(
             children: [
-              // Status text
-              AnimatedSwitcher(
-                duration: const Duration(milliseconds: 300),
-                child: Text(
-                  _statusText,
-                  key: ValueKey(_statusText),
-                  style: GoogleFonts.plusJakartaSans(
-                    color: StitchColors.emerald.withValues(alpha: 0.7),
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
-                    letterSpacing: 1.5,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
               // Progress bar
               Container(
                 height: 4,
+                width: double.infinity,
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.06),
+                  color: AppColors.surface,
                   borderRadius: BorderRadius.circular(4),
                 ),
                 child: FractionallySizedBox(
@@ -354,15 +349,22 @@ class _SplashScreenState extends State<SplashScreen>
                   widthFactor: _progressAnimation.value,
                   child: Container(
                     decoration: BoxDecoration(
-                      gradient: StitchGradients.splashProgress,
+                      gradient: AppColors.primaryGradient,
                       borderRadius: BorderRadius.circular(4),
-                      boxShadow: [
-                        BoxShadow(
-                          color: StitchColors.emerald.withValues(alpha: 0.4),
-                          blurRadius: 12,
-                        ),
-                      ],
                     ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              // Status text
+              AnimatedSwitcher(
+                duration: const Duration(milliseconds: 300),
+                child: Text(
+                  _statusText.toUpperCase(),
+                  key: ValueKey(_statusText),
+                  style: AppTextStyles.labelSmall.copyWith(
+                    color: AppColors.textMuted,
+                    fontSize: 10,
                   ),
                 ),
               ),
@@ -407,9 +409,7 @@ class _ParticlePainter extends CustomPainter {
 
       final particleOpacity = (0.15 + _rng.nextDouble() * 0.15) * opacity;
 
-      paint.color = (i % 3 == 0 ? StitchColors.emerald : Colors.white)
-          .withValues(alpha: particleOpacity);
-
+      paint.color = Colors.white.withValues(alpha: particleOpacity);
       canvas.drawCircle(Offset(x, y), radius, paint);
     }
   }

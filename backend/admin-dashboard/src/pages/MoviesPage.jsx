@@ -6,12 +6,12 @@ export default function MoviesPage() {
     const [search, setSearch] = useState('');
     const [showModal, setShowModal] = useState(false);
 
-    const load = () => api.get('/admin/movies').then(r => setMovies(r.data.movies || [])).catch(() => { });
+    const load = () => api.get('/admin/manual-links').then(r => setMovies(r.data.links || [])).catch(() => { });
     useEffect(() => { load(); }, []);
 
     const deleteMovie = async (id) => {
         if (!confirm('Delete this movie?')) return;
-        try { await api.delete(`/admin/movies/${id}`); load(); } catch { }
+        try { await api.delete(`/admin/manual-links/${id}`); load(); } catch { }
     };
 
     const filtered = movies.filter(m =>
@@ -110,7 +110,7 @@ function AddMovieModal({ onClose, onSuccess }) {
         setLoading(true);
         setError('');
         try {
-            await api.post('/admin/movies', { tmdb_id: parseInt(tmdbId) });
+            await api.post('/admin/manual-links', { movie_title: `TMDB-${tmdbId}`, tmdb_id: parseInt(tmdbId), links: [] });
             onSuccess();
         } catch (err) {
             setError(err.response?.data?.detail || 'Failed to add movie');

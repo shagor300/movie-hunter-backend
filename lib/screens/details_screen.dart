@@ -11,7 +11,8 @@ import '../controllers/link_controller.dart';
 import '../controllers/watchlist_controller.dart';
 import '../controllers/download_controller.dart';
 import '../services/api_service.dart';
-import '../utils/stitch_design_system.dart';
+import '../theme/app_colors.dart';
+import '../theme/app_text_styles.dart';
 import 'webview_player.dart';
 import 'video_player_screen.dart';
 
@@ -39,7 +40,7 @@ class _DetailsScreenState extends State<DetailsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: StitchColors.bgDark,
+      backgroundColor: AppColors.backgroundDarker,
       body: Stack(
         children: [
           CustomScrollView(
@@ -168,8 +169,8 @@ class _DetailsScreenState extends State<DetailsScreen> {
                             end: Alignment.bottomCenter,
                             colors: [
                               Colors.transparent,
-                              StitchColors.bgDark.withValues(alpha: 0.5),
-                              StitchColors.bgDark,
+                              AppColors.backgroundDarker.withValues(alpha: 0.5),
+                              AppColors.backgroundDarker,
                             ],
                           ),
                         ),
@@ -190,14 +191,16 @@ class _DetailsScreenState extends State<DetailsScreen> {
                       // Title and Metadata
                       Text(
                         widget.movie.title,
-                        style: StitchText.movieTitle(fontSize: 28),
+                        style: AppTextStyles.displayMedium.copyWith(
+                          fontSize: 28,
+                        ),
                       ),
                       const SizedBox(height: 12),
                       Row(
                         children: [
-                          _buildChip(widget.movie.year, StitchColors.emerald),
+                          _buildChip(widget.movie.year, AppColors.primary),
                           const SizedBox(width: 8),
-                          _buildChip("HD 4K", StitchColors.emeraldDark),
+                          _buildChip("HD 4K", AppColors.primaryDark),
                           const SizedBox(width: 8),
                           const Icon(Icons.star, color: Colors.amber, size: 20),
                           const SizedBox(width: 4),
@@ -218,14 +221,16 @@ class _DetailsScreenState extends State<DetailsScreen> {
                       // Storyline Section
                       Text(
                         "Storyline",
-                        style: StitchText.heading(fontSize: 20),
+                        style: AppTextStyles.headingLarge.copyWith(
+                          fontSize: 20,
+                        ),
                       ),
                       const SizedBox(height: 12),
                       Text(
                         widget.movie.plot,
-                        style: StitchText.body(
+                        style: AppTextStyles.bodyLarge.copyWith(
                           fontSize: 15,
-                          color: StitchColors.textSecondary,
+                          color: AppColors.textSecondary,
                         ),
                       ),
                       const SizedBox(height: 40),
@@ -237,7 +242,9 @@ class _DetailsScreenState extends State<DetailsScreen> {
                             children: [
                               Text(
                                 "Available Links",
-                                style: StitchText.heading(fontSize: 20),
+                                style: AppTextStyles.headingLarge.copyWith(
+                                  fontSize: 20,
+                                ),
                               ),
                               const SizedBox(height: 16),
                               // --- Embed/Streaming Links ---
@@ -246,16 +253,14 @@ class _DetailsScreenState extends State<DetailsScreen> {
                                   children: [
                                     const Icon(
                                       Icons.play_circle_fill,
-                                      color: StitchColors.emerald,
+                                      color: AppColors.primary,
                                       size: 20,
                                     ),
                                     const SizedBox(width: 8),
                                     Text(
                                       'Stream Online',
-                                      style: GoogleFonts.plusJakartaSans(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.w600,
-                                        color: StitchColors.emerald,
+                                      style: AppTextStyles.titleMedium.copyWith(
+                                        color: AppColors.primary,
                                       ),
                                     ),
                                   ],
@@ -275,16 +280,14 @@ class _DetailsScreenState extends State<DetailsScreen> {
                                   children: [
                                     const Icon(
                                       Icons.cloud_download,
-                                      color: StitchColors.emeraldDark,
+                                      color: AppColors.primaryDark,
                                       size: 20,
                                     ),
                                     const SizedBox(width: 8),
                                     Text(
                                       'Download',
-                                      style: GoogleFonts.plusJakartaSans(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.w600,
-                                        color: StitchColors.emeraldDark,
+                                      style: AppTextStyles.titleMedium.copyWith(
+                                        color: AppColors.primaryDark,
                                       ),
                                     ),
                                   ],
@@ -347,10 +350,10 @@ class _DetailsScreenState extends State<DetailsScreen> {
       height: 60,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(16),
-        gradient: StitchGradients.accent,
+        gradient: AppColors.primaryGradient,
         boxShadow: [
           BoxShadow(
-            color: StitchColors.emerald.withValues(alpha: 0.3),
+            color: AppColors.primary.withValues(alpha: 0.3),
             blurRadius: 15,
             offset: const Offset(0, 5),
           ),
@@ -375,8 +378,7 @@ class _DetailsScreenState extends State<DetailsScreen> {
         icon: const Icon(Icons.play_circle_fill, size: 28),
         label: Text(
           "Generate Links",
-          style: GoogleFonts.plusJakartaSans(
-            fontSize: 18,
+          style: AppTextStyles.headingLarge.copyWith(
             fontWeight: FontWeight.bold,
           ),
         ),
@@ -468,9 +470,9 @@ class _DetailsScreenState extends State<DetailsScreen> {
                   () => Text(
                     _linkController.progressText.value,
                     key: ValueKey(_linkController.progressText.value),
-                    style: StitchText.body(
+                    style: AppTextStyles.bodyLarge.copyWith(
                       fontSize: 17,
-                      color: StitchColors.textPrimary,
+                      color: AppColors.textPrimary,
                     ),
                     textAlign: TextAlign.center,
                   ),
@@ -494,13 +496,13 @@ class _DetailsScreenState extends State<DetailsScreen> {
                           child: Stack(
                             children: [
                               // Background
-                              Container(color: StitchColors.slateChip),
+                              Container(color: AppColors.surfaceLight),
                               // Gradient fill
                               FractionallySizedBox(
                                 widthFactor: progress,
                                 child: Container(
                                   decoration: const BoxDecoration(
-                                    gradient: StitchGradients.accent,
+                                    gradient: AppColors.primaryGradient,
                                   ),
                                 ),
                               ),
@@ -511,9 +513,9 @@ class _DetailsScreenState extends State<DetailsScreen> {
                       const SizedBox(height: 10),
                       Text(
                         '$pct%',
-                        style: StitchText.caption(
+                        style: AppTextStyles.bodySmall.copyWith(
                           fontSize: 13,
-                          color: StitchColors.textTertiary,
+                          color: AppColors.textMuted,
                         ),
                       ),
                     ],
@@ -562,15 +564,17 @@ class _DetailsScreenState extends State<DetailsScreen> {
                 size: 80,
               ),
               const SizedBox(height: 24),
-              Text("Search Failed", style: StitchText.heading(fontSize: 22)),
+              Text(
+                "Search Failed",
+                style: AppTextStyles.headingLarge.copyWith(fontSize: 22),
+              ),
               const SizedBox(height: 12),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 40),
                 child: Text(
                   _linkController.errorMessage.value,
-                  style: StitchText.body(
-                    color: StitchColors.textSecondary,
-                    fontSize: 14,
+                  style: AppTextStyles.bodyMedium.copyWith(
+                    color: AppColors.textSecondary,
                   ),
                   textAlign: TextAlign.center,
                 ),
@@ -584,7 +588,7 @@ class _DetailsScreenState extends State<DetailsScreen> {
                     child: Text(
                       "Dismiss",
                       style: GoogleFonts.plusJakartaSans(
-                        color: StitchColors.textTertiary,
+                        color: AppColors.textMuted,
                       ),
                     ),
                   ),
@@ -601,7 +605,7 @@ class _DetailsScreenState extends State<DetailsScreen> {
                       skyMoviesHDUrl: widget.movie.skyMoviesHDUrl,
                     ),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: StitchColors.emerald,
+                      backgroundColor: AppColors.primary,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
@@ -659,11 +663,11 @@ class _DetailsScreenState extends State<DetailsScreen> {
             margin: const EdgeInsets.all(40),
             padding: const EdgeInsets.all(28),
             decoration: BoxDecoration(
-              color: StitchColors.surfaceDark,
+              color: AppColors.surface,
               borderRadius: BorderRadius.circular(20),
               boxShadow: [
                 BoxShadow(
-                  color: StitchColors.emerald.withValues(alpha: 0.3),
+                  color: AppColors.primary.withValues(alpha: 0.3),
                   blurRadius: 30,
                   spreadRadius: 2,
                 ),
@@ -676,19 +680,19 @@ class _DetailsScreenState extends State<DetailsScreen> {
                   width: 50,
                   height: 50,
                   child: CircularProgressIndicator(
-                    color: StitchColors.emerald,
+                    color: AppColors.primary,
                     strokeWidth: 3,
                   ),
                 ),
                 const SizedBox(height: 20),
                 Text(
                   'Preparing Video...',
-                  style: StitchText.heading(fontSize: 18),
+                  style: AppTextStyles.headingLarge.copyWith(fontSize: 18),
                 ),
                 const SizedBox(height: 8),
                 Text(
                   'Resolving stream link, please wait',
-                  style: StitchText.caption(fontSize: 13),
+                  style: AppTextStyles.bodySmall.copyWith(fontSize: 13),
                 ),
               ],
             ),
@@ -782,9 +786,9 @@ class _DetailsScreenState extends State<DetailsScreen> {
       child: Container(
         margin: const EdgeInsets.only(bottom: 12),
         decoration: BoxDecoration(
-          color: StitchColors.glassBackground,
+          color: AppColors.glassBackground,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: StitchColors.glassBorder),
+          border: Border.all(color: AppColors.glassBorder),
         ),
         child: ListTile(
           contentPadding: const EdgeInsets.symmetric(
@@ -794,21 +798,18 @@ class _DetailsScreenState extends State<DetailsScreen> {
           leading: Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: StitchColors.emerald.withValues(alpha: 0.1),
+              color: AppColors.primary.withValues(alpha: 0.1),
               shape: BoxShape.circle,
             ),
-            child: const Icon(
-              Icons.cloud_download,
-              color: StitchColors.emerald,
-            ),
+            child: const Icon(Icons.cloud_download, color: AppColors.primary),
           ),
           title: Text(
             link['name'] ?? "Source ${index + 1}",
-            style: StitchText.movieTitle(fontSize: 14),
+            style: AppTextStyles.titleMedium,
           ),
           subtitle: Text(
             "Quality: ${link['quality']}",
-            style: StitchText.caption(fontSize: 12),
+            style: AppTextStyles.bodySmall,
           ),
           trailing: Row(
             mainAxisSize: MainAxisSize.min,
@@ -817,7 +818,7 @@ class _DetailsScreenState extends State<DetailsScreen> {
               IconButton(
                 icon: const Icon(
                   Icons.play_circle_outline,
-                  color: StitchColors.emerald,
+                  color: AppColors.primary,
                   size: 22,
                 ),
                 tooltip: 'Play Video',
@@ -827,7 +828,7 @@ class _DetailsScreenState extends State<DetailsScreen> {
               IconButton(
                 icon: const Icon(
                   Icons.download_rounded,
-                  color: StitchColors.emeraldDark,
+                  color: AppColors.primaryDark,
                   size: 22,
                 ),
                 tooltip: 'Download',
@@ -849,7 +850,7 @@ class _DetailsScreenState extends State<DetailsScreen> {
               IconButton(
                 icon: const Icon(
                   Icons.copy,
-                  color: StitchColors.textTertiary,
+                  color: AppColors.textMuted,
                   size: 18,
                 ),
                 onPressed: () {
@@ -858,9 +859,7 @@ class _DetailsScreenState extends State<DetailsScreen> {
                     "Link Copied",
                     "Ready to paste in your browser",
                     snackPosition: SnackPosition.BOTTOM,
-                    backgroundColor: StitchColors.emerald.withValues(
-                      alpha: 0.8,
-                    ),
+                    backgroundColor: AppColors.primary.withValues(alpha: 0.8),
                     colorText: Colors.white,
                     margin: const EdgeInsets.all(20),
                     duration: const Duration(seconds: 2),
@@ -883,7 +882,7 @@ class _DetailsScreenState extends State<DetailsScreen> {
   Widget _buildEmbedLinkItem(Map<String, String> link, int index) {
     // Gradient colors based on player priority
     final gradients = <List<Color>>[
-      [StitchColors.emerald, StitchColors.emeraldDark], // Emerald - Recommended
+      [AppColors.primary, AppColors.primaryDark], // Emerald - Recommended
       [const Color(0xFF2563EB), const Color(0xFF3B82F6)], // Blue - High Speed
       [const Color(0xFF059669), const Color(0xFF10B981)], // Green - Standard
       [const Color(0xFFD97706), const Color(0xFFF59E0B)], // Orange - Backup

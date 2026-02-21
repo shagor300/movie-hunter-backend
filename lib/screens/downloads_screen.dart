@@ -1,11 +1,12 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:google_fonts/google_fonts.dart';
+
 import 'package:open_filex/open_filex.dart';
 import '../controllers/download_controller.dart';
 import '../models/download_item.dart';
-import '../utils/stitch_design_system.dart';
+import '../theme/app_colors.dart';
+import '../theme/app_text_styles.dart';
 import '../widgets/empty_state.dart';
 
 class DownloadsScreen extends StatelessWidget {
@@ -24,7 +25,7 @@ class DownloadsScreen extends StatelessWidget {
         title: Obx(
           () => Text(
             'Downloads (${controller.allDownloads.length})',
-            style: StitchText.display(fontSize: 20),
+            style: AppTextStyles.headingLarge.copyWith(fontSize: 20),
           ),
         ),
         actions: [
@@ -89,20 +90,18 @@ class DownloadsScreen extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: 10, top: 4),
       child: Row(
         children: [
-          Text(title, style: StitchText.heading(fontSize: 16)),
+          Text(title, style: AppTextStyles.titleMedium),
           const SizedBox(width: 8),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
             decoration: BoxDecoration(
-              color: StitchColors.emerald.withValues(alpha: 0.2),
+              color: AppColors.primary.withValues(alpha: 0.2),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Text(
               '$count',
-              style: GoogleFonts.plusJakartaSans(
-                fontSize: 12,
-                fontWeight: FontWeight.bold,
-                color: StitchColors.emerald,
+              style: AppTextStyles.labelSmall.copyWith(
+                color: AppColors.primary,
               ),
             ),
           ),
@@ -137,7 +136,7 @@ class _DownloadCard extends StatelessWidget {
     return Card(
       margin: const EdgeInsets.only(bottom: 10),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-      color: StitchColors.glassBackground,
+      color: AppColors.glassBackground,
       elevation: 0,
       child: Padding(
         padding: const EdgeInsets.all(14),
@@ -155,7 +154,7 @@ class _DownloadCard extends StatelessWidget {
                     children: [
                       Text(
                         item.movieTitle,
-                        style: StitchText.movieTitle(fontSize: 14),
+                        style: AppTextStyles.titleMedium,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -167,7 +166,7 @@ class _DownloadCard extends StatelessWidget {
                           Flexible(
                             child: Text(
                               item.fileName,
-                              style: StitchText.caption(fontSize: 11),
+                              style: AppTextStyles.bodySmall,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),
@@ -191,9 +190,8 @@ class _DownloadCard extends StatelessWidget {
                 padding: const EdgeInsets.only(top: 8),
                 child: Text(
                   '✅ ${item.fileSizeText} · Completed',
-                  style: GoogleFonts.plusJakartaSans(
-                    color: StitchColors.emerald,
-                    fontSize: 12,
+                  style: AppTextStyles.bodySmall.copyWith(
+                    color: AppColors.primary,
                   ),
                 ),
               ),
@@ -204,9 +202,8 @@ class _DownloadCard extends StatelessWidget {
                 padding: const EdgeInsets.only(top: 8),
                 child: Text(
                   '❌ Failed · Tap retry to try again',
-                  style: GoogleFonts.plusJakartaSans(
+                  style: AppTextStyles.bodySmall.copyWith(
                     color: Colors.red[400],
-                    fontSize: 12,
                   ),
                 ),
               ),
@@ -245,9 +242,9 @@ class _ProgressSection extends StatelessWidget {
               child: LinearProgressIndicator(
                 value: progress.clamp(0.0, 1.0),
                 minHeight: 5,
-                backgroundColor: StitchColors.slateChip,
+                backgroundColor: AppColors.surfaceLight,
                 valueColor: AlwaysStoppedAnimation(
-                  isPaused ? Colors.orange : StitchColors.emerald,
+                  isPaused ? Colors.orange : AppColors.primary,
                 ),
               ),
             ),
@@ -258,33 +255,28 @@ class _ProgressSection extends StatelessWidget {
               children: [
                 Text(
                   '${item.downloadedText} / ${item.fileSizeText}',
-                  style: GoogleFonts.plusJakartaSans(
-                    color: StitchColors.textTertiary,
-                    fontSize: 11,
+                  style: AppTextStyles.bodySmall.copyWith(
+                    color: AppColors.textMuted,
                   ),
                 ),
                 Text(
                   item.progressText,
-                  style: GoogleFonts.plusJakartaSans(
-                    color: StitchColors.emerald,
-                    fontSize: 11,
-                    fontWeight: FontWeight.bold,
+                  style: AppTextStyles.labelSmall.copyWith(
+                    color: AppColors.primary,
                   ),
                 ),
                 if (!isPaused)
                   Text(
                     '$speed · $eta',
-                    style: GoogleFonts.plusJakartaSans(
-                      color: StitchColors.textTertiary,
-                      fontSize: 11,
+                    style: AppTextStyles.bodySmall.copyWith(
+                      color: AppColors.textMuted,
                     ),
                   )
                 else
                   Text(
                     'Paused',
-                    style: GoogleFonts.plusJakartaSans(
+                    style: AppTextStyles.bodySmall.copyWith(
                       color: Colors.orange,
-                      fontSize: 11,
                     ),
                   ),
               ],
@@ -311,7 +303,7 @@ class _StatusIcon extends StatelessWidget {
 
     switch (status) {
       case 'downloading':
-        color = StitchColors.emerald;
+        color = AppColors.primary;
         icon = Icons.download;
         break;
       case 'completed':
@@ -352,16 +344,12 @@ class _QualityBadge extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
       decoration: BoxDecoration(
-        color: StitchColors.emerald,
+        color: AppColors.primary,
         borderRadius: BorderRadius.circular(4),
       ),
       child: Text(
         quality,
-        style: GoogleFonts.plusJakartaSans(
-          color: Colors.white,
-          fontSize: 10,
-          fontWeight: FontWeight.bold,
-        ),
+        style: AppTextStyles.labelSmall.copyWith(color: Colors.white),
       ),
     );
   }
@@ -417,7 +405,7 @@ class _ActionButtons extends StatelessWidget {
             IconButton(
               icon: const Icon(
                 Icons.play_circle_outline,
-                color: StitchColors.emerald,
+                color: AppColors.primary,
                 size: 22,
               ),
               onPressed: () async {
@@ -478,23 +466,17 @@ class _ActionButtons extends StatelessWidget {
   void _deleteDialog(BuildContext context) {
     Get.dialog(
       AlertDialog(
-        backgroundColor: StitchColors.bgAlt,
+        backgroundColor: AppColors.surface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Text(
-          'Delete Download?',
-          style: GoogleFonts.plusJakartaSans(
-            color: StitchColors.textPrimary,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
+        title: Text('Delete Download?', style: AppTextStyles.titleMedium),
         content: Text(
           'Delete "${item.movieTitle}" from your downloads?',
-          style: StitchText.caption(fontSize: 14),
+          style: AppTextStyles.bodyMedium,
         ),
         actions: [
           TextButton(
             onPressed: () => Get.back(),
-            child: Text('Cancel', style: StitchText.caption(fontSize: 14)),
+            child: Text('Cancel', style: AppTextStyles.bodyMedium),
           ),
           ElevatedButton(
             onPressed: () {

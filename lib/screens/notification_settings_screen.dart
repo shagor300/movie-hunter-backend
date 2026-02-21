@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
-import '../utils/stitch_design_system.dart';
+import '../theme/app_colors.dart';
+import '../theme/app_text_styles.dart';
 
 import '../controllers/notification_controller.dart';
 import '../controllers/theme_controller.dart';
@@ -18,13 +19,16 @@ class NotificationSettingsScreen extends StatelessWidget {
     final accent = tc.accentColor;
 
     return Scaffold(
-      backgroundColor: StitchColors.bgDark,
+      backgroundColor: AppColors.background,
       appBar: AppBar(
-        backgroundColor: StitchColors.bgDark,
+        backgroundColor: AppColors.background,
         elevation: 0,
         title: Text(
           'Notifications',
-          style: StitchText.heading(fontWeight: FontWeight.bold, fontSize: 22),
+          style: AppTextStyles.headingLarge.copyWith(
+            fontWeight: FontWeight.bold,
+            fontSize: 22,
+          ),
         ),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new, size: 20),
@@ -275,15 +279,15 @@ class NotificationSettingsScreen extends StatelessWidget {
                         children: [
                           Text(
                             'Enable Quiet Hours',
-                            style: StitchText.body(
+                            style: AppTextStyles.bodyMedium.copyWith(
                               fontWeight: FontWeight.w600,
                               fontSize: 14,
                             ),
                           ),
                           Text(
                             'Silence notifications during set times',
-                            style: StitchText.caption(
-                              color: StitchColors.textTertiary,
+                            style: AppTextStyles.bodySmall.copyWith(
+                              color: AppColors.textSecondary,
                             ),
                           ),
                         ],
@@ -295,7 +299,7 @@ class NotificationSettingsScreen extends StatelessWidget {
                         HapticFeedback.lightImpact();
                         nc.toggleQuietHours(v);
                       },
-                      activeTrackColor: StitchColors.emerald,
+                      activeTrackColor: AppColors.primary,
                     ),
                   ],
                 ),
@@ -347,11 +351,13 @@ class _Header extends StatelessWidget {
           const SizedBox(width: 8),
           Text(
             title.toUpperCase(),
-            style: StitchText.heading(
-              color: StitchColors.textTertiary,
-              fontSize: 12,
-              fontWeight: FontWeight.w700,
-            ).copyWith(letterSpacing: 1.2),
+            style: AppTextStyles.headingLarge
+                .copyWith(
+                  color: AppColors.textSecondary,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                )
+                .copyWith(letterSpacing: 1.2),
           ),
         ],
       ),
@@ -368,9 +374,9 @@ class _Card extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: StitchColors.glassBackground,
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: StitchColors.glassBorder),
+        border: Border.all(color: AppColors.surfaceLight),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -384,7 +390,7 @@ class _Divider extends StatelessWidget {
   const _Divider();
   @override
   Widget build(BuildContext c) =>
-      const Divider(color: StitchColors.glassBorder, height: 24);
+      const Divider(color: AppColors.surfaceLight, height: 24);
 }
 
 class _MasterToggle extends StatelessWidget {
@@ -425,7 +431,7 @@ class _MasterToggle extends StatelessWidget {
             children: [
               Text(
                 'All Notifications',
-                style: StitchText.body(
+                style: AppTextStyles.bodyMedium.copyWith(
                   fontWeight: FontWeight.bold,
                   fontSize: 16,
                 ),
@@ -434,10 +440,8 @@ class _MasterToggle extends StatelessWidget {
                 enabled
                     ? 'Notifications are enabled'
                     : 'All notifications silenced',
-                style: StitchText.caption(
-                  color: enabled
-                      ? StitchColors.emerald
-                      : StitchColors.textTertiary,
+                style: AppTextStyles.bodySmall.copyWith(
+                  color: enabled ? AppColors.primary : AppColors.textSecondary,
                 ),
               ),
             ],
@@ -446,7 +450,7 @@ class _MasterToggle extends StatelessWidget {
         Switch(
           value: enabled,
           onChanged: onChanged,
-          activeTrackColor: StitchColors.emerald,
+          activeTrackColor: AppColors.primary,
         ),
       ],
     );
@@ -494,7 +498,7 @@ class _CategoryTile extends StatelessWidget {
                   children: [
                     Text(
                       title,
-                      style: StitchText.body(
+                      style: AppTextStyles.bodyMedium.copyWith(
                         fontWeight: FontWeight.w600,
                         fontSize: 14,
                       ),
@@ -503,7 +507,7 @@ class _CategoryTile extends StatelessWidget {
                       const SizedBox(width: 6),
                       const Icon(
                         Icons.lock,
-                        color: StitchColors.textTertiary,
+                        color: AppColors.textSecondary,
                         size: 14,
                       ),
                     ],
@@ -511,7 +515,9 @@ class _CategoryTile extends StatelessWidget {
                 ),
                 Text(
                   description,
-                  style: StitchText.caption(color: StitchColors.textTertiary),
+                  style: AppTextStyles.bodySmall.copyWith(
+                    color: AppColors.textSecondary,
+                  ),
                 ),
               ],
             ),
@@ -527,7 +533,7 @@ class _CategoryTile extends StatelessWidget {
           Switch(
             value: value,
             onChanged: enabled && !locked ? onChanged : null,
-            activeTrackColor: StitchColors.emerald,
+            activeTrackColor: AppColors.primary,
           ),
         ],
       ),
@@ -580,8 +586,8 @@ class _TimePicker extends StatelessWidget {
               const SizedBox(width: 8),
               Text(
                 label,
-                style: StitchText.caption(
-                  color: StitchColors.textSecondary,
+                style: AppTextStyles.bodySmall.copyWith(
+                  color: AppColors.textMuted,
                   fontSize: 13,
                 ),
               ),
@@ -592,13 +598,13 @@ class _TimePicker extends StatelessWidget {
                   vertical: 4,
                 ),
                 decoration: BoxDecoration(
-                  color: StitchColors.emerald.withValues(alpha: 0.12),
+                  color: AppColors.primary.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
                   formatted,
-                  style: StitchText.body(
-                    color: StitchColors.emerald,
+                  style: AppTextStyles.bodyMedium.copyWith(
+                    color: AppColors.primary,
                     fontWeight: FontWeight.bold,
                     fontSize: 13,
                   ),

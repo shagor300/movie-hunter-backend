@@ -1,16 +1,13 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:cached_network_image/cached_network_image.dart';
-import 'package:shimmer/shimmer.dart';
 import '../services/tmdb_service.dart';
 import '../services/api_service.dart';
 import '../models/movie.dart';
-import '../controllers/theme_controller.dart';
-import '../utils/stitch_design_system.dart';
+import '../theme/app_colors.dart';
+import '../theme/app_text_styles.dart';
 import '../widgets/movie_card.dart';
+import '../widgets/custom_search_bar.dart';
 import '../widgets/filter_sheet.dart';
 import '../widgets/empty_state.dart';
 import '../widgets/skeleton_loader.dart';
@@ -175,11 +172,7 @@ class _SearchScreenState extends State<SearchScreen> {
     });
   }
 
-  bool get _hasActiveFilters =>
-      _selectedGenres.isNotEmpty ||
-      _selectedYear != null ||
-      _minRating > 0 ||
-      _selectedLanguage != null;
+
 
   void _showFilterSheet() {
     showModalBottomSheet(
@@ -277,21 +270,18 @@ class _SearchScreenState extends State<SearchScreen> {
   Widget _buildGlassHeader(bool isDark) {
     return ClipRRect(
       child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+        filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
         child: Container(
           padding: EdgeInsets.only(
-            top: MediaQuery.of(context).padding.top + 12,
-            left: 16,
-            right: 16,
-            bottom: 8,
+            top: MediaQuery.of(context).padding.top + 16,
+            left: 20,
+            right: 20,
+            bottom: 16,
           ),
           decoration: BoxDecoration(
-            color: StitchColors.glassHeader,
-            border: Border(
-              bottom: BorderSide(
-                color: Colors.white.withValues(alpha: 0.05),
-                width: 1,
-              ),
+            color: AppColors.backgroundDark.withValues(alpha: 0.8),
+            border: const Border(
+              bottom: BorderSide(color: AppColors.glassBorder, width: 1),
             ),
           ),
           child: Column(
@@ -300,126 +290,48 @@ class _SearchScreenState extends State<SearchScreen> {
               Row(
                 children: [
                   Expanded(
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: StitchColors.slateChip.withValues(alpha: 0.5),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: StitchColors.slateChipBorder.withValues(
-                            alpha: 0.5,
-                          ),
-                          width: 1,
-                        ),
-                      ),
-                      child: TextField(
-                        controller: _searchController,
-                        style: StitchText.body(fontSize: 14),
-                        decoration: InputDecoration(
-                          hintText: 'Search movies, actors, directors...',
-                          hintStyle: StitchText.body(
-                            fontSize: 14,
-                            color: StitchColors.textTertiary,
-                          ),
-                          prefixIcon: const Icon(
-                            Icons.search,
-                            color: StitchColors.emerald,
-                            size: 22,
-                          ),
-                          suffixIcon: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              // Voice search
-                              IconButton(
-                                icon: const Icon(
-                                  Icons.mic_rounded,
-                                  color: StitchColors.emerald,
-                                  size: 20,
-                                ),
-                                onPressed: () {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (_) => VoiceSearchScreen(
-                                        onSearchResult: (query) {
-                                          _searchController.text = query;
-                                          _onSearch(query);
-                                        },
-                                      ),
-                                    ),
-                                  );
-                                },
-                              ),
-                              if (_searchController.text.isNotEmpty)
-                                IconButton(
-                                  icon: Icon(
-                                    Icons.clear,
-                                    color: StitchColors.textTertiary,
-                                    size: 18,
-                                  ),
-                                  onPressed: () {
-                                    _searchController.clear();
-                                    _fetchTrending();
-                                  },
-                                ),
-                            ],
-                          ),
-                          border: InputBorder.none,
-                          contentPadding: const EdgeInsets.symmetric(
-                            vertical: 13,
-                          ),
-                        ),
-                        onSubmitted: _onSearch,
-                        onTap: () {
-                          if (_searchController.text.isEmpty &&
-                              _recentSearches.isNotEmpty) {
-                            setState(() => _showRecent = true);
-                          }
-                        },
-                        onChanged: (value) {
-                          if (value.isEmpty && _recentSearches.isNotEmpty) {
-                            setState(() => _showRecent = true);
-                          } else {
-                            setState(() => _showRecent = false);
-                          }
-                        },
-                      ),
+                    child: CustomSearchBar(
+                      controller: _searchController,
+                      onChanged: (value) {
+                        if (value.isEmpty && _recentSearches.isNotEmpty) {
+                          setState(() => _showRecent = true);
+                        } else {
+                          setState(() => _showRecent = false);
+                        }
+                      },
+                      onFilterTap: _showFilterSheet,
                     ),
                   ),
-                  const SizedBox(width: 10),
-                  // Filter button
+                  const SizedBox(width: 12),
+                  // Mic / Voice Search
                   GestureDetector(
-                    onTap: _showFilterSheet,
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => VoiceSearchScreen(
+                            onSearchResult: (query) {
+                              _searchController.text = query;
+                              _onSearch(query);
+                            },
+                          ),
+                        ),
+                      );
+                    },
                     child: Container(
-                      padding: const EdgeInsets.all(11),
+                      height: 48,
+                      width: 48,
                       decoration: BoxDecoration(
-                        color: StitchColors.emerald.withValues(alpha: 0.1),
+                        color: AppColors.primary.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      child: Stack(
-                        children: [
-                          const Icon(
-                            Icons.tune,
-                            color: StitchColors.emerald,
-                            size: 22,
-                          ),
-                          if (_hasActiveFilters)
-                            Positioned(
-                              right: 0,
-                              top: 0,
-                              child: Container(
-                                width: 7,
-                                height: 7,
-                                decoration: const BoxDecoration(
-                                  color: StitchColors.redDanger,
-                                  shape: BoxShape.circle,
-                                ),
-                              ),
-                            ),
-                        ],
+                      child: const Icon(
+                        Icons.mic_rounded,
+                        color: AppColors.primary,
                       ),
                     ),
                   ),
-                  const SizedBox(width: 6),
+                  const SizedBox(width: 12),
                   // Settings
                   GestureDetector(
                     onTap: () => Navigator.push(
@@ -427,24 +339,24 @@ class _SearchScreenState extends State<SearchScreen> {
                       MaterialPageRoute(builder: (_) => const SettingsScreen()),
                     ),
                     child: Container(
-                      padding: const EdgeInsets.all(11),
+                      height: 48,
+                      width: 48,
                       decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.05),
+                        color: AppColors.surfaceLight.withValues(alpha: 0.5),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: const Icon(
                         Icons.settings_outlined,
-                        color: StitchColors.textSecondary,
-                        size: 22,
+                        color: AppColors.textSecondary,
                       ),
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: 16),
               // Quick filter chips
               SizedBox(
-                height: 34,
+                height: 36,
                 child: ListView.separated(
                   scrollDirection: Axis.horizontal,
                   itemCount: _quickFilters.length,
@@ -460,26 +372,26 @@ class _SearchScreenState extends State<SearchScreen> {
                         alignment: Alignment.center,
                         decoration: BoxDecoration(
                           color: isActive
-                              ? StitchColors.emerald
-                              : StitchColors.slateChip,
+                              ? AppColors.primary
+                              : AppColors.surfaceLight,
                           borderRadius: BorderRadius.circular(9999),
                           border: isActive
                               ? null
                               : Border.all(
-                                  color: StitchColors.slateChipBorder,
+                                  color: AppColors.glassBorder,
                                   width: 1,
                                 ),
                         ),
                         child: Text(
                           filter,
-                          style: GoogleFonts.plusJakartaSans(
+                          style: AppTextStyles.labelSmall.copyWith(
                             fontSize: 12,
                             fontWeight: isActive
-                                ? FontWeight.w600
-                                : FontWeight.w500,
+                                ? FontWeight.w700
+                                : FontWeight.w600,
                             color: isActive
                                 ? Colors.white
-                                : StitchColors.textSecondary,
+                                : AppColors.textSecondary,
                           ),
                         ),
                       ),
@@ -498,158 +410,36 @@ class _SearchScreenState extends State<SearchScreen> {
     return Expanded(
       child: RefreshIndicator(
         onRefresh: _fetchTrending,
-        color: StitchColors.emerald,
-        backgroundColor: StitchColors.bgDark,
-        child: Obx(() {
-          final tc = Get.find<ThemeController>();
-          final prefs = tc.preferences.value;
-          if (prefs.useGridLayout) {
-            return _buildStitchGrid();
-          }
-          return ListView.builder(
-            padding: const EdgeInsets.fromLTRB(20, 10, 20, 100),
-            itemCount: _searchResults.length,
-            physics: const AlwaysScrollableScrollPhysics(
-              parent: BouncingScrollPhysics(),
-            ),
-            itemBuilder: (context, index) {
-              final movie = _searchResults[index];
-              return MovieCard(
-                movie: movie,
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => DetailsScreen(movie: movie),
-                    ),
-                  );
-                },
-              );
-            },
-          );
-        }),
-      ),
-    );
-  }
-
-  Widget _buildStitchGrid() {
-    return GridView.builder(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        childAspectRatio: 0.58,
-        crossAxisSpacing: 16,
-        mainAxisSpacing: 20,
-      ),
-      physics: const AlwaysScrollableScrollPhysics(
-        parent: BouncingScrollPhysics(),
-      ),
-      itemCount: _searchResults.length,
-      itemBuilder: (context, index) {
-        final movie = _searchResults[index];
-        return GestureDetector(
-          onTap: () => Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => DetailsScreen(movie: movie)),
+        color: AppColors.primary,
+        backgroundColor: AppColors.backgroundDark,
+        child: GridView.builder(
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 100),
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 2,
+            childAspectRatio: 0.58,
+            crossAxisSpacing: 16,
+            mainAxisSpacing: 20,
           ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Poster
-              Expanded(
-                child: Container(
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(
-                      color: Colors.white.withValues(alpha: 0.1),
-                      width: 1,
-                    ),
-                  ),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(14),
-                    child: Stack(
-                      fit: StackFit.expand,
-                      children: [
-                        CachedNetworkImage(
-                          imageUrl: movie.fullPosterPath,
-                          fit: BoxFit.cover,
-                          memCacheWidth: 300,
-                          placeholder: (_, _) => Shimmer.fromColors(
-                            baseColor: StitchColors.slateChip,
-                            highlightColor: StitchColors.slateChipBorder,
-                            child: Container(color: StitchColors.slateChip),
-                          ),
-                          errorWidget: (_, _, _) => Container(
-                            color: StitchColors.slateChip,
-                            child: const Icon(
-                              Icons.movie_outlined,
-                              color: StitchColors.textTertiary,
-                              size: 40,
-                            ),
-                          ),
-                        ),
-                        // Quality badge
-                        Positioned(
-                          top: 8,
-                          right: 8,
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 6,
-                              vertical: 3,
-                            ),
-                            decoration: BoxDecoration(
-                              color: Colors.white.withValues(alpha: 0.1),
-                              borderRadius: BorderRadius.circular(6),
-                              border: Border.all(
-                                color: Colors.white.withValues(alpha: 0.2),
-                              ),
-                            ),
-                            child: Text(
-                              'HD',
-                              style: GoogleFonts.plusJakartaSans(
-                                fontSize: 10,
-                                fontWeight: FontWeight.w700,
-                                color: Colors.white,
-                              ),
-                            ),
-                          ),
-                        ),
-                        // Rating badge
-                        Positioned(
-                          bottom: 8,
-                          left: 8,
-                          child: RatingBadge(rating: movie.rating),
-                        ),
-                        // Bottom gradient
-                        Positioned.fill(
-                          child: DecoratedBox(
-                            decoration: BoxDecoration(
-                              gradient: StitchGradients.posterFade,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 6),
-              // Title
-              Text(
-                movie.title,
-                style: StitchText.movieTitle(fontSize: 14),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-              // Subtitle
-              Text(
-                '${movie.year} • ${movie.rating.toStringAsFixed(1)} ⭐',
-                style: StitchText.caption(fontSize: 12),
-              ),
-            ],
+          physics: const AlwaysScrollableScrollPhysics(
+            parent: BouncingScrollPhysics(),
           ),
-        );
-      },
+          itemCount: _searchResults.length,
+          itemBuilder: (context, index) {
+            final movie = _searchResults[index];
+            return MovieCard(
+              movie: movie,
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => DetailsScreen(movie: movie),
+                  ),
+                );
+              },
+            );
+          },
+        ),
+      ),
     );
   }
 
@@ -664,25 +454,23 @@ class _SearchScreenState extends State<SearchScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text('RECENT SEARCHES', style: StitchText.sectionLabel()),
+                Text('RECENT SEARCHES', style: AppTextStyles.labelSmall),
                 GestureDetector(
                   onTap: _clearRecentSearches,
                   child: Text(
                     'Clear All',
-                    style: StitchText.caption(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w500,
-                      color: StitchColors.emerald,
+                    style: AppTextStyles.bodyMedium.copyWith(
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.primary,
                     ),
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 12),
-            // Recent search tags (Stitch style)
+            const SizedBox(height: 16),
             Wrap(
               spacing: 8,
-              runSpacing: 8,
+              runSpacing: 12,
               children: _recentSearches.take(6).map((search) {
                 return GestureDetector(
                   onTap: () {
@@ -691,37 +479,33 @@ class _SearchScreenState extends State<SearchScreen> {
                   },
                   child: Container(
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 8,
+                      horizontal: 14,
+                      vertical: 10,
                     ),
                     decoration: BoxDecoration(
-                      color: StitchColors.slateChip.withValues(alpha: 0.4),
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(
-                        color: StitchColors.slateChipBorder.withValues(
-                          alpha: 0.5,
-                        ),
-                      ),
+                      color: AppColors.surfaceLight.withValues(alpha: 0.5),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: AppColors.glassBorder),
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(
+                        const Icon(
                           Icons.history,
-                          size: 14,
-                          color: StitchColors.textTertiary,
+                          size: 16,
+                          color: AppColors.textSecondary,
                         ),
-                        const SizedBox(width: 6),
-                        Text(search, style: StitchText.caption(fontSize: 12)),
-                        const SizedBox(width: 6),
+                        const SizedBox(width: 8),
+                        Text(search, style: AppTextStyles.bodyMedium),
+                        const SizedBox(width: 8),
                         GestureDetector(
                           onTap: () {
                             setState(() => _recentSearches.remove(search));
                           },
-                          child: Icon(
+                          child: const Icon(
                             Icons.close,
-                            size: 14,
-                            color: StitchColors.textTertiary,
+                            size: 16,
+                            color: AppColors.textMuted,
                           ),
                         ),
                       ],

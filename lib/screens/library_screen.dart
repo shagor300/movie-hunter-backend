@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:cached_network_image/cached_network_image.dart';
-import 'package:shimmer/shimmer.dart';
 import '../controllers/watchlist_controller.dart';
 import '../controllers/theme_controller.dart';
 import '../models/watchlist_movie.dart';
 import '../models/movie.dart';
-import '../utils/stitch_design_system.dart';
+import '../theme/app_colors.dart';
+import '../theme/app_text_styles.dart';
 import '../widgets/empty_state.dart';
 import '../widgets/skeleton_loader.dart';
+import '../widgets/movie_card.dart';
 import 'details_screen.dart';
 
 class LibraryScreen extends StatefulWidget {
@@ -57,16 +57,20 @@ class _LibraryScreenState extends State<LibraryScreen>
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('My Library', style: StitchText.display(fontSize: 22)),
+        title: Text(
+          'My Library',
+          style: AppTextStyles.headingLarge.copyWith(fontSize: 22),
+        ),
         centerTitle: true,
+        backgroundColor: AppColors.backgroundDark,
         bottom: TabBar(
           controller: _tabController,
           isScrollable: true,
-          indicatorColor: StitchColors.emerald,
+          indicatorColor: AppColors.primary,
           indicatorWeight: 3,
-          labelColor: StitchColors.emerald,
-          unselectedLabelColor: StitchColors.textTertiary,
-          labelStyle: GoogleFonts.plusJakartaSans(
+          labelColor: AppColors.primary,
+          unselectedLabelColor: AppColors.textMuted,
+          labelStyle: AppTextStyles.titleMedium.copyWith(
             fontWeight: FontWeight.w600,
             fontSize: 14,
           ),
@@ -172,130 +176,47 @@ class _LibraryScreenState extends State<LibraryScreen>
   }
 
   Widget _buildMovieCard(WatchlistMovie movie, WatchlistController controller) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final movieObj = Movie(
+      tmdbId: movie.tmdbId,
+      title: movie.title,
+      plot: movie.plot ?? '',
+      tmdbPoster: movie.posterUrl ?? '',
+      releaseDate: movie.releaseDate ?? 'N/A',
+      rating: movie.rating,
+      sources: [],
+    );
+
     return GestureDetector(
-      onTap: () {
-        // Convert WatchlistMovie back to Movie for navigation
-        final movieObj = Movie(
-          tmdbId: movie.tmdbId,
-          title: movie.title,
-          plot: movie.plot ?? '',
-          tmdbPoster: movie.posterUrl ?? '',
-          releaseDate: movie.releaseDate ?? 'N/A',
-          rating: movie.rating,
-          sources: [],
-        );
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => DetailsScreen(movie: movieObj),
-          ),
-        );
-      },
       onLongPress: () => _showOptionsSheet(movie, controller),
-      child: Container(
-        decoration: BoxDecoration(
-          color: colorScheme.surface,
-          borderRadius: BorderRadius.circular(
-            Get.find<ThemeController>().preferences.value.roundedPosters
-                ? 16
-                : 4,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.3),
-              blurRadius: 8,
-              offset: const Offset(0, 4),
+      child: Stack(
+        children: [
+          MovieCard(
+            movie: movieObj,
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => DetailsScreen(movie: movieObj),
+              ),
             ),
-          ],
-        ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(
-            Get.find<ThemeController>().preferences.value.roundedPosters
-                ? 16
-                : 4,
           ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                flex: 4,
-                child: Stack(
-                  fit: StackFit.expand,
-                  children: [
-                    if (movie.posterUrl != null && movie.posterUrl!.isNotEmpty)
-                      CachedNetworkImage(
-                        imageUrl: movie.posterUrl!,
-                        fit: BoxFit.cover,
-                        memCacheWidth: 300,
-                        placeholder: (context, url) => Shimmer.fromColors(
-                          baseColor: StitchColors.slateChip,
-                          highlightColor: StitchColors.slateChipBorder,
-                          child: Container(color: StitchColors.slateChip),
-                        ),
-                        errorWidget: (context, url, error) => Container(
-                          color: Colors.grey[900],
-                          child: const Icon(
-                            Icons.broken_image_outlined,
-                            color: Colors.white24,
-                            size: 40,
-                          ),
-                        ),
-                      )
-                    else
-                      Container(
-                        color: Colors.grey[900],
-                        child: const Icon(
-                          Icons.movie_outlined,
-                          color: Colors.white24,
-                          size: 40,
-                        ),
-                      ),
-                    // Rating badge
-                    Positioned(
-                      top: 8,
-                      left: 8,
-                      child: RatingBadge(rating: movie.rating),
-                    ),
-                    // Favorite icon
-                    if (movie.favorite)
-                      Positioned(
-                        top: 8,
-                        right: 8,
-                        child: Container(
-                          padding: const EdgeInsets.all(4),
-                          decoration: BoxDecoration(
-                            color: Colors.black.withValues(alpha: 0.7),
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(
-                            Icons.favorite,
-                            color: Colors.redAccent,
-                            size: 14,
-                          ),
-                        ),
-                      ),
-                  ],
+          if (movie.favorite)
+            Positioned(
+              top: 8,
+              right: 8,
+              child: Container(
+                padding: const EdgeInsets.all(4),
+                decoration: BoxDecoration(
+                  color: Colors.black.withValues(alpha: 0.7),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.favorite,
+                  color: Colors.redAccent,
+                  size: 14,
                 ),
               ),
-              Expanded(
-                flex: 1,
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 6,
-                  ),
-                  child: Text(
-                    movie.title,
-                    style: StitchText.movieTitle(fontSize: 13),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
+            ),
+        ],
       ),
     );
   }
@@ -324,7 +245,7 @@ class _LibraryScreenState extends State<LibraryScreen>
             const SizedBox(height: 20),
             Text(
               movie.title,
-              style: StitchText.heading(fontSize: 18),
+              style: AppTextStyles.headingLarge,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
@@ -390,7 +311,7 @@ class _LibraryScreenState extends State<LibraryScreen>
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text('Move to', style: StitchText.heading(fontSize: 18)),
+            Text('Move to', style: AppTextStyles.headingLarge),
             const SizedBox(height: 16),
             ...WatchlistCategory.values.map((cat) {
               final isSelected = movie.category == cat;

@@ -4,7 +4,8 @@ import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:avatar_glow/avatar_glow.dart';
 import '../../services/voice_search_service.dart';
-import '../../utils/stitch_design_system.dart';
+import '../../theme/app_colors.dart';
+import '../../theme/app_text_styles.dart';
 
 /// Full-screen voice search overlay with animated mic, sound wave
 /// visualization, language selector, and auto-search on recognition.
@@ -102,7 +103,7 @@ class _VoiceSearchScreenState extends State<VoiceSearchScreen>
     final colorScheme = theme.colorScheme;
 
     return Scaffold(
-      backgroundColor: StitchColors.bgDark,
+      backgroundColor: AppColors.background,
       extendBodyBehindAppBar: true,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
@@ -116,7 +117,9 @@ class _VoiceSearchScreenState extends State<VoiceSearchScreen>
         ),
         title: Text(
           'Voice Search',
-          style: StitchText.heading(fontWeight: FontWeight.w600),
+          style: AppTextStyles.headingLarge.copyWith(
+            fontWeight: FontWeight.w600,
+          ),
         ),
         actions: [
           // Language selector
@@ -131,15 +134,15 @@ class _VoiceSearchScreenState extends State<VoiceSearchScreen>
             itemBuilder: (context) => [
               PopupMenuItem(
                 value: 'en-US',
-                child: Text('🇺🇸  English', style: StitchText.body()),
+                child: Text('🇺🇸  English', style: AppTextStyles.bodyMedium),
               ),
               PopupMenuItem(
                 value: 'hi-IN',
-                child: Text('🇮🇳  हिंदी', style: StitchText.body()),
+                child: Text('🇮🇳  हिंदी', style: AppTextStyles.bodyMedium),
               ),
               PopupMenuItem(
                 value: 'bn-IN',
-                child: Text('🇧🇩  বাংলা', style: StitchText.body()),
+                child: Text('🇧🇩  বাংলা', style: AppTextStyles.bodyMedium),
               ),
             ],
           ),
@@ -162,7 +165,7 @@ class _VoiceSearchScreenState extends State<VoiceSearchScreen>
               },
               child: AvatarGlow(
                 animate: _voiceService.isListening.value,
-                glowColor: StitchColors.emerald,
+                glowColor: AppColors.primary,
                 duration: const Duration(milliseconds: 2000),
                 repeat: true,
                 child: Container(
@@ -170,15 +173,13 @@ class _VoiceSearchScreenState extends State<VoiceSearchScreen>
                   height: 140,
                   decoration: BoxDecoration(
                     color: _voiceService.isListening.value
-                        ? StitchColors.emerald
-                        : StitchColors.slateChip.withValues(alpha: 0.12),
+                        ? AppColors.primary
+                        : AppColors.surface.withValues(alpha: 0.12),
                     shape: BoxShape.circle,
                     boxShadow: _voiceService.isListening.value
                         ? [
                             BoxShadow(
-                              color: StitchColors.emerald.withValues(
-                                alpha: 0.4,
-                              ),
+                              color: AppColors.primary.withValues(alpha: 0.4),
                               blurRadius: 30,
                               spreadRadius: 5,
                             ),
@@ -201,7 +202,7 @@ class _VoiceSearchScreenState extends State<VoiceSearchScreen>
             // ── Status text ──
             Text(
               _voiceService.isListening.value ? 'Listening...' : 'Tap to speak',
-              style: StitchText.heading(
+              style: AppTextStyles.headingLarge.copyWith(
                 fontSize: 22,
                 fontWeight: FontWeight.w600,
               ),
@@ -216,11 +217,11 @@ class _VoiceSearchScreenState extends State<VoiceSearchScreen>
                 _voiceService.recognizedText.value.isEmpty
                     ? 'Say a movie name'
                     : _voiceService.recognizedText.value,
-                style: StitchText.body(
+                style: AppTextStyles.bodyMedium.copyWith(
                   fontSize: 18,
                   color: _voiceService.recognizedText.value.isEmpty
-                      ? StitchColors.textSecondary.withValues(alpha: 0.5)
-                      : StitchColors.emerald,
+                      ? AppColors.textSecondary.withValues(alpha: 0.5)
+                      : AppColors.primary,
                 ),
                 textAlign: TextAlign.center,
               ),
@@ -246,12 +247,12 @@ class _VoiceSearchScreenState extends State<VoiceSearchScreen>
                       Navigator.of(context).pop();
                     },
                     icon: const Icon(Icons.close, size: 20),
-                    label: Text('Cancel', style: StitchText.body()),
+                    label: Text('Cancel', style: AppTextStyles.bodyMedium),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: StitchColors.slateChip.withValues(
+                      backgroundColor: AppColors.surface.withValues(
                         alpha: 0.12,
                       ),
-                      foregroundColor: StitchColors.textPrimary,
+                      foregroundColor: AppColors.textPrimary,
                       padding: const EdgeInsets.symmetric(
                         horizontal: 24,
                         vertical: 14,
@@ -278,10 +279,12 @@ class _VoiceSearchScreenState extends State<VoiceSearchScreen>
                     ),
                     label: Text(
                       _voiceService.isListening.value ? 'Stop' : 'Start',
-                      style: StitchText.body(fontWeight: FontWeight.w600),
+                      style: AppTextStyles.bodyMedium.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: StitchColors.emerald,
+                      backgroundColor: AppColors.primary,
                       foregroundColor: Colors.black,
                       padding: const EdgeInsets.symmetric(
                         horizontal: 24,
@@ -302,8 +305,8 @@ class _VoiceSearchScreenState extends State<VoiceSearchScreen>
                 padding: const EdgeInsets.only(bottom: 20),
                 child: Text(
                   'Confidence: ${(_voiceService.confidenceLevel.value * 100).toStringAsFixed(0)}%',
-                  style: StitchText.caption(
-                    color: StitchColors.textSecondary.withValues(alpha: 0.5),
+                  style: AppTextStyles.bodySmall.copyWith(
+                    color: AppColors.textSecondary.withValues(alpha: 0.5),
                   ),
                 ),
               ),
@@ -333,7 +336,7 @@ class _VoiceSearchScreenState extends State<VoiceSearchScreen>
               height: height,
               margin: const EdgeInsets.symmetric(horizontal: 3),
               decoration: BoxDecoration(
-                color: StitchColors.emerald.withValues(alpha: 0.8),
+                color: AppColors.primary.withValues(alpha: 0.8),
                 borderRadius: BorderRadius.circular(2),
               ),
             );

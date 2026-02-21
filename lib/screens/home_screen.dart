@@ -1,8 +1,8 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:google_fonts/google_fonts.dart';
-import '../utils/stitch_design_system.dart';
+import '../theme/app_colors.dart';
+import '../theme/app_text_styles.dart';
 import 'search_screen.dart';
 import 'library_screen.dart';
 import 'downloads_screen.dart';
@@ -30,7 +30,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   static const _navItems = [
     _NavItem(
-      icon: Icons.search_rounded,
+      icon: Icons.search_outlined,
       activeIcon: Icons.search_rounded,
       label: 'Search',
     ),
@@ -41,17 +41,17 @@ class _HomeScreenState extends State<HomeScreen> {
     ),
     _NavItem(
       icon: Icons.fiber_new_outlined,
-      activeIcon: Icons.fiber_new,
+      activeIcon: Icons.fiber_new_rounded,
       label: 'Latest',
     ),
     _NavItem(
       icon: Icons.video_library_outlined,
-      activeIcon: Icons.video_library,
+      activeIcon: Icons.video_library_rounded,
       label: 'Library',
     ),
     _NavItem(
       icon: Icons.download_outlined,
-      activeIcon: Icons.download_for_offline,
+      activeIcon: Icons.download_rounded,
       label: 'Downloads',
     ),
   ];
@@ -76,24 +76,24 @@ class _HomeScreenState extends State<HomeScreen> {
     return Container(
       margin: const EdgeInsets.only(left: 20, right: 20, bottom: 24),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(22),
+        borderRadius: BorderRadius.circular(24),
         child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+          filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
           child: Container(
             height: 72,
             padding: const EdgeInsets.symmetric(horizontal: 4),
             decoration: BoxDecoration(
-              color: StitchColors.glassNav,
-              borderRadius: BorderRadius.circular(22),
+              color: AppColors.backgroundDark.withValues(alpha: 0.85),
+              borderRadius: BorderRadius.circular(24),
               border: Border.all(
-                color: Colors.white.withValues(alpha: 0.1),
+                color: AppColors.surface.withValues(alpha: 0.5),
                 width: 1,
               ),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.4),
-                  blurRadius: 30,
-                  offset: const Offset(0, 10),
+                  color: Colors.black.withValues(alpha: 0.5),
+                  blurRadius: 32,
+                  offset: const Offset(0, 8),
                 ),
               ],
             ),
@@ -112,76 +112,32 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildNavItem(_NavItem item, bool isActive, int index) {
-    // "For You" tab (index 1) gets the elevated treatment
-    final isElevated = isActive && index == 1;
+    final color = isActive ? AppColors.primary : AppColors.textMuted;
 
     return GestureDetector(
       onTap: () => setState(() => _currentIndex = index),
       behavior: HitTestBehavior.opaque,
-      child: SizedBox(
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
         width: 64,
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            if (isElevated) ...[
-              // Elevated icon with emerald glow (raised effect)
-              Transform.translate(
-                offset: const Offset(0, -10),
-                child: Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: StitchColors.bgDark,
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(
-                      color: StitchColors.emerald.withValues(alpha: 0.3),
-                      width: 1,
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: StitchColors.emerald.withValues(alpha: 0.3),
-                        blurRadius: 16,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
-                  ),
-                  child: Icon(
-                    item.activeIcon,
-                    size: 26,
-                    color: StitchColors.emerald,
-                  ),
-                ),
+            Icon(
+              isActive ? item.activeIcon : item.icon,
+              size: isActive ? 26 : 24,
+              color: color,
+            ),
+            const SizedBox(height: 4),
+            Text(
+              item.label,
+              style: AppTextStyles.labelSmall.copyWith(
+                fontSize: 10,
+                fontWeight: isActive ? FontWeight.w700 : FontWeight.w500,
+                color: color,
+                letterSpacing: 0,
               ),
-              Transform.translate(
-                offset: const Offset(0, -6),
-                child: Text(
-                  item.label,
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w700,
-                    color: StitchColors.emerald,
-                  ),
-                ),
-              ),
-            ] else ...[
-              Icon(
-                isActive ? item.activeIcon : item.icon,
-                size: 24,
-                color: isActive
-                    ? StitchColors.emerald
-                    : StitchColors.textTertiary,
-              ),
-              const SizedBox(height: 4),
-              Text(
-                item.label,
-                style: GoogleFonts.plusJakartaSans(
-                  fontSize: 10,
-                  fontWeight: isActive ? FontWeight.w600 : FontWeight.w500,
-                  color: isActive
-                      ? StitchColors.emerald
-                      : StitchColors.textTertiary,
-                ),
-              ),
-            ],
+            ),
           ],
         ),
       ),
@@ -210,8 +166,7 @@ class _HomeScreenState extends State<HomeScreen> {
               const SizedBox(width: 12),
               Text(
                 'Press back again to exit',
-                style: GoogleFonts.plusJakartaSans(
-                  fontSize: 13,
+                style: AppTextStyles.bodyMedium.copyWith(
                   fontWeight: FontWeight.w500,
                 ),
               ),
@@ -219,11 +174,11 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           duration: const Duration(seconds: 2),
           behavior: SnackBarBehavior.floating,
-          backgroundColor: StitchColors.surfaceDark,
+          backgroundColor: AppColors.surface,
           margin: const EdgeInsets.only(left: 16, right: 16, bottom: 100),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
-            side: BorderSide(color: StitchColors.glassBorder),
+            side: const BorderSide(color: AppColors.glassBorder),
           ),
         ),
       );

@@ -6,7 +6,7 @@ export default function DashboardPage() {
     const [stats, setStats] = useState(null);
 
     useEffect(() => {
-        api.get('/admin/dashboard').then(r => setStats(r.data)).catch(() => { });
+        api.get('/admin/dashboard/stats').then(r => setStats(r.data)).catch(() => { });
     }, []);
 
     const chartData = stats?.recent_searches?.map((item, i) => ({

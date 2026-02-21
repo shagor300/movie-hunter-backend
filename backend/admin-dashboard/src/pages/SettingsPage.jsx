@@ -7,7 +7,7 @@ export default function SettingsPage() {
     const [msg, setMsg] = useState('');
 
     useEffect(() => {
-        api.get('/admin/settings').then(r => setSettings(r.data || {})).catch(() => { });
+        api.get('/admin/config').then(r => setSettings(r.data || {})).catch(() => { });
     }, []);
 
     const update = (key, val) => setSettings(prev => ({ ...prev, [key]: val }));
@@ -16,7 +16,7 @@ export default function SettingsPage() {
         setSaving(true);
         setMsg('');
         try {
-            await api.put('/admin/settings', settings);
+            await api.put('/admin/config', { updates: settings });
             setMsg('Settings saved successfully!');
             setTimeout(() => setMsg(''), 3000);
         } catch {
@@ -28,7 +28,7 @@ export default function SettingsPage() {
 
     const resetAll = async () => {
         if (!confirm('Reset all settings to defaults? This cannot be undone.')) return;
-        try { await api.post('/admin/settings/reset'); window.location.reload(); } catch { }
+        try { await api.put('/admin/config', { updates: {} }); window.location.reload(); } catch { }
     };
 
     return (

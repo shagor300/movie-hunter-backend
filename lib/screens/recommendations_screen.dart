@@ -2,7 +2,6 @@ import 'dart:math';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:shimmer/shimmer.dart';
 import '../models/movie.dart';
@@ -10,7 +9,9 @@ import '../models/watchlist_movie.dart';
 import '../services/recommendation_service.dart';
 import '../services/tmdb_service.dart';
 import '../controllers/watchlist_controller.dart';
-import '../utils/stitch_design_system.dart';
+import '../theme/app_colors.dart';
+import '../theme/app_text_styles.dart';
+import '../widgets/movie_card.dart';
 import '../widgets/continue_watching_section.dart';
 import 'details_screen.dart';
 import 'settings_screen.dart';
@@ -280,7 +281,7 @@ class _RecommendationsScreenState extends State<RecommendationsScreen>
           : _sections.isEmpty
           ? RefreshIndicator(
               onRefresh: _loadRecommendations,
-              color: StitchColors.emerald,
+              color: AppColors.primary,
               child: ListView(
                 physics: const AlwaysScrollableScrollPhysics(),
                 children: [
@@ -293,7 +294,7 @@ class _RecommendationsScreenState extends State<RecommendationsScreen>
               opacity: _fadeAnim,
               child: RefreshIndicator(
                 onRefresh: _loadRecommendations,
-                color: StitchColors.emerald,
+                color: AppColors.primary,
                 child: CustomScrollView(
                   physics: const BouncingScrollPhysics(
                     parent: AlwaysScrollableScrollPhysics(),
@@ -319,16 +320,19 @@ class _RecommendationsScreenState extends State<RecommendationsScreen>
       return SliverAppBar(
         floating: true,
         snap: true,
-        backgroundColor: StitchColors.bgDark,
+        backgroundColor: AppColors.backgroundDark,
         title: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text('Movie', style: StitchText.display(fontSize: 22)),
+            Text(
+              'Movie',
+              style: AppTextStyles.headingLarge.copyWith(fontSize: 22),
+            ),
             Text(
               'Hub',
-              style: StitchText.display(
+              style: AppTextStyles.headingLarge.copyWith(
                 fontSize: 22,
-                color: StitchColors.emerald,
+                color: AppColors.primary,
               ),
             ),
           ],
@@ -338,7 +342,7 @@ class _RecommendationsScreenState extends State<RecommendationsScreen>
           IconButton(
             icon: const Icon(
               Icons.settings_outlined,
-              color: StitchColors.textSecondary,
+              color: AppColors.textSecondary,
             ),
             tooltip: 'Settings',
             onPressed: () => Navigator.push(
@@ -356,16 +360,19 @@ class _RecommendationsScreenState extends State<RecommendationsScreen>
       expandedHeight: 420,
       floating: false,
       pinned: true,
-      backgroundColor: StitchColors.bgDark,
+      backgroundColor: AppColors.backgroundDark,
       title: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Text('Movie', style: StitchText.display(fontSize: 22)),
+          Text(
+            'Movie',
+            style: AppTextStyles.headingLarge.copyWith(fontSize: 22),
+          ),
           Text(
             'Hub',
-            style: StitchText.display(
+            style: AppTextStyles.headingLarge.copyWith(
               fontSize: 22,
-              color: StitchColors.emerald,
+              color: AppColors.primary,
             ),
           ),
         ],
@@ -375,7 +382,7 @@ class _RecommendationsScreenState extends State<RecommendationsScreen>
         IconButton(
           icon: const Icon(
             Icons.settings_outlined,
-            color: StitchColors.textSecondary,
+            color: AppColors.textSecondary,
           ),
           tooltip: 'Settings',
           onPressed: () => Navigator.push(
@@ -402,9 +409,10 @@ class _RecommendationsScreenState extends State<RecommendationsScreen>
                   ),
                   fit: BoxFit.cover,
                   memCacheWidth: 780,
-                  placeholder: (_, _) => Container(color: StitchColors.bgDark),
+                  placeholder: (_, _) =>
+                      Container(color: AppColors.backgroundDark),
                   errorWidget: (_, _, _) =>
-                      Container(color: StitchColors.bgDark),
+                      Container(color: AppColors.backgroundDark),
                 ),
 
               // Cinematic gradient overlay
@@ -414,10 +422,10 @@ class _RecommendationsScreenState extends State<RecommendationsScreen>
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
                     colors: [
-                      StitchColors.bgDark.withValues(alpha: 0.3),
+                      AppColors.backgroundDark.withValues(alpha: 0.3),
                       Colors.transparent,
-                      StitchColors.bgDark.withValues(alpha: 0.8),
-                      StitchColors.bgDark,
+                      AppColors.backgroundDark.withValues(alpha: 0.8),
+                      AppColors.backgroundDark,
                     ],
                     stops: const [0.0, 0.3, 0.7, 1.0],
                   ),
@@ -432,22 +440,19 @@ class _RecommendationsScreenState extends State<RecommendationsScreen>
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // "FEATURED" badge — emerald
+                    // "FEATURED" badge
                     Container(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 12,
                         vertical: 5,
                       ),
                       decoration: BoxDecoration(
-                        gradient: StitchGradients.accent,
+                        gradient: AppColors.primaryGradient,
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(
                         'FEATURED',
-                        style: GoogleFonts.plusJakartaSans(
-                          fontSize: 10,
-                          fontWeight: FontWeight.w800,
-                          letterSpacing: 1.5,
+                        style: AppTextStyles.labelSmall.copyWith(
                           color: Colors.white,
                         ),
                       ),
@@ -456,7 +461,7 @@ class _RecommendationsScreenState extends State<RecommendationsScreen>
                     // Title
                     Text(
                       movie.title,
-                      style: StitchText.movieTitle(fontSize: 28),
+                      style: AppTextStyles.displayMedium.copyWith(fontSize: 28),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -467,30 +472,26 @@ class _RecommendationsScreenState extends State<RecommendationsScreen>
                         if (movie.rating > 0) ...[
                           const Icon(
                             Icons.star_rounded,
-                            color: Colors.amber,
+                            color: AppColors.starRating,
                             size: 16,
                           ),
                           const SizedBox(width: 4),
                           Text(
                             movie.rating.toStringAsFixed(1),
-                            style: StitchText.body(
-                              fontSize: 14,
+                            style: AppTextStyles.bodyMedium.copyWith(
                               fontWeight: FontWeight.w700,
                             ),
                           ),
                           const SizedBox(width: 16),
                         ],
                         if (movie.year.isNotEmpty) ...[
-                          Icon(
+                          const Icon(
                             Icons.calendar_today,
-                            color: StitchColors.textTertiary,
+                            color: AppColors.textMuted,
                             size: 14,
                           ),
                           const SizedBox(width: 4),
-                          Text(
-                            movie.year,
-                            style: StitchText.caption(fontSize: 13),
-                          ),
+                          Text(movie.year, style: AppTextStyles.bodySmall),
                         ],
                       ],
                     ),
@@ -501,11 +502,11 @@ class _RecommendationsScreenState extends State<RecommendationsScreen>
                         Expanded(
                           child: Container(
                             decoration: BoxDecoration(
-                              gradient: StitchGradients.accent,
-                              borderRadius: BorderRadius.circular(14),
+                              gradient: AppColors.primaryGradient,
+                              borderRadius: BorderRadius.circular(12),
                               boxShadow: [
                                 BoxShadow(
-                                  color: StitchColors.emerald.withValues(
+                                  color: AppColors.primary.withValues(
                                     alpha: 0.3,
                                   ),
                                   blurRadius: 16,
@@ -526,9 +527,8 @@ class _RecommendationsScreenState extends State<RecommendationsScreen>
                               ),
                               label: Text(
                                 'Watch Now',
-                                style: GoogleFonts.plusJakartaSans(
+                                style: AppTextStyles.bodyMedium.copyWith(
                                   fontWeight: FontWeight.w700,
-                                  fontSize: 14,
                                 ),
                               ),
                               style: ElevatedButton.styleFrom(
@@ -539,7 +539,7 @@ class _RecommendationsScreenState extends State<RecommendationsScreen>
                                   vertical: 14,
                                 ),
                                 shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(14),
+                                  borderRadius: BorderRadius.circular(12),
                                 ),
                               ),
                             ),
@@ -548,15 +548,15 @@ class _RecommendationsScreenState extends State<RecommendationsScreen>
                         const SizedBox(width: 12),
                         // Info button — glass
                         ClipRRect(
-                          borderRadius: BorderRadius.circular(14),
+                          borderRadius: BorderRadius.circular(12),
                           child: BackdropFilter(
                             filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
                             child: Container(
                               decoration: BoxDecoration(
-                                color: Colors.white.withValues(alpha: 0.1),
-                                borderRadius: BorderRadius.circular(14),
+                                color: AppColors.glassBackground,
+                                borderRadius: BorderRadius.circular(12),
                                 border: Border.all(
-                                  color: Colors.white.withValues(alpha: 0.15),
+                                  color: AppColors.glassBorder,
                                 ),
                               ),
                               child: IconButton(
@@ -596,8 +596,8 @@ class _RecommendationsScreenState extends State<RecommendationsScreen>
         itemBuilder: (context, index) {
           if (index == 0) {
             return Shimmer.fromColors(
-              baseColor: StitchColors.slateChip,
-              highlightColor: StitchColors.slateChipBorder,
+              baseColor: AppColors.surfaceLight,
+              highlightColor: AppColors.surface,
               child: Container(
                 height: 280,
                 margin: const EdgeInsets.only(bottom: 24),
@@ -614,8 +614,8 @@ class _RecommendationsScreenState extends State<RecommendationsScreen>
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Shimmer.fromColors(
-                  baseColor: StitchColors.slateChip,
-                  highlightColor: StitchColors.slateChipBorder,
+                  baseColor: AppColors.surfaceLight,
+                  highlightColor: AppColors.surface,
                   child: Container(
                     width: 180,
                     height: 24,
@@ -633,8 +633,8 @@ class _RecommendationsScreenState extends State<RecommendationsScreen>
                     itemCount: 4,
                     itemBuilder: (context, i) {
                       return Shimmer.fromColors(
-                        baseColor: StitchColors.slateChip,
-                        highlightColor: StitchColors.slateChipBorder,
+                        baseColor: AppColors.surfaceLight,
+                        highlightColor: AppColors.surface,
                         child: Container(
                           width: 130,
                           margin: const EdgeInsets.only(right: 12),
@@ -666,34 +666,36 @@ class _RecommendationsScreenState extends State<RecommendationsScreen>
             padding: const EdgeInsets.all(28),
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: StitchColors.emerald.withValues(alpha: 0.1),
+              color: AppColors.primary.withValues(alpha: 0.1),
             ),
             child: Icon(
               _hasError ? Icons.wifi_off_rounded : Icons.movie_filter,
               size: 56,
-              color: StitchColors.emerald.withValues(alpha: 0.5),
+              color: AppColors.primary.withValues(alpha: 0.5),
             ),
           ),
           const SizedBox(height: 20),
           Text(
             _hasError ? 'Something went wrong' : 'No recommendations yet',
-            style: StitchText.heading(fontSize: 18),
+            style: AppTextStyles.headingLarge,
           ),
           const SizedBox(height: 8),
           Text(
             _hasError
                 ? 'Check your internet connection'
                 : 'Watch some movies first!',
-            style: StitchText.caption(fontSize: 14),
+            style: AppTextStyles.bodyMedium.copyWith(
+              color: AppColors.textMuted,
+            ),
           ),
           const SizedBox(height: 24),
           Container(
             decoration: BoxDecoration(
-              gradient: StitchGradients.accent,
-              borderRadius: BorderRadius.circular(14),
+              gradient: AppColors.primaryGradient,
+              borderRadius: BorderRadius.circular(12),
               boxShadow: [
                 BoxShadow(
-                  color: StitchColors.emerald.withValues(alpha: 0.25),
+                  color: AppColors.primary.withValues(alpha: 0.25),
                   blurRadius: 16,
                   offset: const Offset(0, 4),
                 ),
@@ -704,7 +706,9 @@ class _RecommendationsScreenState extends State<RecommendationsScreen>
               icon: const Icon(Icons.refresh, size: 18),
               label: Text(
                 'Try Again',
-                style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w600),
+                style: AppTextStyles.bodyMedium.copyWith(
+                  fontWeight: FontWeight.w700,
+                ),
               ),
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.transparent,
@@ -715,7 +719,7 @@ class _RecommendationsScreenState extends State<RecommendationsScreen>
                   vertical: 14,
                 ),
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14),
+                  borderRadius: BorderRadius.circular(12),
                 ),
               ),
             ),
@@ -749,36 +753,30 @@ class _RecommendationsScreenState extends State<RecommendationsScreen>
                 Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: StitchColors.emerald.withValues(alpha: 0.1),
+                    color: AppColors.primary.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  child: Icon(
-                    section.icon,
-                    color: StitchColors.emerald,
-                    size: 18,
-                  ),
+                  child: Icon(section.icon, color: AppColors.primary, size: 18),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(
                     section.title,
-                    style: StitchText.heading(fontSize: 17),
+                    style: AppTextStyles.titleMedium.copyWith(fontSize: 17),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
                 Text(
                   'See All',
-                  style: StitchText.caption(
-                    fontSize: 12,
-                    color: StitchColors.emerald,
-                    fontWeight: FontWeight.w600,
+                  style: AppTextStyles.labelSmall.copyWith(
+                    color: AppColors.primary,
                   ),
                 ),
                 const SizedBox(width: 4),
                 const Icon(
                   Icons.arrow_forward_ios,
-                  color: StitchColors.emerald,
+                  color: AppColors.primary,
                   size: 12,
                 ),
               ],
@@ -805,89 +803,14 @@ class _RecommendationsScreenState extends State<RecommendationsScreen>
   // ── Movie Card ──
 
   Widget _buildMovieCard(Movie movie) {
-    return GestureDetector(
-      onTap: () => Navigator.push(
-        context,
-        MaterialPageRoute(builder: (_) => DetailsScreen(movie: movie)),
-      ),
-      child: Container(
-        width: 140,
-        margin: const EdgeInsets.only(right: 14),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(
-              child: Container(
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(
-                    color: Colors.white.withValues(alpha: 0.08),
-                    width: 1,
-                  ),
-                ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(14),
-                  child: Stack(
-                    fit: StackFit.expand,
-                    children: [
-                      movie.tmdbPoster.isNotEmpty
-                          ? CachedNetworkImage(
-                              imageUrl: movie.fullPosterPath,
-                              fit: BoxFit.cover,
-                              width: double.infinity,
-                              memCacheWidth: 280,
-                              placeholder: (_, _) => Shimmer.fromColors(
-                                baseColor: StitchColors.slateChip,
-                                highlightColor: StitchColors.slateChipBorder,
-                                child: Container(color: StitchColors.slateChip),
-                              ),
-                              errorWidget: (_, _, _) => Container(
-                                color: StitchColors.slateChip,
-                                child: const Icon(
-                                  Icons.movie,
-                                  color: StitchColors.textTertiary,
-                                  size: 40,
-                                ),
-                              ),
-                            )
-                          : Container(
-                              color: StitchColors.slateChip,
-                              child: const Icon(
-                                Icons.movie,
-                                color: StitchColors.textTertiary,
-                                size: 40,
-                              ),
-                            ),
-                      // Rating badge
-                      if (movie.rating > 0)
-                        Positioned(
-                          top: 8,
-                          left: 8,
-                          child: RatingBadge(rating: movie.rating),
-                        ),
-                      // Bottom gradient
-                      Positioned.fill(
-                        child: DecoratedBox(
-                          decoration: BoxDecoration(
-                            gradient: StitchGradients.posterFade,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              movie.title,
-              style: StitchText.movieTitle(fontSize: 13),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-            const SizedBox(height: 2),
-            Text(movie.year, style: StitchText.caption(fontSize: 11)),
-          ],
+    return Container(
+      width: 140,
+      margin: const EdgeInsets.only(right: 14),
+      child: MovieCard(
+        movie: movie,
+        onTap: () => Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => DetailsScreen(movie: movie)),
         ),
       ),
     );

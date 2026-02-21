@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:webview_flutter/webview_flutter.dart';
-import '../utils/stitch_design_system.dart';
+import '../theme/app_colors.dart';
+import '../theme/app_text_styles.dart';
 
 class WebViewPlayer extends StatefulWidget {
   final String videoUrl;
@@ -96,23 +97,20 @@ class _WebViewPlayerState extends State<WebViewPlayer> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const CircularProgressIndicator(
-                        color: StitchColors.emerald,
-                      ),
+                      const CircularProgressIndicator(color: AppColors.primary),
                       const SizedBox(height: 20),
                       Text(
                         'Loading player...',
-                        style: StitchText.body(
-                          color: StitchColors.textSecondary,
-                          fontSize: 16,
+                        style: AppTextStyles.bodyLarge.copyWith(
+                          color: AppColors.textSecondary,
                         ),
                       ),
                       const SizedBox(height: 8),
                       Text(
                         widget.movieTitle,
-                        style: StitchText.caption(
+                        style: AppTextStyles.bodySmall.copyWith(
                           fontSize: 13,
-                          color: StitchColors.textTertiary,
+                          color: AppColors.textMuted,
                         ),
                         textAlign: TextAlign.center,
                       ),
@@ -139,14 +137,15 @@ class _WebViewPlayerState extends State<WebViewPlayer> {
                         const SizedBox(height: 24),
                         Text(
                           'Unable to Load Video',
-                          style: StitchText.heading(fontSize: 22),
+                          style: AppTextStyles.headingLarge.copyWith(
+                            fontSize: 22,
+                          ),
                         ),
                         const SizedBox(height: 12),
                         Text(
                           'The video source may be unavailable.\nTry a different player.',
-                          style: StitchText.body(
-                            color: StitchColors.textSecondary,
-                            fontSize: 14,
+                          style: AppTextStyles.bodyMedium.copyWith(
+                            color: AppColors.textSecondary,
                           ),
                           textAlign: TextAlign.center,
                         ),
@@ -179,7 +178,7 @@ class _WebViewPlayerState extends State<WebViewPlayer> {
                           icon: const Icon(Icons.refresh),
                           label: const Text('Retry'),
                           style: TextButton.styleFrom(
-                            foregroundColor: StitchColors.textSecondary,
+                            foregroundColor: AppColors.textSecondary,
                           ),
                         ),
                       ],

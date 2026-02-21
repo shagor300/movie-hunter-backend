@@ -1,18 +1,31 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:google_fonts/google_fonts.dart';
+
 import 'package:hive_flutter/hive_flutter.dart';
 import '../models/theme_preferences.dart';
-import '../utils/stitch_design_system.dart';
+import '../theme/app_colors.dart';
+import '../theme/app_theme.dart';
 
 class ThemeController extends GetxController {
   Box<ThemePreferences>? _box;
   var preferences = ThemePreferences().obs;
   var isReady = false.obs;
 
-  /// Accent colors from Stitch design system
-  static const accentColors = StitchColors.accentPalette;
-  static const accentColorNames = StitchColors.accentNames;
+  static const List<Color> accentColors = [
+    AppColors.primary, // Emerald (default)
+    Color(0xFF1E94F6), // Blue
+    Color(0xFFA855F7), // Purple
+    Color(0xFFEC4899), // Pink
+    Color(0xFFF59E0B), // Amber
+  ];
+
+  static const List<String> accentColorNames = [
+    'Emerald',
+    'Blue',
+    'Purple',
+    'Pink',
+    'Amber',
+  ];
 
   @override
   void onInit() {
@@ -53,113 +66,9 @@ class ThemeController extends GetxController {
       )];
 
   ThemeData get currentTheme {
-    final prefs = preferences.value;
-    final accent = accentColor;
-
-    switch (prefs.themeMode) {
-      case AppThemeMode.dark:
-        return _buildTheme(
-          scaffoldBg: StitchColors.bgDark, // #0F0F1E
-          surfaceBg: StitchColors.bgAlt, // #101A22
-          brightness: Brightness.dark,
-          accent: accent,
-          fontSize: prefs.fontSize,
-        );
-      case AppThemeMode.amoled:
-        return _buildTheme(
-          scaffoldBg: Colors.black,
-          surfaceBg: const Color(0xFF0A0A0A),
-          brightness: Brightness.dark,
-          accent: accent,
-          fontSize: prefs.fontSize,
-        );
-      case AppThemeMode.light:
-        return _buildTheme(
-          scaffoldBg: const Color(0xFFF5F7F8), // Stitch light BG
-          surfaceBg: Colors.white,
-          brightness: Brightness.light,
-          accent: accent,
-          fontSize: prefs.fontSize,
-        );
-    }
-  }
-
-  ThemeData _buildTheme({
-    required Color scaffoldBg,
-    required Color surfaceBg,
-    required Brightness brightness,
-    required Color accent,
-    required double fontSize,
-  }) {
-    final isDark = brightness == Brightness.dark;
-    final textColor = isDark ? StitchColors.textPrimary : Colors.black87;
-
-    return ThemeData(
-      brightness: brightness,
-      useMaterial3: true,
-      scaffoldBackgroundColor: scaffoldBg,
-      colorScheme: ColorScheme.fromSeed(
-        seedColor: accent,
-        brightness: brightness,
-        surface: surfaceBg,
-        primary: accent,
-      ),
-      // Plus Jakarta Sans — Stitch primary font
-      textTheme:
-          GoogleFonts.plusJakartaSansTextTheme(
-            (isDark ? ThemeData.dark() : ThemeData.light()).textTheme,
-          ).apply(
-            bodyColor: textColor,
-            displayColor: textColor,
-            fontSizeFactor: fontSize / 14.0,
-          ),
-      appBarTheme: AppBarTheme(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        iconTheme: IconThemeData(color: textColor),
-        titleTextStyle: GoogleFonts.plusJakartaSans(
-          fontWeight: FontWeight.w700,
-          fontSize: 22 * (fontSize / 14.0),
-          color: textColor,
-        ),
-      ),
-      bottomNavigationBarTheme: BottomNavigationBarThemeData(
-        backgroundColor: surfaceBg,
-        selectedItemColor: accent,
-        unselectedItemColor: isDark
-            ? StitchColors.textTertiary
-            : Colors.black38,
-      ),
-      // Stitch-style elevated buttons
-      elevatedButtonTheme: ElevatedButtonThemeData(
-        style: ElevatedButton.styleFrom(
-          backgroundColor: accent,
-          foregroundColor: StitchColors.bgDark,
-          padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 14),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-          textStyle: GoogleFonts.plusJakartaSans(
-            fontWeight: FontWeight.w700,
-            fontSize: 14,
-          ),
-        ),
-      ),
-      // Stitch-style switches
-      switchTheme: SwitchThemeData(
-        thumbColor: WidgetStateProperty.resolveWith(
-          (states) => states.contains(WidgetState.selected)
-              ? Colors.white
-              : Colors.white,
-        ),
-        trackColor: WidgetStateProperty.resolveWith(
-          (states) => states.contains(WidgetState.selected)
-              ? accent
-              : Colors.white.withValues(alpha: 0.1),
-        ),
-        trackOutlineColor: WidgetStateProperty.all(Colors.transparent),
-      ),
-    );
+    // The Stitch design uses a strict Dark Theme with specific tokens
+    // We return the pre-configured AppTheme.darkTheme
+    return AppTheme.darkTheme;
   }
 
   // Setters

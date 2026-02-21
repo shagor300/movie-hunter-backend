@@ -8,7 +8,8 @@ import 'package:wakelock_plus/wakelock_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../controllers/video_player_controller.dart';
 import '../services/api_service.dart';
-import '../utils/stitch_design_system.dart';
+import '../theme/app_colors.dart';
+import '../theme/app_text_styles.dart';
 
 class VideoPlayerScreen extends StatefulWidget {
   final String videoUrl;
@@ -262,19 +263,19 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
             enableRetry: true,
             skipBackIcon: Icons.replay_10,
             skipForwardIcon: Icons.forward_10,
-            progressBarPlayedColor: StitchColors.emerald,
-            progressBarHandleColor: StitchColors.emerald,
-            progressBarBufferedColor: StitchColors.slateChipBorder,
-            progressBarBackgroundColor: StitchColors.slateChip,
+            progressBarPlayedColor: AppColors.primary,
+            progressBarHandleColor: AppColors.primary,
+            progressBarBufferedColor: AppColors.surfaceLight,
+            progressBarBackgroundColor: AppColors.surface,
             controlBarHeight: 48,
             iconsColor: Colors.white,
             loadingWidget: Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const CircularProgressIndicator(color: StitchColors.emerald),
+                  const CircularProgressIndicator(color: AppColors.primary),
                   const SizedBox(height: 16),
-                  Text('Loading video...', style: StitchText.caption()),
+                  Text('Loading video...', style: AppTextStyles.bodySmall),
                 ],
               ),
             ),
@@ -424,21 +425,21 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const CircularProgressIndicator(color: StitchColors.emerald),
+          const CircularProgressIndicator(color: AppColors.primary),
           const SizedBox(height: 20),
-          Text('Preparing Video...', style: StitchText.heading(fontSize: 18)),
+          Text(
+            'Preparing Video...',
+            style: AppTextStyles.headingLarge.copyWith(fontSize: 18),
+          ),
           const SizedBox(height: 8),
           Text(
             'Resolving stream link, please wait',
-            style: StitchText.caption(fontSize: 14),
+            style: AppTextStyles.bodySmall.copyWith(fontSize: 14),
           ),
           const SizedBox(height: 4),
           Text(
             'This may take up to 60 seconds',
-            style: StitchText.caption(
-              fontSize: 12,
-              color: StitchColors.textTertiary,
-            ),
+            style: AppTextStyles.bodySmall.copyWith(color: AppColors.textMuted),
           ),
         ],
       ),
@@ -450,9 +451,9 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const CircularProgressIndicator(color: StitchColors.emerald),
+          const CircularProgressIndicator(color: AppColors.primary),
           const SizedBox(height: 20),
-          Text('Loading video...', style: StitchText.caption()),
+          Text('Loading video...', style: AppTextStyles.bodySmall),
         ],
       ),
     );
@@ -471,13 +472,15 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
           children: [
             const Icon(Icons.error_outline, color: Colors.redAccent, size: 80),
             const SizedBox(height: 20),
-            Text('Cannot Play Video', style: StitchText.heading(fontSize: 22)),
+            Text(
+              'Cannot Play Video',
+              style: AppTextStyles.headingLarge.copyWith(fontSize: 22),
+            ),
             const SizedBox(height: 12),
             Text(
               _errorMessage!,
-              style: StitchText.body(
-                color: StitchColors.textSecondary,
-                fontSize: 14,
+              style: AppTextStyles.bodyMedium.copyWith(
+                color: AppColors.textSecondary,
               ),
               textAlign: TextAlign.center,
             ),
@@ -503,7 +506,7 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
                   icon: const Icon(Icons.refresh),
                   label: const Text('Retry'),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: StitchColors.emerald,
+                    backgroundColor: AppColors.primary,
                     padding: const EdgeInsets.symmetric(
                       horizontal: 20,
                       vertical: 12,
@@ -534,8 +537,8 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
                 OutlinedButton(
                   onPressed: () => Navigator.pop(context),
                   style: OutlinedButton.styleFrom(
-                    foregroundColor: StitchColors.textSecondary,
-                    side: const BorderSide(color: StitchColors.slateChipBorder),
+                    foregroundColor: AppColors.textSecondary,
+                    side: const BorderSide(color: AppColors.surfaceLight),
                     padding: const EdgeInsets.symmetric(
                       horizontal: 20,
                       vertical: 12,

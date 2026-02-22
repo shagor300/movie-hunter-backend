@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'models/download_item.dart';
@@ -10,9 +11,10 @@ import 'models/notification_settings.dart';
 import 'controllers/download_controller.dart';
 import 'controllers/watchlist_controller.dart';
 import 'controllers/video_player_controller.dart';
-import 'controllers/theme_controller.dart';
+import 'theme/theme_controller.dart';
 import 'controllers/update_controller.dart';
 import 'controllers/notification_controller.dart';
+import 'services/storage_settings_service.dart';
 import 'services/notification_service.dart';
 import 'services/voice_search_service.dart';
 import 'utils/notification_scheduler.dart';
@@ -23,6 +25,16 @@ void main() async {
 
   WidgetsFlutterBinding.ensureInitialized();
   debugPrint('✅ MAIN: Flutter binding initialized');
+
+  SystemChrome.setSystemUIOverlayStyle(
+    const SystemUiOverlayStyle(
+      statusBarColor: Colors.transparent,
+      statusBarIconBrightness: Brightness.light,
+      systemNavigationBarColor: Colors.transparent,
+      systemNavigationBarIconBrightness: Brightness.light,
+    ),
+  );
+  SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
 
   // Global error handlers — prevent black screen on uncaught errors
   FlutterError.onError = (FlutterErrorDetails details) {
@@ -82,6 +94,13 @@ void main() async {
   }
 
   try {
+    await Get.putAsync(() => StorageSettingsService().init(), permanent: true);
+    debugPrint('✅ MAIN: StorageSettingsService registered');
+  } catch (e) {
+    debugPrint('❌ MAIN: StorageSettingsService failed: $e');
+  }
+
+  try {
     Get.put(DownloadController(), permanent: true);
     debugPrint('✅ MAIN: DownloadController registered');
   } catch (e) {
@@ -134,21 +153,17 @@ class MovieHunterApp extends StatelessWidget {
     try {
       final themeController = Get.find<ThemeController>();
 
-      return Obx(() {
-        // Force rebuild when preferences change
-        themeController.preferences.value;
-
-        debugPrint(
-          '🎨 MovieHunterApp: Obx rebuilding, isReady=${themeController.isReady.value}',
-        );
-
-        return GetMaterialApp(
+      return Obx(
+        () => GetMaterialApp(
           title: 'MovieHunter',
           debugShowCheckedModeBanner: false,
-          theme: themeController.currentTheme,
+          theme: themeController.themeData,
+          themeMode: ThemeMode.dark,
           home: const SplashScreen(),
-        );
-      });
+          defaultTransition: Transition.cupertino,
+          transitionDuration: const Duration(milliseconds: 300),
+        ),
+      );
     } catch (e) {
       debugPrint('❌ MovieHunterApp: build error: $e');
       // Emergency fallback — render something visible

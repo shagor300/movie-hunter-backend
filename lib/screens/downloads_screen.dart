@@ -8,6 +8,7 @@ import '../models/download_item.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_text_styles.dart';
 import '../widgets/empty_state.dart';
+import 'storage_management_screen.dart';
 
 class DownloadsScreen extends StatefulWidget {
   const DownloadsScreen({super.key});
@@ -47,6 +48,23 @@ class _DownloadsScreenState extends State<DownloadsScreen> {
               ),
               onPressed: () => _clearCompleted(controller),
               tooltip: 'Clear completed',
+            ),
+          ),
+          Container(
+            margin: const EdgeInsets.only(right: 16),
+            decoration: BoxDecoration(
+              color: AppColors.surface,
+              shape: BoxShape.circle,
+              border: Border.all(color: Colors.white10),
+            ),
+            child: IconButton(
+              icon: const Icon(
+                Icons.settings,
+                size: 20,
+                color: AppColors.textSecondary,
+              ),
+              onPressed: () => Get.to(() => const StorageManagementScreen()),
+              tooltip: 'Storage Settings',
             ),
           ),
         ],

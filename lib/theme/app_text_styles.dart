@@ -1,76 +1,67 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:get/get.dart';
-import 'app_colors.dart';
-import '../controllers/theme_controller.dart';
 
 class AppTextStyles {
-  static double get _scale {
-    try {
-      final tc = Get.find<ThemeController>();
-      // Default font size in settings is 14. Scale relative to that.
-      return tc.preferences.value.fontSize / 14.0;
-    } catch (_) {
-      return 1.0;
-    }
-  }
-
-  // Splash / Hero
-  static TextStyle get displayLarge => GoogleFonts.plusJakartaSans(
-    fontSize: 48 * _scale,
-    fontWeight: FontWeight.w800,
-    color: AppColors.textPrimary,
-    letterSpacing: -1.5,
+  // Legacy text styles to prevent breaking changes during migration
+  static final TextStyle headerLarge = GoogleFonts.poppins(
+    fontSize: 28,
+    fontWeight: FontWeight.bold,
   );
 
-  // Screen Titles
-  static TextStyle get displayMedium => GoogleFonts.plusJakartaSans(
-    fontSize: 32 * _scale,
-    fontWeight: FontWeight.w800,
-    color: AppColors.textPrimary,
-    letterSpacing: -1.0,
-  );
+  static final TextStyle headingLarge =
+      headerLarge; // Alias for backward compatibility
+  static final TextStyle displayMedium =
+      headerLarge; // Alias for backward compatibility
+  static final TextStyle displayLarge =
+      headerLarge; // Alias for backward compatibility
 
-  // Section Headings
-  static TextStyle get headingLarge => GoogleFonts.plusJakartaSans(
-    fontSize: 18 * _scale,
-    fontWeight: FontWeight.w700,
-    color: AppColors.textPrimary,
-    letterSpacing: -0.5,
-  );
-
-  // Card Titles (Poppins)
-  static TextStyle get titleMedium => GoogleFonts.poppins(
-    fontSize: 14 * _scale,
+  static final TextStyle headerMedium = GoogleFonts.poppins(
+    fontSize: 24,
     fontWeight: FontWeight.w600,
-    color: AppColors.textPrimary,
   );
 
-  // Body Text
-  static TextStyle get bodyLarge => GoogleFonts.plusJakartaSans(
-    fontSize: 16 * _scale,
+  static final TextStyle titleLarge = GoogleFonts.poppins(
+    fontSize: 20,
+    fontWeight: FontWeight.w600,
+  );
+
+  static final TextStyle titleMedium = GoogleFonts.poppins(
+    fontSize: 18,
+    fontWeight: FontWeight.w600,
+  );
+
+  static final TextStyle titleSmall = GoogleFonts.poppins(
+    fontSize: 16,
+    fontWeight: FontWeight.w600,
+  );
+
+  static final TextStyle bodyLarge = GoogleFonts.inter(
+    fontSize: 16,
+    fontWeight: FontWeight.normal,
+  );
+
+  static final TextStyle bodyMedium = GoogleFonts.inter(
+    fontSize: 14,
+    fontWeight: FontWeight.normal,
+  );
+
+  static final TextStyle bodySmall = GoogleFonts.inter(
+    fontSize: 12,
+    fontWeight: FontWeight.normal,
+  );
+
+  static final TextStyle labelLarge = GoogleFonts.inter(
+    fontSize: 14,
     fontWeight: FontWeight.w500,
-    color: AppColors.textSecondary,
-    height: 1.5,
   );
 
-  static TextStyle get bodyMedium => GoogleFonts.plusJakartaSans(
-    fontSize: 14 * _scale,
+  static final TextStyle labelMedium = GoogleFonts.inter(
+    fontSize: 12,
     fontWeight: FontWeight.w500,
-    color: AppColors.textSecondary,
   );
 
-  static TextStyle get bodySmall => GoogleFonts.plusJakartaSans(
-    fontSize: 12 * _scale,
+  static final TextStyle labelSmall = GoogleFonts.inter(
+    fontSize: 10,
     fontWeight: FontWeight.w500,
-    color: AppColors.textMuted,
-  );
-
-  // Labels / Overlines (Badges)
-  static TextStyle get labelSmall => GoogleFonts.plusJakartaSans(
-    fontSize: 10 * _scale,
-    fontWeight: FontWeight.w700,
-    color: AppColors.textPrimary,
-    letterSpacing: 1.5,
   );
 }

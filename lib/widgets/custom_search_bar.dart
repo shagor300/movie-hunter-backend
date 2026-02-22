@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_text_styles.dart';
+import 'package:get/get.dart';
+import '../theme/theme_controller.dart';
 
 class CustomSearchBar extends StatelessWidget {
   final TextEditingController controller;
@@ -22,10 +24,10 @@ class CustomSearchBar extends StatelessWidget {
       children: [
         Expanded(
           child: Container(
-            height: 48,
+            height: 56,
             decoration: BoxDecoration(
               color: AppColors.surfaceLight.withValues(alpha: 0.5),
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(16),
               border: Border.all(color: AppColors.glassBorder),
             ),
             child: TextField(
@@ -33,15 +35,29 @@ class CustomSearchBar extends StatelessWidget {
               onChanged: onChanged,
               style: AppTextStyles.bodyMedium.copyWith(
                 color: AppColors.textPrimary,
+                fontSize: 16,
               ),
               decoration: InputDecoration(
                 hintText: hintText,
                 hintStyle: AppTextStyles.bodyMedium.copyWith(
                   color: AppColors.textMuted,
+                  fontSize: 15,
                 ),
-                prefixIcon: const Icon(Icons.search, color: AppColors.primary),
+                prefixIcon: Padding(
+                  padding: const EdgeInsets.only(left: 8.0),
+                  child: Obx(
+                    () => Icon(
+                      Icons.search,
+                      color: Get.find<ThemeController>().accentColor,
+                      size: 24,
+                    ),
+                  ),
+                ),
                 border: InputBorder.none,
-                contentPadding: const EdgeInsets.symmetric(vertical: 12),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 16,
+                ),
                 isDense: true,
               ),
             ),
@@ -52,13 +68,13 @@ class CustomSearchBar extends StatelessWidget {
           GestureDetector(
             onTap: onFilterTap,
             child: Container(
-              height: 48,
-              width: 48,
+              height: 56,
+              width: 56,
               decoration: BoxDecoration(
                 color: AppColors.primary.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(16),
               ),
-              child: const Icon(Icons.tune, color: AppColors.primary),
+              child: const Icon(Icons.tune, color: AppColors.primary, size: 24),
             ),
           ),
         ],

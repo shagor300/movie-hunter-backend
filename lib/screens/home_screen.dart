@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_text_styles.dart';
+import 'package:get/get.dart';
+import '../theme/theme_controller.dart';
 import 'search_screen.dart';
 import 'library_screen.dart';
 import 'downloads_screen.dart';
@@ -112,35 +114,39 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildNavItem(_NavItem item, bool isActive, int index) {
-    final color = isActive ? AppColors.primary : AppColors.textMuted;
+    final tc = Get.find<ThemeController>();
 
     return GestureDetector(
       onTap: () => setState(() => _currentIndex = index),
       behavior: HitTestBehavior.opaque,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        width: 64,
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              isActive ? item.activeIcon : item.icon,
-              size: isActive ? 26 : 24,
-              color: color,
-            ),
-            const SizedBox(height: 4),
-            Text(
-              item.label,
-              style: AppTextStyles.labelSmall.copyWith(
-                fontSize: 10,
-                fontWeight: isActive ? FontWeight.w700 : FontWeight.w500,
+      child: Obx(() {
+        final color = isActive ? tc.accentColor : AppColors.textMuted;
+
+        return AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          width: 64,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                isActive ? item.activeIcon : item.icon,
+                size: isActive ? 26 : 24,
                 color: color,
-                letterSpacing: 0,
               ),
-            ),
-          ],
-        ),
-      ),
+              const SizedBox(height: 4),
+              Text(
+                item.label,
+                style: AppTextStyles.labelSmall.copyWith(
+                  fontSize: 10,
+                  fontWeight: isActive ? FontWeight.w700 : FontWeight.w500,
+                  color: color,
+                  letterSpacing: 0,
+                ),
+              ),
+            ],
+          ),
+        );
+      }),
     );
   }
 

@@ -5,7 +5,7 @@ import '../theme/app_colors.dart';
 import '../theme/app_text_styles.dart';
 
 import '../controllers/notification_controller.dart';
-import '../controllers/theme_controller.dart';
+import '../theme/theme_controller.dart';
 import '../services/notification_service.dart';
 
 /// Detailed notification preferences screen.

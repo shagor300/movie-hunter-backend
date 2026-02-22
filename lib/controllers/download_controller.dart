@@ -6,6 +6,7 @@ import 'package:hive_flutter/hive_flutter.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:path_provider/path_provider.dart';
 import '../models/download_item.dart';
+import '../services/storage_settings_service.dart';
 import '../services/parallel_download_engine.dart';
 import '../services/api_service.dart';
 import '../services/notification_service.dart';
@@ -26,9 +27,12 @@ class DownloadController extends GetxController {
   // Notification throttle (avoid updating notifications too frequently)
   final Map<String, DateTime> _lastNotifUpdate = {};
 
+  late StorageSettingsService _settings;
+
   @override
   void onInit() {
     super.onInit();
+    _settings = Get.find<StorageSettingsService>();
     _init();
   }
 
@@ -96,6 +100,38 @@ class DownloadController extends GetxController {
     String? quality,
     required String movieTitle,
   }) async {
+    // Check storage limits first
+    final double maxStorageGb = _settings.storageLimit.value;
+    double currentUsedGb = 0;
+    for (var d in allDownloads) {
+      if (d.status == 'completed' || d.status == 'downloading') {
+        final sStr = d.fileSizeText
+            .toUpperCase()
+            .replaceAll(' GB', '')
+            .replaceAll(' MB', '');
+        final val = double.tryParse(sStr) ?? 0.0;
+        if (d.fileSizeText.toUpperCase().contains('MB')) {
+          currentUsedGb += (val / 1024);
+        } else {
+          currentUsedGb += val;
+        }
+      }
+    }
+
+    // 64.0 is treated as "Max" (unlimited practically)
+    if (currentUsedGb >= maxStorageGb && maxStorageGb < 64.0) {
+      Get.snackbar(
+        'Storage Limit Reached',
+        'You have reached your set download limit of ${maxStorageGb.toInt()}GB. Please manage your storage in the Downloads settings.',
+        backgroundColor: Colors.red.withValues(alpha: 0.9),
+        colorText: Colors.white,
+        snackPosition: SnackPosition.BOTTOM,
+        duration: const Duration(seconds: 4),
+        icon: const Icon(Icons.storage, color: Colors.white),
+      );
+      return;
+    }
+
     // Strategy 1: Direct URL
     if (_isDirectUrl(url)) {
       debugPrint('🎯 URL looks direct, skipping resolver');

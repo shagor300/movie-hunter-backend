@@ -5,13 +5,14 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../controllers/notification_controller.dart';
-import '../controllers/theme_controller.dart';
+import '../theme/theme_controller.dart';
 import '../controllers/watchlist_controller.dart';
 import '../controllers/update_controller.dart';
-import '../models/theme_preferences.dart';
+import '../theme/theme_config.dart' as config;
 import 'notification_settings_screen.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_text_styles.dart';
+import 'settings/appearance_settings.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
@@ -38,7 +39,6 @@ class SettingsScreen extends StatelessWidget {
         ),
       ),
       body: Obx(() {
-        final prefs = tc.preferences.value;
         return ListView(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           children: [
@@ -48,175 +48,17 @@ class SettingsScreen extends StatelessWidget {
             _SectionHeader(title: 'Appearance', icon: Icons.palette_outlined),
             const SizedBox(height: 8),
 
-            // Theme Mode
             _SettingsCard(
               children: [
-                _SettingsLabel('Theme Mode'),
-                const SizedBox(height: 10),
-                Row(
-                  children: [
-                    _ThemeChip(
-                      label: 'Dark',
-                      icon: Icons.dark_mode,
-                      selected: prefs.themeMode == AppThemeMode.dark,
-                      color: AppColors.primary,
-                      onTap: () => tc.setThemeMode(AppThemeMode.dark),
-                    ),
-                    const SizedBox(width: 10),
-                    _ThemeChip(
-                      label: 'AMOLED',
-                      icon: Icons.brightness_2,
-                      selected: prefs.themeMode == AppThemeMode.amoled,
-                      color: AppColors.primary,
-                      onTap: () => tc.setThemeMode(AppThemeMode.amoled),
-                    ),
-                    const SizedBox(width: 10),
-                    _ThemeChip(
-                      label: 'Light',
-                      icon: Icons.light_mode,
-                      selected: prefs.themeMode == AppThemeMode.light,
-                      color: AppColors.primary,
-                      onTap: () => tc.setThemeMode(AppThemeMode.light),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-
-            const SizedBox(height: 12),
-
-            // Accent Color
-            _SettingsCard(
-              children: [
-                _SettingsLabel('Accent Color'),
-                const SizedBox(height: 12),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: List.generate(
-                    ThemeController.accentColors.length,
-                    (i) => GestureDetector(
-                      onTap: () => tc.setAccentColor(i),
-                      child: AnimatedContainer(
-                        duration: const Duration(milliseconds: 250),
-                        width: prefs.accentColorIndex == i ? 42 : 36,
-                        height: prefs.accentColorIndex == i ? 42 : 36,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: ThemeController.accentColors[i],
-                          border: prefs.accentColorIndex == i
-                              ? Border.all(color: Colors.white, width: 2.5)
-                              : null,
-                          boxShadow: prefs.accentColorIndex == i
-                              ? [
-                                  BoxShadow(
-                                    color: ThemeController.accentColors[i]
-                                        .withValues(alpha: 0.5),
-                                    blurRadius: 10,
-                                  ),
-                                ]
-                              : null,
-                        ),
-                        child: prefs.accentColorIndex == i
-                            ? const Icon(
-                                Icons.check,
-                                color: Colors.white,
-                                size: 18,
-                              )
-                            : null,
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Center(
-                  child: Text(
-                    ThemeController.accentColorNames[prefs.accentColorIndex
-                        .clamp(0, ThemeController.accentColorNames.length - 1)],
-                    style: AppTextStyles.bodySmall.copyWith(
-                      color: AppColors.textSecondary.withValues(alpha: 0.5),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-
-            const SizedBox(height: 12),
-
-            // Font Size
-            _SettingsCard(
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    _SettingsLabel('Font Size'),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
-                        color: AppColors.primary.withValues(alpha: 0.15),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Text(
-                        '${prefs.fontSize.round()}',
-                        style: AppTextStyles.bodyMedium.copyWith(
-                          color: AppColors.primary,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 13,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                SliderTheme(
-                  data: SliderTheme.of(Get.context!).copyWith(
-                    activeTrackColor: tc.accentColor,
-                    inactiveTrackColor: Colors.white10,
-                    thumbColor: tc.accentColor,
-                    overlayColor: tc.accentColor.withValues(alpha: 0.15),
-                    trackHeight: 3,
-                  ),
-                  child: Slider(
-                    value: prefs.fontSize,
-                    min: 10,
-                    max: 20,
-                    divisions: 10,
-                    onChanged: (v) => tc.setFontSize(v),
-                  ),
-                ),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      'Aa',
-                      style: AppTextStyles.bodySmall.copyWith(
-                        color: AppColors.textMuted,
-                        fontSize: 11,
-                      ),
-                    ),
-                    Text(
-                      'Aa',
-                      style: AppTextStyles.bodyMedium.copyWith(
-                        color: AppColors.textMuted,
-                        fontSize: 18,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                // Live preview
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: AppColors.surface,
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Text(
-                    'Preview: The quick brown fox jumps over the lazy dog',
-                    style: AppTextStyles.bodyMedium.copyWith(
-                      color: AppColors.textSecondary,
-                      fontSize: prefs.fontSize,
+                _ActionTile(
+                  icon: Icons.color_lens,
+                  title: 'Theme & Accent',
+                  subtitle: 'Manage theme mode and custom accent colors',
+                  iconColor: tc.accentColor,
+                  onTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const AppearanceSettings(),
                     ),
                   ),
                 ),
@@ -237,7 +79,7 @@ class SettingsScreen extends StatelessWidget {
                   icon: Icons.grid_on,
                   title: 'Grid Layout',
                   subtitle: 'Show movies in a grid',
-                  value: prefs.useGridLayout,
+                  value: tc.useGridLayout,
                   accentColor: tc.accentColor,
                   onChanged: (_) => tc.toggleGridLayout(),
                 ),
@@ -246,7 +88,7 @@ class SettingsScreen extends StatelessWidget {
                   icon: Icons.rounded_corner,
                   title: 'Rounded Posters',
                   subtitle: 'Apply rounded corners to movie posters',
-                  value: prefs.roundedPosters,
+                  value: tc.roundedPosters,
                   accentColor: tc.accentColor,
                   onChanged: (_) => tc.toggleRoundedPosters(),
                 ),
@@ -258,7 +100,7 @@ class SettingsScreen extends StatelessWidget {
                     Row(
                       children: List.generate(3, (i) {
                         final count = i + 2;
-                        final isSelected = prefs.gridColumnCount == count;
+                        final isSelected = tc.gridColumnCount == count;
                         return Padding(
                           padding: const EdgeInsets.only(left: 8),
                           child: GestureDetector(
@@ -505,12 +347,14 @@ class SettingsScreen extends StatelessWidget {
                     message:
                         'This will restore theme, layout, and all preferences to their default values.',
                     onConfirm: () {
-                      tc.setThemeMode(AppThemeMode.dark);
-                      tc.setAccentColor(3); // Emerald index
+                      tc.setThemeMode(
+                        config.AppThemeMode.dark,
+                      ); // theme_config.dart enum
+                      tc.setAccentColorByKey('mint_green');
                       tc.setFontSize(14.0);
                       tc.setGridColumnCount(2);
-                      if (!prefs.useGridLayout) tc.toggleGridLayout();
-                      if (!prefs.roundedPosters) tc.toggleRoundedPosters();
+                      if (!tc.useGridLayout) tc.toggleGridLayout();
+                      if (!tc.roundedPosters) tc.toggleRoundedPosters();
                       Get.snackbar(
                         '✅ Settings Reset',
                         'All settings restored to default',
@@ -934,63 +778,6 @@ class _SettingsLabel extends StatelessWidget {
       style: AppTextStyles.bodyMedium.copyWith(
         fontWeight: FontWeight.w600,
         fontSize: 15,
-      ),
-    );
-  }
-}
-
-class _ThemeChip extends StatelessWidget {
-  final String label;
-  final IconData icon;
-  final bool selected;
-  final Color color;
-  final VoidCallback onTap;
-  const _ThemeChip({
-    required this.label,
-    required this.icon,
-    required this.selected,
-    required this.color,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Expanded(
-      child: GestureDetector(
-        onTap: onTap,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 250),
-          padding: const EdgeInsets.symmetric(vertical: 12),
-          decoration: BoxDecoration(
-            color: selected
-                ? color.withValues(alpha: 0.15)
-                : AppColors.surface.withValues(alpha: 0.1),
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: selected
-                  ? color.withValues(alpha: 0.5)
-                  : AppColors.surfaceLight,
-              width: selected ? 1.5 : 1,
-            ),
-          ),
-          child: Column(
-            children: [
-              Icon(
-                icon,
-                color: selected ? color : AppColors.textMuted,
-                size: 22,
-              ),
-              const SizedBox(height: 6),
-              Text(
-                label,
-                style: AppTextStyles.bodySmall.copyWith(
-                  color: selected ? color : AppColors.textMuted,
-                  fontWeight: selected ? FontWeight.bold : FontWeight.normal,
-                ),
-              ),
-            ],
-          ),
-        ),
       ),
     );
   }

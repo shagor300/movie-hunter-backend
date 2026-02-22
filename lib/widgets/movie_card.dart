@@ -105,10 +105,10 @@ class MovieCard extends StatelessWidget {
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            const Icon(
-                              Icons.star_rounded,
-                              color: AppColors.starRating,
-                              size: 12,
+                            Icon(
+                              Icons.star,
+                              color: AppColors.starGold,
+                              size: 14,
                             ),
                             const SizedBox(width: 2),
                             Text(

@@ -172,8 +172,6 @@ class _SearchScreenState extends State<SearchScreen> {
     });
   }
 
-
-
   void _showFilterSheet() {
     showModalBottomSheet(
       context: context,
@@ -273,10 +271,10 @@ class _SearchScreenState extends State<SearchScreen> {
         filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
         child: Container(
           padding: EdgeInsets.only(
-            top: MediaQuery.of(context).padding.top + 16,
+            top: MediaQuery.of(context).padding.top + 20,
             left: 20,
             right: 20,
-            bottom: 16,
+            bottom: 20,
           ),
           decoration: BoxDecoration(
             color: AppColors.backgroundDark.withValues(alpha: 0.8),
@@ -319,15 +317,26 @@ class _SearchScreenState extends State<SearchScreen> {
                       );
                     },
                     child: Container(
-                      height: 48,
-                      width: 48,
+                      height: 56,
+                      width: 56,
                       decoration: BoxDecoration(
-                        color: AppColors.primary.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(12),
+                        color: AppColors.primary.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                          color: AppColors.primary.withValues(alpha: 0.3),
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppColors.primary.withValues(alpha: 0.1),
+                            blurRadius: 10,
+                            spreadRadius: 1,
+                          ),
+                        ],
                       ),
                       child: const Icon(
                         Icons.mic_rounded,
                         color: AppColors.primary,
+                        size: 26,
                       ),
                     ),
                   ),
@@ -339,15 +348,17 @@ class _SearchScreenState extends State<SearchScreen> {
                       MaterialPageRoute(builder: (_) => const SettingsScreen()),
                     ),
                     child: Container(
-                      height: 48,
-                      width: 48,
+                      height: 56,
+                      width: 56,
                       decoration: BoxDecoration(
-                        color: AppColors.surfaceLight.withValues(alpha: 0.5),
-                        borderRadius: BorderRadius.circular(12),
+                        color: AppColors.surfaceLight.withValues(alpha: 0.6),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: AppColors.glassBorder),
                       ),
                       child: const Icon(
                         Icons.settings_outlined,
                         color: AppColors.textSecondary,
+                        size: 26,
                       ),
                     ),
                   ),

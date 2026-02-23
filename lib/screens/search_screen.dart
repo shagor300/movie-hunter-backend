@@ -4,11 +4,13 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../services/tmdb_service.dart';
 import '../services/api_service.dart';
 import '../models/movie.dart';
+import '../models/movie_tags.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_text_styles.dart';
 import '../widgets/movie_card.dart';
 import '../widgets/custom_search_bar.dart';
 import '../widgets/filter_sheet.dart';
+import '../widgets/tag_filter_sheet.dart';
 import '../widgets/empty_state.dart';
 import '../widgets/skeleton_loader.dart';
 import 'details_screen.dart';
@@ -37,6 +39,11 @@ class _SearchScreenState extends State<SearchScreen> {
   // Recent searches
   List<String> _recentSearches = [];
   bool _showRecent = false;
+
+  // Tag filters
+  Set<QualityTag> _qualityTags = {};
+  Set<AudioTag> _audioTags = {};
+  int get _activeTagCount => _qualityTags.length + _audioTags.length;
 
   // Quick filter chips
   final _quickFilters = [
@@ -124,6 +131,20 @@ class _SearchScreenState extends State<SearchScreen> {
             .toList();
       }
     }
+    // Tag-based filtering (matches against movie title)
+    if (_qualityTags.isNotEmpty || _audioTags.isNotEmpty) {
+      filtered = filtered.where((m) {
+        final titleTags = MovieTags.parseQualityTags(m.title);
+        final titleAudioTags = MovieTags.parseAudioTags(m.title);
+        final matchesQuality =
+            _qualityTags.isEmpty ||
+            _qualityTags.any((tag) => titleTags.contains(tag));
+        final matchesAudio =
+            _audioTags.isEmpty ||
+            _audioTags.any((tag) => titleAudioTags.contains(tag));
+        return matchesQuality && matchesAudio;
+      }).toList();
+    }
     return filtered;
   }
 
@@ -171,8 +192,6 @@ class _SearchScreenState extends State<SearchScreen> {
       _isLoading = false;
     });
   }
-
-
 
   void _showFilterSheet() {
     showModalBottomSheet(
@@ -273,10 +292,10 @@ class _SearchScreenState extends State<SearchScreen> {
         filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
         child: Container(
           padding: EdgeInsets.only(
-            top: MediaQuery.of(context).padding.top + 16,
+            top: MediaQuery.of(context).padding.top + 20,
             left: 20,
             right: 20,
-            bottom: 16,
+            bottom: 20,
           ),
           decoration: BoxDecoration(
             color: AppColors.backgroundDark.withValues(alpha: 0.8),
@@ -319,15 +338,26 @@ class _SearchScreenState extends State<SearchScreen> {
                       );
                     },
                     child: Container(
-                      height: 48,
-                      width: 48,
+                      height: 56,
+                      width: 56,
                       decoration: BoxDecoration(
-                        color: AppColors.primary.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(12),
+                        color: AppColors.primary.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                          color: AppColors.primary.withValues(alpha: 0.3),
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppColors.primary.withValues(alpha: 0.1),
+                            blurRadius: 10,
+                            spreadRadius: 1,
+                          ),
+                        ],
                       ),
                       child: const Icon(
                         Icons.mic_rounded,
                         color: AppColors.primary,
+                        size: 26,
                       ),
                     ),
                   ),
@@ -339,65 +369,136 @@ class _SearchScreenState extends State<SearchScreen> {
                       MaterialPageRoute(builder: (_) => const SettingsScreen()),
                     ),
                     child: Container(
-                      height: 48,
-                      width: 48,
+                      height: 56,
+                      width: 56,
                       decoration: BoxDecoration(
-                        color: AppColors.surfaceLight.withValues(alpha: 0.5),
-                        borderRadius: BorderRadius.circular(12),
+                        color: AppColors.surfaceLight.withValues(alpha: 0.6),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: AppColors.glassBorder),
                       ),
                       child: const Icon(
                         Icons.settings_outlined,
                         color: AppColors.textSecondary,
+                        size: 26,
                       ),
                     ),
                   ),
                 ],
               ),
               const SizedBox(height: 16),
-              // Quick filter chips
-              SizedBox(
-                height: 36,
-                child: ListView.separated(
-                  scrollDirection: Axis.horizontal,
-                  itemCount: _quickFilters.length,
-                  separatorBuilder: (_, _) => const SizedBox(width: 8),
-                  itemBuilder: (context, index) {
-                    final filter = _quickFilters[index];
-                    final isActive = _activeQuickFilter == filter;
-                    return GestureDetector(
-                      onTap: () => _onQuickFilter(filter),
-                      child: AnimatedContainer(
-                        duration: const Duration(milliseconds: 200),
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        alignment: Alignment.center,
-                        decoration: BoxDecoration(
-                          color: isActive
+              // Quick filter chips + tag filter button
+              Row(
+                children: [
+                  // Tag filter button
+                  GestureDetector(
+                    onTap: () => TagFilterSheet.show(
+                      context,
+                      selectedQuality: _qualityTags,
+                      selectedAudio: _audioTags,
+                      onApply: (result) {
+                        setState(() {
+                          _qualityTags = result.quality;
+                          _audioTags = result.audio;
+                        });
+                        if (_searchController.text.isNotEmpty) {
+                          _onSearch(_searchController.text);
+                        } else {
+                          _fetchTrending();
+                        }
+                      },
+                    ),
+                    child: Container(
+                      height: 36,
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      margin: const EdgeInsets.only(right: 8),
+                      decoration: BoxDecoration(
+                        color: _activeTagCount > 0
+                            ? AppColors.primary.withValues(alpha: 0.2)
+                            : AppColors.surfaceLight,
+                        borderRadius: BorderRadius.circular(9999),
+                        border: Border.all(
+                          color: _activeTagCount > 0
                               ? AppColors.primary
-                              : AppColors.surfaceLight,
-                          borderRadius: BorderRadius.circular(9999),
-                          border: isActive
-                              ? null
-                              : Border.all(
-                                  color: AppColors.glassBorder,
-                                  width: 1,
-                                ),
-                        ),
-                        child: Text(
-                          filter,
-                          style: AppTextStyles.labelSmall.copyWith(
-                            fontSize: 12,
-                            fontWeight: isActive
-                                ? FontWeight.w700
-                                : FontWeight.w600,
-                            color: isActive
-                                ? Colors.white
-                                : AppColors.textSecondary,
-                          ),
+                              : AppColors.glassBorder,
                         ),
                       ),
-                    );
-                  },
-                ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.label_outlined,
+                            size: 16,
+                            color: _activeTagCount > 0
+                                ? AppColors.primary
+                                : AppColors.textSecondary,
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            _activeTagCount > 0
+                                ? 'Tags ($_activeTagCount)'
+                                : 'Tags',
+                            style: AppTextStyles.labelSmall.copyWith(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: _activeTagCount > 0
+                                  ? AppColors.primary
+                                  : AppColors.textSecondary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  // Existing quick filters
+                  Expanded(
+                    child: SizedBox(
+                      height: 36,
+                      child: ListView.separated(
+                        scrollDirection: Axis.horizontal,
+                        itemCount: _quickFilters.length,
+                        separatorBuilder: (_, _) => const SizedBox(width: 8),
+                        itemBuilder: (context, index) {
+                          final filter = _quickFilters[index];
+                          final isActive = _activeQuickFilter == filter;
+                          return GestureDetector(
+                            onTap: () => _onQuickFilter(filter),
+                            child: AnimatedContainer(
+                              duration: const Duration(milliseconds: 200),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                              ),
+                              alignment: Alignment.center,
+                              decoration: BoxDecoration(
+                                color: isActive
+                                    ? AppColors.primary
+                                    : AppColors.surfaceLight,
+                                borderRadius: BorderRadius.circular(9999),
+                                border: isActive
+                                    ? null
+                                    : Border.all(
+                                        color: AppColors.glassBorder,
+                                        width: 1,
+                                      ),
+                              ),
+                              child: Text(
+                                filter,
+                                style: AppTextStyles.labelSmall.copyWith(
+                                  fontSize: 12,
+                                  fontWeight: isActive
+                                      ? FontWeight.w700
+                                      : FontWeight.w600,
+                                  color: isActive
+                                      ? Colors.white
+                                      : AppColors.textSecondary,
+                                ),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ],
           ),

@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Storage &amp; Downloads</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#1337ec",
+                        "primary-glow": "#3b5bfc",
+                        "background-light": "#f6f6f8",
+                        "background-dark": "#0a0a10",
+                        "surface-dark": "#161821",
+                        "glass-border": "rgba(255, 255, 255, 0.08)",
+                        "glass-bg": "rgba(22, 24, 33, 0.6)",
+                    },
+                    fontFamily: {
+                        "display": ["Be Vietnam Pro", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.5rem",
+                        "lg": "1rem",
+                        "xl": "1.5rem",
+                        "full": "9999px"
+                    },
+                    backgroundImage: {
+                        'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        /* Custom scrollbar for webkit */
+        ::-webkit-scrollbar {
+            width: 4px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #333;
+            border-radius: 2px;
+        }
+        
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .toggle-checkbox:checked {
+            right: 0;
+            border-color: #1337ec;
+        }
+        .toggle-checkbox:checked + .toggle-label {
+            background-color: #1337ec;
+        }
+        
+        /* Donut Chart Animation */
+        @keyframes fillChart {
+            from { stroke-dasharray: 0, 100; }
+        }
+        .donut-segment {
+            animation: fillChart 1s ease-out forwards;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 font-display min-h-screen flex flex-col antialiased selection:bg-primary selection:text-white">
+<!-- Top Glow Effect -->
+<div class="fixed top-[-20%] left-[-10%] w-[50%] h-[50%] bg-primary/20 rounded-full blur-[120px] pointer-events-none z-0"></div>
+<div class="fixed bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-purple-600/10 rounded-full blur-[100px] pointer-events-none z-0"></div>
+<!-- Header -->
+<header class="relative z-10 sticky top-0 bg-background-light/80 dark:bg-background-dark/80 backdrop-blur-md border-b border-glass-border">
+<div class="flex items-center justify-between px-6 py-4">
+<h1 class="text-xl font-bold tracking-tight">Storage &amp; Downloads</h1>
+<button class="text-slate-500 hover:text-white transition-colors p-2 rounded-full hover:bg-white/5">
+<span class="material-symbols-outlined">settings</span>
+</button>
+</div>
+</header>
+<main class="flex-1 relative z-10 px-6 pb-24 space-y-8 overflow-y-auto">
+<!-- Storage Visualization -->
+<section class="mt-6 flex flex-col items-center">
+<div class="relative w-64 h-64 flex items-center justify-center">
+<!-- SVG Donut Chart -->
+<svg class="w-full h-full rotate-[-90deg]" viewbox="0 0 100 100">
+<!-- Background Circle -->
+<circle cx="50" cy="50" fill="transparent" r="40" stroke="#232948" stroke-width="8"></circle>
+<!-- Segments (Calculated based on circumference 2*pi*r approx 251) -->
+<!-- Free Space (Grey/Dark) is the background circle implicitly remaining -->
+<!-- Movies Segment (Blue) - 45% -->
+<circle class="donut-segment drop-shadow-[0_0_8px_rgba(19,55,236,0.5)]" cx="50" cy="50" fill="transparent" r="40" stroke="#1337ec" stroke-dasharray="113 251" stroke-dashoffset="0" stroke-linecap="round" stroke-width="8"></circle>
+<!-- Series Segment (Purple) - 25% -->
+<circle class="donut-segment" cx="50" cy="50" fill="transparent" r="40" stroke="#8b5cf6" stroke-dasharray="63 251" stroke-dashoffset="-120" stroke-linecap="round" stroke-width="8"></circle>
+<!-- Other Segment (Cyan) - 10% -->
+<circle class="donut-segment" cx="50" cy="50" fill="transparent" r="40" stroke="#06b6d4" stroke-dasharray="25 251" stroke-dashoffset="-190" stroke-linecap="round" stroke-width="8"></circle>
+</svg>
+<!-- Center Text -->
+<div class="absolute inset-0 flex flex-col items-center justify-center text-center">
+<span class="text-sm text-slate-400 font-medium mb-1">Available</span>
+<span class="text-3xl font-bold text-white tracking-tighter">34.2 <span class="text-lg text-slate-400 font-normal">GB</span></span>
+<span class="text-xs text-slate-500 mt-1">of 128 GB</span>
+</div>
+</div>
+<!-- Legend -->
+<div class="flex flex-wrap justify-center gap-4 mt-2 w-full max-w-sm">
+<div class="flex items-center gap-2">
+<div class="w-2.5 h-2.5 rounded-full bg-primary shadow-[0_0_8px_rgba(19,55,236,0.6)]"></div>
+<span class="text-xs text-slate-300 font-medium">Movies</span>
+</div>
+<div class="flex items-center gap-2">
+<div class="w-2.5 h-2.5 rounded-full bg-purple-500"></div>
+<span class="text-xs text-slate-300 font-medium">Series</span>
+</div>
+<div class="flex items-center gap-2">
+<div class="w-2.5 h-2.5 rounded-full bg-cyan-500"></div>
+<span class="text-xs text-slate-300 font-medium">Other</span>
+</div>
+<div class="flex items-center gap-2">
+<div class="w-2.5 h-2.5 rounded-full bg-[#232948]"></div>
+<span class="text-xs text-slate-300 font-medium">Free</span>
+</div>
+</div>
+</section>
+<!-- Smart Downloads Toggle -->
+<section class="glass-panel p-5 rounded-xl flex items-center justify-between gap-4 relative overflow-hidden group">
+<!-- Glow effect on hover/active state simulation -->
+<div class="absolute inset-0 bg-gradient-to-r from-primary/10 to-transparent opacity-50 group-hover:opacity-100 transition-opacity"></div>
+<div class="relative z-10 flex flex-col gap-1">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-xl">auto_delete</span>
+<h3 class="text-white font-bold text-base">Smart Downloads</h3>
+</div>
+<p class="text-slate-400 text-xs font-medium leading-relaxed max-w-[220px]">
+                    Automatically delete episodes after you finish watching them.
+                </p>
+</div>
+<label class="relative inline-flex items-center cursor-pointer z-10">
+<input checked="" class="sr-only peer" type="checkbox" value=""/>
+<div class="w-11 h-6 bg-slate-700 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-primary/50 rounded-full peer dark:bg-[#232948] peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-primary shadow-[0_0_15px_rgba(19,55,236,0.4)]"></div>
+</label>
+</section>
+<!-- Downloads List -->
+<section class="space-y-4">
+<div class="flex items-center justify-between">
+<h2 class="text-white text-lg font-bold">Downloaded</h2>
+<button class="text-primary text-xs font-bold uppercase tracking-wider hover:text-white transition-colors">Delete All</button>
+</div>
+<!-- List Items -->
+<div class="flex flex-col gap-4">
+<!-- Item 1 -->
+<article class="glass-panel p-3 rounded-xl flex gap-4 hover:bg-white/5 transition-colors group cursor-pointer">
+<div class="relative w-20 aspect-[2/3] shrink-0 rounded-lg overflow-hidden shadow-lg">
+<img alt="Abstract dark sci-fi movie poster art" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBvP7MkXfH9NumhWGqjinyYg94S0flAVuaLcwD56wSrEvmUDLITVn9SEHLt_9TZku6aqkwdGLsOcKeiwpdIdMK-w4l3qtzkNSdXelrTZ6HAQDpLwGXnKewL6jHgaEF1LRZM2Id7PBlEw63fXb9gsXJOahUSimHqoKk5-URK2OmY8OjKTbH7y5c7J_vKKoBxQUm5_RBI7HuFSbzuAlRZPtzrhp9BoSTV5x6V8kg2wXlazUmgl4YsR3WyIBVdVeX_64Mqh4rhU9ULbBFP"/>
+<div class="absolute inset-0 bg-black/30 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+<span class="material-symbols-outlined text-white !text-3xl drop-shadow-md">play_circle</span>
+</div>
+<div class="absolute bottom-0 left-0 right-0 h-1 bg-gray-700">
+<div class="h-full bg-primary w-3/4"></div>
+</div>
+</div>
+<div class="flex flex-col justify-center flex-1 py-1 min-w-0">
+<h3 class="text-white font-bold text-base truncate pr-2">Dune: Part Two</h3>
+<div class="flex items-center gap-2 mt-1">
+<span class="text-xs text-slate-400">2h 46m</span>
+<span class="w-1 h-1 rounded-full bg-slate-600"></span>
+<span class="text-xs text-slate-400">2.4 GB</span>
+</div>
+<div class="mt-3 flex items-center gap-2">
+<span class="inline-flex items-center justify-center px-2 py-0.5 rounded text-[10px] font-bold bg-white/10 text-slate-300 border border-white/5">4K HDR</span>
+<span class="text-[10px] text-green-400 flex items-center gap-1"><span class="material-symbols-outlined !text-[12px]">check_circle</span>Complete</span>
+</div>
+</div>
+<div class="flex flex-col justify-between items-end py-1">
+<button class="text-slate-500 hover:text-white transition-colors p-1">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</div>
+</article>
+<!-- Item 2 -->
+<article class="glass-panel p-3 rounded-xl flex gap-4 hover:bg-white/5 transition-colors group cursor-pointer">
+<div class="relative w-20 aspect-[2/3] shrink-0 rounded-lg overflow-hidden shadow-lg">
+<img alt="Retro neon 80s style poster art" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCnU-MbFcg6xkeDPpnVztVyInUexlk1LqF-cawcGX4D_jAgs3Bx8GxsnXqrFeqm1RI3qQ4sQJHvR8tD2yw3EQn1pOp_5qFOS2lgR1F8bh_Jt4ZqPL-xA9fU55r9mEfqJ32VOCRUOSKksG5DpQE9OmBbihbx-YK3SL0Kx7iyxbY5-FG4zMT5DRo4_TiOM_VgkxRggADmLEdtXmrLTpSs1y507piPpPRdF94rHhqLU3nyLgkpNz_lmZVyUyZ_ecOJk1k5_IbNH4XdhD_p"/>
+<div class="absolute inset-0 bg-black/30 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+<span class="material-symbols-outlined text-white !text-3xl drop-shadow-md">play_circle</span>
+</div>
+</div>
+<div class="flex flex-col justify-center flex-1 py-1 min-w-0">
+<h3 class="text-white font-bold text-base truncate pr-2">Stranger Things</h3>
+<p class="text-slate-400 text-xs font-medium truncate">S4:E1 • The Hellfire Club</p>
+<div class="flex items-center gap-2 mt-2">
+<span class="text-xs text-slate-400">850 MB</span>
+<span class="w-1 h-1 rounded-full bg-slate-600"></span>
+<span class="text-[10px] text-yellow-500 flex items-center gap-1"><span class="material-symbols-outlined !text-[12px]">warning</span>Expires in 2d</span>
+</div>
+</div>
+<div class="flex flex-col justify-between items-end py-1">
+<button class="text-slate-500 hover:text-white transition-colors p-1">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</div>
+</article>
+<!-- Item 3 -->
+<article class="glass-panel p-3 rounded-xl flex gap-4 hover:bg-white/5 transition-colors group cursor-pointer">
+<div class="relative w-20 aspect-[2/3] shrink-0 rounded-lg overflow-hidden shadow-lg">
+<img alt="Starry space galaxy background poster" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBCIUR93uGLaUZl78ZO8fpiyyzwqtwUoAkugUNySp6Hij5twuM4EDmGCM5D-cmWHetBNLcTK6JuFnpZ9_cj7yedCToZhpnGGuQKF0b_Qjmrt8KO3brcRhbYWOjTPQQB4Jmub3IW1ZfEjv9HPepdtWvmVPwNtkbPcB_m4idBvXxBOGESgnJ5uiNV2SF6cWAIfzDSxYdiFTdilAIV2woSvv8oK5YRykj9yVma-NR4bC_V5fbm5pPtvxMFN0Ec5xqhRvvFNqQAo9gJWGoE"/>
+<div class="absolute inset-0 bg-black/30 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+<span class="material-symbols-outlined text-white !text-3xl drop-shadow-md">play_circle</span>
+</div>
+<div class="absolute bottom-0 left-0 right-0 h-1 bg-gray-700">
+<div class="h-full bg-primary w-1/2"></div>
+</div>
+</div>
+<div class="flex flex-col justify-center flex-1 py-1 min-w-0">
+<h3 class="text-white font-bold text-base truncate pr-2">Interstellar</h3>
+<div class="flex items-center gap-2 mt-1">
+<span class="text-xs text-slate-400">2h 49m</span>
+<span class="w-1 h-1 rounded-full bg-slate-600"></span>
+<span class="text-xs text-slate-400">1.9 GB</span>
+</div>
+<div class="mt-3 flex items-center gap-2">
+<span class="inline-flex items-center justify-center px-2 py-0.5 rounded text-[10px] font-bold bg-white/10 text-slate-300 border border-white/5">HD</span>
+<span class="text-[10px] text-green-400 flex items-center gap-1"><span class="material-symbols-outlined !text-[12px]">check_circle</span>Complete</span>
+</div>
+</div>
+<div class="flex flex-col justify-between items-end py-1">
+<button class="text-slate-500 hover:text-white transition-colors p-1">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</div>
+</article>
+<!-- Item 4 -->
+<article class="glass-panel p-3 rounded-xl flex gap-4 hover:bg-white/5 transition-colors group cursor-pointer opacity-70">
+<div class="relative w-20 aspect-[2/3] shrink-0 rounded-lg overflow-hidden shadow-lg grayscale">
+<img alt="Abstract dark gradient poster" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB-OoPn_gqETX7HTL3C_j1D2qqbXWXqCbKOkFh7bnXAgZX5nLjTPoRrQ6kg3x6oqGq7JWiBlMin4q0uigL_CJ2MDwKBaYuiPyOnaWV7Vv3UIYpJz9v5Y-EcoiENLFvI_Q3s4rFxM3cs-2CHX_-LnSzlyKWAY8FAmzgjkFgysBVc4RWUG1fiG4ye7_mEDm0kRo9UxXwXXV88qbioWj7_qOWAgdrrj3mePKxTFtq266Ktnqqn9b7dP_t9B7fSpII_cBWDeRHOjgVkWh1z"/>
+<div class="absolute inset-0 flex items-center justify-center">
+<span class="material-symbols-outlined text-white/50 !text-3xl">pause_circle</span>
+</div>
+</div>
+<div class="flex flex-col justify-center flex-1 py-1 min-w-0">
+<h3 class="text-slate-300 font-bold text-base truncate pr-2">Blade Runner 2049</h3>
+<div class="flex items-center gap-2 mt-1">
+<span class="text-xs text-slate-500">Paused</span>
+<span class="w-1 h-1 rounded-full bg-slate-600"></span>
+<span class="text-xs text-slate-500">45% of 3.1 GB</span>
+</div>
+<div class="w-full h-1 bg-gray-800 rounded-full mt-3 overflow-hidden">
+<div class="bg-slate-500 h-full w-[45%]"></div>
+</div>
+</div>
+<div class="flex flex-col justify-between items-end py-1">
+<button class="text-slate-500 hover:text-white transition-colors p-1">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</div>
+</article>
+</div>
+</section>
+</main>
+<!-- Bottom Navigation -->
+<nav class="fixed bottom-0 left-0 right-0 z-50 bg-[#191e33]/90 backdrop-blur-xl border-t border-[#232948] pb-6 pt-3 px-6">
+<div class="flex items-center justify-between">
+<a class="flex flex-col items-center gap-1 group" href="#">
+<span class="material-symbols-outlined text-[#929bc9] group-hover:text-primary transition-colors text-[24px]">home</span>
+<span class="text-[10px] font-medium text-[#929bc9] group-hover:text-primary transition-colors">Home</span>
+</a>
+<a class="flex flex-col items-center gap-1 group" href="#">
+<span class="material-symbols-outlined text-[#929bc9] group-hover:text-primary transition-colors text-[24px]">search</span>
+<span class="text-[10px] font-medium text-[#929bc9] group-hover:text-primary transition-colors">Search</span>
+</a>
+<a class="flex flex-col items-center gap-1 group relative" href="#">
+<div class="absolute -top-1 right-2 w-2 h-2 bg-primary rounded-full animate-pulse"></div>
+<span class="material-symbols-outlined text-white text-[24px]">download</span>
+<span class="text-[10px] font-medium text-white">Downloads</span>
+</a>
+<a class="flex flex-col items-center gap-1 group" href="#">
+<span class="material-symbols-outlined text-[#929bc9] group-hover:text-primary transition-colors text-[24px]">person</span>
+<span class="text-[10px] font-medium text-[#929bc9] group-hover:text-primary transition-colors">Profile</span>
+</a>
+</div>
+</nav>
+</body></html>

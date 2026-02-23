@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../controllers/watchlist_controller.dart';
-import '../controllers/theme_controller.dart';
+import '../theme/theme_controller.dart';
 import '../models/watchlist_movie.dart';
 import '../models/movie.dart';
 import '../theme/app_colors.dart';
@@ -100,7 +100,7 @@ class _LibraryScreenState extends State<LibraryScreen>
               backgroundColor: colorScheme.surface,
               child: Obx(() {
                 final tc = Get.find<ThemeController>();
-                final cols = tc.preferences.value.gridColumnCount;
+                final cols = tc.gridColumnCount;
                 return GridView.builder(
                   padding: const EdgeInsets.all(16),
                   physics: const AlwaysScrollableScrollPhysics(

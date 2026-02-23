@@ -40,6 +40,7 @@ dependencies:
   wakelock_plus: ^1.1.4
   collection: ^1.19.1
   youtube_player_flutter: ^9.0.3
+  palette_generator: ^0.3.3+7
 
 dev_dependencies:
   flutter_test:

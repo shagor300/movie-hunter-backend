@@ -18,6 +18,7 @@ import '../widgets/skeleton_loader.dart';
 import 'details_screen.dart';
 import 'settings_screen.dart';
 import 'voice_search/voice_search_screen.dart';
+import '../widgets/premium_transitions.dart';
 
 class SearchScreen extends StatefulWidget {
   const SearchScreen({super.key});
@@ -518,9 +519,7 @@ class _SearchScreenState extends State<SearchScreen> {
               onTap: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(
-                    builder: (context) => DetailsScreen(movie: movie),
-                  ),
+                  PremiumPageRoute(page: DetailsScreen(movie: movie)),
                 );
               },
             );

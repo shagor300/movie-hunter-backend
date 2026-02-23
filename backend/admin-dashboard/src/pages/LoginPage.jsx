@@ -14,8 +14,9 @@ export default function LoginPage({ onLogin }) {
         try {
             const { data } = await api.post('/admin/login', { username, password });
             localStorage.setItem('admin_token', data.token);
-            localStorage.setItem('admin_user', JSON.stringify(data.user));
-            onLogin(data.user);
+            const user = { username: data.username, role: data.role };
+            localStorage.setItem('admin_user', JSON.stringify(user));
+            onLogin(user);
         } catch (err) {
             setError(err.response?.data?.detail || 'Login failed');
         } finally {

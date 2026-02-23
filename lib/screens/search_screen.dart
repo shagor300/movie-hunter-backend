@@ -1,5 +1,6 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../services/tmdb_service.dart';
 import '../services/api_service.dart';
@@ -7,6 +8,7 @@ import '../models/movie.dart';
 import '../models/movie_tags.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_text_styles.dart';
+import '../theme/theme_controller.dart';
 import '../widgets/movie_card.dart';
 import '../widgets/custom_search_bar.dart';
 import '../widgets/filter_sheet.dart';
@@ -287,231 +289,215 @@ class _SearchScreenState extends State<SearchScreen> {
   }
 
   Widget _buildGlassHeader(bool isDark) {
-    return ClipRRect(
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
-        child: Container(
-          padding: EdgeInsets.only(
-            top: MediaQuery.of(context).padding.top + 20,
-            left: 20,
-            right: 20,
-            bottom: 20,
-          ),
-          decoration: BoxDecoration(
-            color: AppColors.backgroundDark.withValues(alpha: 0.8),
-            border: const Border(
-              bottom: BorderSide(color: AppColors.glassBorder, width: 1),
+    final tc = Get.find<ThemeController>();
+    return Obx(() {
+      final accent = tc.accentColor;
+      return ClipRRect(
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+          child: Container(
+            padding: EdgeInsets.only(
+              top: MediaQuery.of(context).padding.top + 16,
+              left: 20,
+              right: 20,
+              bottom: 16,
             ),
-          ),
-          child: Column(
-            children: [
-              // Search bar row
-              Row(
-                children: [
-                  Expanded(
-                    child: CustomSearchBar(
-                      controller: _searchController,
-                      onChanged: (value) {
-                        if (value.isEmpty && _recentSearches.isNotEmpty) {
-                          setState(() => _showRecent = true);
-                        } else {
-                          setState(() => _showRecent = false);
-                        }
-                      },
-                      onFilterTap: _showFilterSheet,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  // Mic / Voice Search
-                  GestureDetector(
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => VoiceSearchScreen(
-                            onSearchResult: (query) {
-                              _searchController.text = query;
-                              _onSearch(query);
-                            },
-                          ),
-                        ),
-                      );
-                    },
-                    child: Container(
-                      height: 56,
-                      width: 56,
-                      decoration: BoxDecoration(
-                        color: AppColors.primary.withValues(alpha: 0.15),
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(
-                          color: AppColors.primary.withValues(alpha: 0.3),
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: AppColors.primary.withValues(alpha: 0.1),
-                            blurRadius: 10,
-                            spreadRadius: 1,
-                          ),
-                        ],
-                      ),
-                      child: const Icon(
-                        Icons.mic_rounded,
-                        color: AppColors.primary,
-                        size: 26,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  // Settings
-                  GestureDetector(
-                    onTap: () => Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (_) => const SettingsScreen()),
-                    ),
-                    child: Container(
-                      height: 56,
-                      width: 56,
-                      decoration: BoxDecoration(
-                        color: AppColors.surfaceLight.withValues(alpha: 0.6),
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: AppColors.glassBorder),
-                      ),
-                      child: const Icon(
-                        Icons.settings_outlined,
-                        color: AppColors.textSecondary,
-                        size: 26,
-                      ),
-                    ),
-                  ),
-                ],
+            decoration: BoxDecoration(
+              color: AppColors.backgroundDark.withValues(alpha: 0.8),
+              border: const Border(
+                bottom: BorderSide(color: AppColors.glassBorder, width: 1),
               ),
-              const SizedBox(height: 16),
-              // Quick filter chips + tag filter button
-              Row(
-                children: [
-                  // Tag filter button
-                  GestureDetector(
-                    onTap: () => TagFilterSheet.show(
-                      context,
-                      selectedQuality: _qualityTags,
-                      selectedAudio: _audioTags,
-                      onApply: (result) {
-                        setState(() {
-                          _qualityTags = result.quality;
-                          _audioTags = result.audio;
-                        });
-                        if (_searchController.text.isNotEmpty) {
-                          _onSearch(_searchController.text);
-                        } else {
-                          _fetchTrending();
-                        }
-                      },
-                    ),
-                    child: Container(
-                      height: 36,
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
-                      margin: const EdgeInsets.only(right: 8),
-                      decoration: BoxDecoration(
-                        color: _activeTagCount > 0
-                            ? AppColors.primary.withValues(alpha: 0.2)
-                            : AppColors.surfaceLight,
-                        borderRadius: BorderRadius.circular(9999),
-                        border: Border.all(
-                          color: _activeTagCount > 0
-                              ? AppColors.primary
-                              : AppColors.glassBorder,
-                        ),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            Icons.label_outlined,
-                            size: 16,
-                            color: _activeTagCount > 0
-                                ? AppColors.primary
-                                : AppColors.textSecondary,
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            _activeTagCount > 0
-                                ? 'Tags ($_activeTagCount)'
-                                : 'Tags',
-                            style: AppTextStyles.labelSmall.copyWith(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                              color: _activeTagCount > 0
-                                  ? AppColors.primary
-                                  : AppColors.textSecondary,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  // Existing quick filters
-                  Expanded(
-                    child: SizedBox(
-                      height: 36,
-                      child: ListView.separated(
-                        scrollDirection: Axis.horizontal,
-                        itemCount: _quickFilters.length,
-                        separatorBuilder: (_, _) => const SizedBox(width: 8),
-                        itemBuilder: (context, index) {
-                          final filter = _quickFilters[index];
-                          final isActive = _activeQuickFilter == filter;
-                          return GestureDetector(
-                            onTap: () => _onQuickFilter(filter),
-                            child: AnimatedContainer(
-                              duration: const Duration(milliseconds: 200),
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 16,
-                              ),
-                              alignment: Alignment.center,
-                              decoration: BoxDecoration(
-                                color: isActive
-                                    ? AppColors.primary
-                                    : AppColors.surfaceLight,
-                                borderRadius: BorderRadius.circular(9999),
-                                border: isActive
-                                    ? null
-                                    : Border.all(
-                                        color: AppColors.glassBorder,
-                                        width: 1,
-                                      ),
-                              ),
-                              child: Text(
-                                filter,
-                                style: AppTextStyles.labelSmall.copyWith(
-                                  fontSize: 12,
-                                  fontWeight: isActive
-                                      ? FontWeight.w700
-                                      : FontWeight.w600,
-                                  color: isActive
-                                      ? Colors.white
-                                      : AppColors.textSecondary,
-                                ),
+            ),
+            child: Column(
+              children: [
+                // Search bar row — clean: searchbar + settings icon
+                Row(
+                  children: [
+                    Expanded(
+                      child: CustomSearchBar(
+                        controller: _searchController,
+                        onChanged: (value) {
+                          if (value.isEmpty && _recentSearches.isNotEmpty) {
+                            setState(() => _showRecent = true);
+                          } else {
+                            setState(() => _showRecent = false);
+                          }
+                        },
+                        onSubmitted: () {
+                          if (_searchController.text.isNotEmpty) {
+                            _onSearch(_searchController.text);
+                          }
+                        },
+                        onFilterTap: _showFilterSheet,
+                        onVoiceTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => VoiceSearchScreen(
+                                onSearchResult: (query) {
+                                  _searchController.text = query;
+                                  _onSearch(query);
+                                },
                               ),
                             ),
                           );
                         },
                       ),
                     ),
-                  ),
-                ],
-              ),
-            ],
+                    const SizedBox(width: 10),
+                    // Settings — small circle
+                    GestureDetector(
+                      onTap: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const SettingsScreen(),
+                        ),
+                      ),
+                      child: Container(
+                        height: 44,
+                        width: 44,
+                        decoration: BoxDecoration(
+                          color: AppColors.surfaceLight.withValues(alpha: 0.5),
+                          shape: BoxShape.circle,
+                          border: Border.all(color: AppColors.glassBorder),
+                        ),
+                        child: const Icon(
+                          Icons.settings_outlined,
+                          color: AppColors.textSecondary,
+                          size: 20,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 14),
+                // Quick filter chips + tag filter button
+                Row(
+                  children: [
+                    // Tag filter button
+                    GestureDetector(
+                      onTap: () => TagFilterSheet.show(
+                        context,
+                        selectedQuality: _qualityTags,
+                        selectedAudio: _audioTags,
+                        onApply: (result) {
+                          setState(() {
+                            _qualityTags = result.quality;
+                            _audioTags = result.audio;
+                          });
+                          if (_searchController.text.isNotEmpty) {
+                            _onSearch(_searchController.text);
+                          } else {
+                            _fetchTrending();
+                          }
+                        },
+                      ),
+                      child: Container(
+                        height: 34,
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        margin: const EdgeInsets.only(right: 8),
+                        decoration: BoxDecoration(
+                          color: _activeTagCount > 0
+                              ? accent.withValues(alpha: 0.2)
+                              : AppColors.surfaceLight,
+                          borderRadius: BorderRadius.circular(9999),
+                          border: Border.all(
+                            color: _activeTagCount > 0
+                                ? accent
+                                : AppColors.glassBorder,
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.label_outlined,
+                              size: 15,
+                              color: _activeTagCount > 0
+                                  ? accent
+                                  : AppColors.textSecondary,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              _activeTagCount > 0
+                                  ? 'Tags ($_activeTagCount)'
+                                  : 'Tags',
+                              style: AppTextStyles.labelSmall.copyWith(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                                color: _activeTagCount > 0
+                                    ? accent
+                                    : AppColors.textSecondary,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    // Quick filter genre chips
+                    Expanded(
+                      child: SizedBox(
+                        height: 34,
+                        child: ListView.separated(
+                          scrollDirection: Axis.horizontal,
+                          itemCount: _quickFilters.length,
+                          separatorBuilder: (_, _) => const SizedBox(width: 8),
+                          itemBuilder: (context, index) {
+                            final filter = _quickFilters[index];
+                            final isActive = _activeQuickFilter == filter;
+                            return GestureDetector(
+                              onTap: () => _onQuickFilter(filter),
+                              child: AnimatedContainer(
+                                duration: const Duration(milliseconds: 200),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                ),
+                                alignment: Alignment.center,
+                                decoration: BoxDecoration(
+                                  color: isActive
+                                      ? accent
+                                      : AppColors.surfaceLight,
+                                  borderRadius: BorderRadius.circular(9999),
+                                  border: isActive
+                                      ? null
+                                      : Border.all(
+                                          color: AppColors.glassBorder,
+                                          width: 1,
+                                        ),
+                                ),
+                                child: Text(
+                                  filter,
+                                  style: AppTextStyles.labelSmall.copyWith(
+                                    fontSize: 12,
+                                    fontWeight: isActive
+                                        ? FontWeight.w700
+                                        : FontWeight.w600,
+                                    color: isActive
+                                        ? Colors.white
+                                        : AppColors.textSecondary,
+                                  ),
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
         ),
-      ),
-    );
+      );
+    });
   }
 
   Widget _buildResultsGrid() {
     return Expanded(
       child: RefreshIndicator(
         onRefresh: _fetchTrending,
-        color: AppColors.primary,
+        color: Get.find<ThemeController>().accentColor,
         backgroundColor: AppColors.backgroundDark,
         child: GridView.builder(
           padding: const EdgeInsets.fromLTRB(20, 16, 20, 100),
@@ -562,7 +548,7 @@ class _SearchScreenState extends State<SearchScreen> {
                     'Clear All',
                     style: AppTextStyles.bodyMedium.copyWith(
                       fontWeight: FontWeight.w600,
-                      color: AppColors.primary,
+                      color: Get.find<ThemeController>().accentColor,
                     ),
                   ),
                 ),

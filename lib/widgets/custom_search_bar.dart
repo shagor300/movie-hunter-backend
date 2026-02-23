@@ -8,6 +8,8 @@ class CustomSearchBar extends StatelessWidget {
   final TextEditingController controller;
   final Function(String) onChanged;
   final VoidCallback? onFilterTap;
+  final VoidCallback? onVoiceTap;
+  final VoidCallback? onSubmitted;
   final String hintText;
 
   const CustomSearchBar({
@@ -15,70 +17,88 @@ class CustomSearchBar extends StatelessWidget {
     required this.controller,
     required this.onChanged,
     this.onFilterTap,
-    this.hintText = "Search movies, actors, directors...",
+    this.onVoiceTap,
+    this.onSubmitted,
+    this.hintText = "Search ...",
   });
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Expanded(
-          child: Container(
-            height: 56,
-            decoration: BoxDecoration(
-              color: AppColors.surfaceLight.withValues(alpha: 0.5),
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: AppColors.glassBorder),
+    final tc = Get.find<ThemeController>();
+
+    return Obx(() {
+      final accent = tc.accentColor;
+
+      return Container(
+        height: 52,
+        decoration: BoxDecoration(
+          color: AppColors.surfaceLight.withValues(alpha: 0.5),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: AppColors.glassBorder),
+        ),
+        child: Row(
+          children: [
+            // Search icon
+            Padding(
+              padding: const EdgeInsets.only(left: 14),
+              child: Icon(Icons.search, color: accent, size: 22),
             ),
-            child: TextField(
-              controller: controller,
-              onChanged: onChanged,
-              style: AppTextStyles.bodyMedium.copyWith(
-                color: AppColors.textPrimary,
-                fontSize: 16,
-              ),
-              decoration: InputDecoration(
-                hintText: hintText,
-                hintStyle: AppTextStyles.bodyMedium.copyWith(
-                  color: AppColors.textMuted,
+            // Text field
+            Expanded(
+              child: TextField(
+                controller: controller,
+                onChanged: onChanged,
+                onSubmitted: onSubmitted != null ? (_) => onSubmitted!() : null,
+                style: AppTextStyles.bodyMedium.copyWith(
+                  color: AppColors.textPrimary,
                   fontSize: 15,
                 ),
-                prefixIcon: Padding(
-                  padding: const EdgeInsets.only(left: 8.0),
-                  child: Obx(
-                    () => Icon(
-                      Icons.search,
-                      color: Get.find<ThemeController>().accentColor,
-                      size: 24,
-                    ),
+                decoration: InputDecoration(
+                  hintText: hintText,
+                  hintStyle: AppTextStyles.bodyMedium.copyWith(
+                    color: AppColors.textMuted,
+                    fontSize: 14,
+                  ),
+                  border: InputBorder.none,
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 14,
+                  ),
+                  isDense: true,
+                ),
+              ),
+            ),
+            // Voice search icon (inside search bar)
+            if (onVoiceTap != null)
+              GestureDetector(
+                onTap: onVoiceTap,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                  child: Icon(
+                    Icons.mic_rounded,
+                    color: accent.withValues(alpha: 0.7),
+                    size: 22,
                   ),
                 ),
-                border: InputBorder.none,
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 16,
+              ),
+            // Filter icon (inside search bar)
+            if (onFilterTap != null)
+              GestureDetector(
+                onTap: onFilterTap,
+                child: Container(
+                  height: 36,
+                  width: 36,
+                  margin: const EdgeInsets.only(right: 8),
+                  decoration: BoxDecoration(
+                    color: accent.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Icon(Icons.tune_rounded, color: accent, size: 18),
                 ),
-                isDense: true,
               ),
-            ),
-          ),
+          ],
         ),
-        if (onFilterTap != null) ...[
-          const SizedBox(width: 12),
-          GestureDetector(
-            onTap: onFilterTap,
-            child: Container(
-              height: 56,
-              width: 56,
-              decoration: BoxDecoration(
-                color: AppColors.primary.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: const Icon(Icons.tune, color: AppColors.primary, size: 24),
-            ),
-          ),
-        ],
-      ],
-    );
+      );
+    });
   }
 }

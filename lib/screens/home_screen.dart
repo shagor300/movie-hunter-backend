@@ -75,37 +75,47 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildFloatingNav() {
-    return Container(
-      margin: const EdgeInsets.only(left: 20, right: 20, bottom: 24),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(24),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
-          child: Container(
-            height: 72,
-            padding: const EdgeInsets.symmetric(horizontal: 4),
-            decoration: BoxDecoration(
-              color: AppColors.backgroundDark.withValues(alpha: 0.85),
-              borderRadius: BorderRadius.circular(24),
-              border: Border.all(
-                color: AppColors.surface.withValues(alpha: 0.5),
-                width: 1,
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.5),
-                  blurRadius: 32,
-                  offset: const Offset(0, 8),
+    final tc = Get.find<ThemeController>();
+    return Obx(
+      () => Container(
+        margin: const EdgeInsets.only(left: 16, right: 16, bottom: 20),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(28),
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+            child: Container(
+              height: 80,
+              padding: const EdgeInsets.symmetric(horizontal: 6),
+              decoration: BoxDecoration(
+                color: tc.currentThemeConfig.surfaceColor.withValues(
+                  alpha: 0.92,
                 ),
-              ],
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: List.generate(_navItems.length, (i) {
-                final item = _navItems[i];
-                final isActive = _currentIndex == i;
-                return _buildNavItem(item, isActive, i);
-              }),
+                borderRadius: BorderRadius.circular(28),
+                border: Border.all(
+                  color: tc.accentColor.withValues(alpha: 0.08),
+                  width: 1.5,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.4),
+                    blurRadius: 24,
+                    offset: const Offset(0, 6),
+                  ),
+                  BoxShadow(
+                    color: tc.accentColor.withValues(alpha: 0.06),
+                    blurRadius: 20,
+                    spreadRadius: 1,
+                  ),
+                ],
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: List.generate(_navItems.length, (i) {
+                  final item = _navItems[i];
+                  final isActive = _currentIndex == i;
+                  return _buildNavItem(item, isActive, i);
+                }),
+              ),
             ),
           ),
         ),
@@ -120,28 +130,42 @@ class _HomeScreenState extends State<HomeScreen> {
       onTap: () => setState(() => _currentIndex = index),
       behavior: HitTestBehavior.opaque,
       child: Obx(() {
-        final color = isActive ? tc.accentColor : AppColors.textMuted;
+        final activeColor = tc.accentColor;
+        final inactiveColor = Theme.of(context).hintColor;
 
         return AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          width: 64,
+          duration: const Duration(milliseconds: 250),
+          curve: Curves.easeOutCubic,
+          width: isActive ? 72 : 60,
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          decoration: isActive
+              ? BoxDecoration(
+                  color: activeColor.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(18),
+                )
+              : null,
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(
-                isActive ? item.activeIcon : item.icon,
-                size: isActive ? 26 : 24,
-                color: color,
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 250),
+                child: Icon(
+                  isActive ? item.activeIcon : item.icon,
+                  size: isActive ? 28 : 26,
+                  color: isActive ? activeColor : inactiveColor,
+                ),
               ),
               const SizedBox(height: 4),
-              Text(
-                item.label,
+              AnimatedDefaultTextStyle(
+                duration: const Duration(milliseconds: 250),
                 style: AppTextStyles.labelSmall.copyWith(
-                  fontSize: 10,
+                  fontSize: isActive ? 11 : 10,
                   fontWeight: isActive ? FontWeight.w700 : FontWeight.w500,
-                  color: color,
-                  letterSpacing: 0,
+                  color: isActive ? activeColor : inactiveColor,
+                  letterSpacing: isActive ? 0.3 : 0,
                 ),
+                child: Text(item.label),
               ),
             ],
           ),

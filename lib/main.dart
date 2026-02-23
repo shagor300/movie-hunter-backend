@@ -8,6 +8,7 @@ import 'models/playback_position.dart';
 import 'models/theme_preferences.dart';
 import 'models/homepage_movie.dart';
 import 'models/notification_settings.dart';
+import 'models/movie_request.dart';
 import 'controllers/download_controller.dart';
 import 'controllers/watchlist_controller.dart';
 import 'controllers/video_player_controller.dart';
@@ -72,6 +73,7 @@ void main() async {
     Hive.registerAdapter(ThemePreferencesAdapter());
     Hive.registerAdapter(HomepageMovieAdapter());
     Hive.registerAdapter(NotificationSettingsAdapter());
+    Hive.registerAdapter(MovieRequestAdapter());
     debugPrint('✅ MAIN: Hive initialized with all adapters');
   } catch (e) {
     debugPrint('❌ MAIN: Hive init error: $e');
@@ -158,7 +160,6 @@ class MovieHunterApp extends StatelessWidget {
           title: 'MovieHunter',
           debugShowCheckedModeBanner: false,
           theme: themeController.themeData,
-          themeMode: ThemeMode.dark,
           home: const SplashScreen(),
           defaultTransition: Transition.cupertino,
           transitionDuration: const Duration(milliseconds: 300),

@@ -13,6 +13,8 @@ import 'notification_settings_screen.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_text_styles.dart';
 import 'settings/appearance_settings.dart';
+import 'request_movie_screen.dart';
+import 'collections_screen.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
@@ -22,9 +24,9 @@ class SettingsScreen extends StatelessWidget {
     final tc = Get.find<ThemeController>();
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: AppColors.background,
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         elevation: 0,
         title: Text(
           'Settings',
@@ -233,6 +235,44 @@ class SettingsScreen extends StatelessWidget {
                   );
                 });
               },
+            ),
+
+            const SizedBox(height: 24),
+
+            // ═══════════════════════════════════════════
+            // MORE FEATURES
+            // ═══════════════════════════════════════════
+            _SectionHeader(title: 'More', icon: Icons.auto_awesome),
+            const SizedBox(height: 8),
+
+            _SettingsCard(
+              children: [
+                _ActionTile(
+                  icon: Icons.movie_filter,
+                  title: 'Request a Movie',
+                  subtitle: "Can't find a movie? Request it here!",
+                  iconColor: Colors.amber,
+                  onTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const RequestMovieScreen(),
+                    ),
+                  ),
+                ),
+                const Divider(color: Colors.white10, height: 24),
+                _ActionTile(
+                  icon: Icons.collections_bookmark,
+                  title: 'My Collections',
+                  subtitle: 'Create and manage movie collections',
+                  iconColor: Colors.deepPurpleAccent,
+                  onTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const CollectionsScreen(),
+                    ),
+                  ),
+                ),
+              ],
             ),
 
             const SizedBox(height: 24),
@@ -661,7 +701,7 @@ class SettingsScreen extends StatelessWidget {
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
-        backgroundColor: AppColors.surface,
+        backgroundColor: Theme.of(context).colorScheme.surface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: Text(
           title,
@@ -721,21 +761,24 @@ class _SectionHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tc = Get.find<ThemeController>();
     return Padding(
       padding: const EdgeInsets.only(left: 4, top: 16, bottom: 8),
       child: Row(
         children: [
-          Icon(icon, color: AppColors.primary, size: 18),
+          Obx(() => Icon(icon, color: tc.accentColor, size: 18)),
           const SizedBox(width: 8),
-          Text(
-            title.toUpperCase(),
-            style: AppTextStyles.headingLarge
-                .copyWith(
-                  color: AppColors.primary,
-                  fontSize: 12,
-                  fontWeight: FontWeight.w700,
-                )
-                .copyWith(letterSpacing: 1.2),
+          Obx(
+            () => Text(
+              title.toUpperCase(),
+              style: AppTextStyles.headingLarge
+                  .copyWith(
+                    color: tc.accentColor,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                  )
+                  .copyWith(letterSpacing: 1.2),
+            ),
           ),
         ],
       ),
@@ -752,9 +795,9 @@ class _SettingsCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.surfaceLight),
+        border: Border.all(color: Theme.of(context).dividerColor),
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(16),

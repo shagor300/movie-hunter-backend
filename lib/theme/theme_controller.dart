@@ -103,8 +103,8 @@ class ThemeController extends GetxController {
       _gridColumnCount.value = prefs.getInt('grid_columns') ?? 2;
       _fontSize.value = prefs.getDouble('font_size') ?? 14.0;
 
-      // Apply theme immediately
-      Get.changeTheme(themeData);
+      // Force reactive rebuild (Obx in main.dart will pick up the changes)
+      update();
     } catch (e) {
       debugPrint('Error loading theme preferences: $e');
     }
@@ -124,8 +124,8 @@ class ThemeController extends GetxController {
       await _saveAccentColor();
     }
 
-    // Apply new theme
-    Get.changeTheme(themeData);
+    // Force reactive rebuild
+    update();
 
     // Save preference
     await _saveThemeMode();
@@ -142,8 +142,8 @@ class ThemeController extends GetxController {
   Future<void> setAccentColor(Color color) async {
     _accentColor.value = color;
 
-    // Apply new theme with updated accent
-    Get.changeTheme(themeData);
+    // Force reactive rebuild
+    update();
 
     // Save preference
     await _saveAccentColor();

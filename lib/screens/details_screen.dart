@@ -11,10 +11,19 @@ import '../controllers/link_controller.dart';
 import '../controllers/watchlist_controller.dart';
 import '../controllers/download_controller.dart';
 import '../services/api_service.dart';
+import '../services/trailer_service.dart';
+import '../services/watch_history_service.dart';
+import '../services/user_rating_service.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_text_styles.dart';
+import '../theme/theme_controller.dart';
+import '../widgets/shareable_movie_card.dart';
+import '../widgets/star_rating_widget.dart';
 import 'webview_player.dart';
 import 'video_player_screen.dart';
+import 'trailer_player_screen.dart';
+import 'dart:io';
+import 'package:path_provider/path_provider.dart';
 
 class DetailsScreen extends StatefulWidget {
   final Movie movie;
@@ -30,11 +39,80 @@ class _DetailsScreenState extends State<DetailsScreen> {
       Get.find<WatchlistController>();
   final DownloadController _downloadController = Get.find<DownloadController>();
 
+  // Trailer state
+  String? _trailerKey;
+  bool _trailerLoading = true;
+
+  // Similar movies state
+  List<Movie> _similarMovies = [];
+  bool _similarLoading = true;
+
+  // User rating state
+  double? _userRating;
+  bool _showBookmarkHeart = false;
+
   @override
   void initState() {
     super.initState();
     // Clear old links so a new movie starts fresh
     _linkController.clearData();
+    // Fetch trailer
+    _loadTrailer();
+    // Record view in watch history
+    _recordView();
+    // Load user rating
+    _loadUserRating();
+  }
+
+  void _recordView() {
+    final m = widget.movie;
+    WatchHistoryService.recordView(
+      tmdbId: m.tmdbId ?? 0,
+      title: m.title,
+      posterUrl: m.fullPosterPath,
+      rating: m.rating,
+    );
+  }
+
+  Future<void> _loadUserRating() async {
+    if (widget.movie.tmdbId == null) return;
+    final rating = await UserRatingService.getRating(widget.movie.tmdbId!);
+    if (mounted) setState(() => _userRating = rating);
+  }
+
+  Future<void> _loadTrailer() async {
+    final tmdbId = widget.movie.tmdbId;
+    if (tmdbId == null || tmdbId <= 0) {
+      setState(() => _trailerLoading = false);
+      return;
+    }
+    final key = await TrailerService.getTrailerKey(tmdbId);
+    if (mounted) {
+      setState(() {
+        _trailerKey = key;
+        _trailerLoading = false;
+      });
+    }
+    // Also load similar movies
+    _loadSimilarMovies(tmdbId);
+  }
+
+  Future<void> _loadSimilarMovies(int tmdbId) async {
+    try {
+      final results = await TrailerService.getSimilarMovies(tmdbId);
+      if (mounted) {
+        setState(() {
+          _similarMovies = results
+              .where((m) => m['poster_path'] != null)
+              .take(15)
+              .map((m) => Movie.fromJson(m))
+              .toList();
+          _similarLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) setState(() => _similarLoading = false);
+    }
   }
 
   @override
@@ -137,16 +215,7 @@ class _DetailsScreenState extends State<DetailsScreen> {
                         size: 22,
                       ),
                       tooltip: 'Share',
-                      onPressed: () {
-                        final m = widget.movie;
-                        final text =
-                            '🎬 ${m.title}'
-                            '${m.year != "N/A" ? " (${m.year})" : ""}\n'
-                            '${m.rating > 0 ? "⭐ ${m.rating.toStringAsFixed(1)}/10\n" : ""}'
-                            '\n${m.plot.isNotEmpty ? "${m.plot.length > 200 ? "${m.plot.substring(0, 200)}..." : m.plot}\n\n" : ""}'
-                            'Shared via MovieHub';
-                        Share.share(text);
-                      },
+                      onPressed: () => _shareMovieCard(),
                     ),
                   ),
                 ],
@@ -154,25 +223,52 @@ class _DetailsScreenState extends State<DetailsScreen> {
                   background: Stack(
                     fit: StackFit.expand,
                     children: [
-                      Hero(
-                        tag: 'poster-${widget.movie.title}',
-                        child: CachedNetworkImage(
-                          imageUrl: widget.movie.fullPosterPath,
-                          fit: BoxFit.cover,
-                        ),
-                      ),
-                      // Gradient Overlay
-                      Container(
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            begin: Alignment.topCenter,
-                            end: Alignment.bottomCenter,
-                            colors: [
-                              Colors.transparent,
-                              AppColors.backgroundDarker.withValues(alpha: 0.5),
-                              AppColors.backgroundDarker,
-                            ],
-                          ),
+                      GestureDetector(
+                        onDoubleTap: _onDoubleTapBookmark,
+                        child: Stack(
+                          fit: StackFit.expand,
+                          children: [
+                            Hero(
+                              tag: 'poster-${widget.movie.title}',
+                              child: CachedNetworkImage(
+                                imageUrl: widget.movie.fullPosterPath,
+                                fit: BoxFit.cover,
+                              ),
+                            ),
+                            // Gradient Overlay
+                            Container(
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  begin: Alignment.topCenter,
+                                  end: Alignment.bottomCenter,
+                                  colors: [
+                                    Colors.transparent,
+                                    AppColors.backgroundDarker.withValues(
+                                      alpha: 0.5,
+                                    ),
+                                    AppColors.backgroundDarker,
+                                  ],
+                                ),
+                              ),
+                            ),
+                            // Double-tap heart animation
+                            if (_showBookmarkHeart)
+                              Center(
+                                child: AnimatedOpacity(
+                                  opacity: _showBookmarkHeart ? 1.0 : 0.0,
+                                  duration: const Duration(milliseconds: 300),
+                                  child: Icon(
+                                    _watchlistController.isInWatchlist(
+                                          widget.movie.tmdbId,
+                                        )
+                                        ? Icons.bookmark
+                                        : Icons.bookmark_remove,
+                                    color: Colors.white.withValues(alpha: 0.9),
+                                    size: 80,
+                                  ),
+                                ),
+                              ),
+                          ],
                         ),
                       ),
                     ],
@@ -214,7 +310,10 @@ class _DetailsScreenState extends State<DetailsScreen> {
                           ),
                         ],
                       ),
-                      const SizedBox(height: 30),
+                      const SizedBox(height: 20),
+                      // Trailer Button
+                      _buildTrailerButton(),
+                      const SizedBox(height: 16),
                       // Glass Button for Links
                       _buildGetLinksButton(),
                       const SizedBox(height: 30),
@@ -305,6 +404,10 @@ class _DetailsScreenState extends State<DetailsScreen> {
                         }
                         return const SizedBox();
                       }),
+                      // User Rating Section
+                      _buildUserRating(),
+                      // Similar Movies Section
+                      _buildSimilarMovies(),
                       const SizedBox(height: 100),
                     ],
                   ),
@@ -340,6 +443,383 @@ class _DetailsScreenState extends State<DetailsScreen> {
           fontWeight: FontWeight.bold,
           fontSize: 12,
         ),
+      ),
+    );
+  }
+
+  Widget _buildTrailerButton() {
+    // Still loading — show subtle placeholder
+    if (_trailerLoading) {
+      return Container(
+        width: double.infinity,
+        height: 52,
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.05),
+          borderRadius: BorderRadius.circular(14),
+        ),
+        child: const Center(
+          child: SizedBox(
+            width: 20,
+            height: 20,
+            child: CircularProgressIndicator(
+              strokeWidth: 2,
+              color: Colors.white30,
+            ),
+          ),
+        ),
+      );
+    }
+
+    // No trailer available — hide button
+    if (_trailerKey == null) return const SizedBox.shrink();
+
+    // Trailer available — show premium button
+    return Container(
+      width: double.infinity,
+      height: 52,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(14),
+        gradient: const LinearGradient(
+          colors: [Color(0xFFFF0000), Color(0xFFCC0000)],
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFFFF0000).withValues(alpha: 0.3),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(14),
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => TrailerPlayerScreen(
+                  videoKey: _trailerKey!,
+                  movieTitle: widget.movie.title,
+                ),
+              ),
+            );
+          },
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(
+                Icons.play_circle_filled,
+                color: Colors.white,
+                size: 26,
+              ),
+              const SizedBox(width: 10),
+              Text(
+                'Watch Trailer',
+                style: GoogleFonts.poppins(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: 0.3,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _shareMovieCard() async {
+    final cardKey = GlobalKey();
+    final tc = Get.find<ThemeController>();
+
+    // Show loading
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const Center(child: CircularProgressIndicator()),
+    );
+
+    // Build card off-screen via Overlay
+    final overlay = Overlay.of(context);
+    final entry = OverlayEntry(
+      builder: (_) => Positioned(
+        left: -1200,
+        top: -2400,
+        child: ShareableMovieCard(
+          movie: widget.movie,
+          accentColor: tc.accentColor,
+          cardKey: cardKey,
+        ),
+      ),
+    );
+    overlay.insert(entry);
+
+    // Wait for render
+    await Future.delayed(const Duration(milliseconds: 800));
+
+    try {
+      final imageBytes = await ShareableMovieCard.captureCard(cardKey);
+      entry.remove();
+
+      if (!mounted) return;
+      Navigator.pop(context); // Close loading
+
+      if (imageBytes != null) {
+        // Save to temp and share
+        final dir = await getTemporaryDirectory();
+        final file = File(
+          '${dir.path}/moviehub_${widget.movie.title.replaceAll(RegExp(r'[^a-zA-Z0-9]'), '_')}.png',
+        );
+        await file.writeAsBytes(imageBytes);
+
+        final m = widget.movie;
+        final text =
+            '🎬 ${m.title}'
+            '${m.year != "N/A" ? " (${m.year})" : ""}\n'
+            '${m.rating > 0 ? "⭐ ${m.rating.toStringAsFixed(1)}/10\n" : ""}'
+            '\nShared via MovieHub';
+
+        await Share.shareXFiles([XFile(file.path)], text: text);
+      } else {
+        // Fallback: text only share
+        _shareAsText();
+      }
+    } catch (e) {
+      entry.remove();
+      if (mounted) Navigator.pop(context);
+      _shareAsText();
+    }
+  }
+
+  void _shareAsText() {
+    final m = widget.movie;
+    final text =
+        '🎬 ${m.title}'
+        '${m.year != "N/A" ? " (${m.year})" : ""}\n'
+        '${m.rating > 0 ? "⭐ ${m.rating.toStringAsFixed(1)}/10\n" : ""}'
+        '\nShared via MovieHub';
+    Share.share(text);
+  }
+
+  Widget _buildUserRating() {
+    return Padding(
+      padding: const EdgeInsets.only(top: 24),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.05),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: Colors.white10),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Your Rating',
+              style: AppTextStyles.headingLarge.copyWith(fontSize: 16),
+            ),
+            const SizedBox(height: 12),
+            Center(
+              child: StarRatingWidget(
+                rating: _userRating ?? 0,
+                size: 36,
+                onRatingChanged: (newRating) {
+                  setState(() => _userRating = newRating);
+                  if (widget.movie.tmdbId != null) {
+                    UserRatingService.rateMovie(
+                      tmdbId: widget.movie.tmdbId!,
+                      rating: newRating,
+                      title: widget.movie.title,
+                    );
+                    Get.snackbar(
+                      '⭐ Rated ${newRating.toStringAsFixed(1)}/5',
+                      widget.movie.title,
+                      snackPosition: SnackPosition.BOTTOM,
+                      backgroundColor: Colors.amber.withValues(alpha: 0.9),
+                      colorText: Colors.black,
+                      margin: const EdgeInsets.all(16),
+                      duration: const Duration(seconds: 2),
+                    );
+                  }
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _onDoubleTapBookmark() {
+    _watchlistController.toggleWatchlist(widget.movie);
+    // Show animated bookmark
+    setState(() => _showBookmarkHeart = true);
+    Future.delayed(const Duration(milliseconds: 800), () {
+      if (mounted) setState(() => _showBookmarkHeart = false);
+    });
+    HapticFeedback.mediumImpact();
+  }
+
+  Widget _buildSimilarMovies() {
+    // Hide if still loading or no results
+    if (_similarLoading) {
+      return Padding(
+        padding: const EdgeInsets.only(top: 30),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'You May Also Like',
+              style: AppTextStyles.headingLarge.copyWith(fontSize: 20),
+            ),
+            const SizedBox(height: 16),
+            SizedBox(
+              height: 200,
+              child: ListView.builder(
+                scrollDirection: Axis.horizontal,
+                itemCount: 5,
+                itemBuilder: (_, _) => Container(
+                  width: 130,
+                  margin: const EdgeInsets.only(right: 12),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.05),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (_similarMovies.isEmpty) return const SizedBox.shrink();
+
+    return Padding(
+      padding: const EdgeInsets.only(top: 30),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'You May Also Like',
+            style: AppTextStyles.headingLarge.copyWith(fontSize: 20),
+          ),
+          const SizedBox(height: 16),
+          SizedBox(
+            height: 220,
+            child: ListView.builder(
+              scrollDirection: Axis.horizontal,
+              itemCount: _similarMovies.length,
+              itemBuilder: (context, index) {
+                final movie = _similarMovies[index];
+                return GestureDetector(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => DetailsScreen(movie: movie),
+                      ),
+                    );
+                  },
+                  child: Container(
+                    width: 130,
+                    margin: const EdgeInsets.only(right: 12),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Poster
+                        Expanded(
+                          child: Container(
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(12),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withValues(alpha: 0.3),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 4),
+                                ),
+                              ],
+                            ),
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(12),
+                              child: Stack(
+                                fit: StackFit.expand,
+                                children: [
+                                  CachedNetworkImage(
+                                    imageUrl: movie.fullPosterPath,
+                                    fit: BoxFit.cover,
+                                    placeholder: (_, _) => Container(
+                                      color: Colors.white.withValues(
+                                        alpha: 0.05,
+                                      ),
+                                    ),
+                                  ),
+                                  // Rating badge
+                                  if (movie.rating > 0)
+                                    Positioned(
+                                      top: 6,
+                                      right: 6,
+                                      child: Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 6,
+                                          vertical: 2,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: Colors.black.withValues(
+                                            alpha: 0.7,
+                                          ),
+                                          borderRadius: BorderRadius.circular(
+                                            6,
+                                          ),
+                                        ),
+                                        child: Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            const Icon(
+                                              Icons.star,
+                                              color: Colors.amber,
+                                              size: 12,
+                                            ),
+                                            const SizedBox(width: 2),
+                                            Text(
+                                              movie.rating.toStringAsFixed(1),
+                                              style: GoogleFonts.inter(
+                                                color: Colors.white,
+                                                fontSize: 11,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        // Title
+                        Text(
+                          movie.title,
+                          style: GoogleFonts.inter(
+                            color: Colors.white,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+        ],
       ),
     );
   }

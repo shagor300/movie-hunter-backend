@@ -14,6 +14,7 @@ import '../services/api_service.dart';
 import '../services/trailer_service.dart';
 import '../services/watch_history_service.dart';
 import '../services/user_rating_service.dart';
+import '../services/movie_collection_service.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_text_styles.dart';
 import '../theme/theme_controller.dart';
@@ -216,6 +217,23 @@ class _DetailsScreenState extends State<DetailsScreen> {
                       ),
                       tooltip: 'Share',
                       onPressed: () => _shareMovieCard(),
+                    ),
+                  ),
+                  // Add to collection button
+                  Container(
+                    margin: const EdgeInsets.only(right: 8),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withValues(alpha: 0.4),
+                      shape: BoxShape.circle,
+                    ),
+                    child: IconButton(
+                      icon: const Icon(
+                        Icons.playlist_add,
+                        color: Colors.white,
+                        size: 22,
+                      ),
+                      tooltip: 'Add to Collection',
+                      onPressed: _showAddToCollectionDialog,
                     ),
                   ),
                 ],
@@ -660,6 +678,105 @@ class _DetailsScreenState extends State<DetailsScreen> {
       if (mounted) setState(() => _showBookmarkHeart = false);
     });
     HapticFeedback.mediumImpact();
+  }
+
+  void _showAddToCollectionDialog() async {
+    final collections = await MovieCollectionService.getCollections();
+    final movie = widget.movie;
+    final tc = Get.find<ThemeController>();
+
+    if (!mounted) return;
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: AppColors.backgroundDarker,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(
+              child: Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.white24,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            Text('Add to Collection', style: AppTextStyles.titleLarge),
+            const SizedBox(height: 16),
+            if (collections.isEmpty)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 20),
+                child: Center(
+                  child: Text(
+                    'No collections yet.\nCreate one from Settings → My Collections.',
+                    textAlign: TextAlign.center,
+                    style: GoogleFonts.inter(
+                      color: AppColors.textMuted,
+                      height: 1.5,
+                    ),
+                  ),
+                ),
+              )
+            else
+              ...collections.map(
+                (col) => ListTile(
+                  leading: Text(
+                    col['emoji'] ?? '🎬',
+                    style: const TextStyle(fontSize: 24),
+                  ),
+                  title: Text(
+                    col['name'] ?? 'Untitled',
+                    style: GoogleFonts.poppins(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  subtitle: Text(
+                    '${(col['movies'] as List?)?.length ?? 0} movies',
+                    style: GoogleFonts.inter(
+                      color: AppColors.textMuted,
+                      fontSize: 12,
+                    ),
+                  ),
+                  trailing: Icon(
+                    Icons.add_circle_outline,
+                    color: tc.accentColor,
+                  ),
+                  onTap: () async {
+                    await MovieCollectionService.addToCollection(
+                      collectionId: col['id'],
+                      tmdbId: movie.tmdbId ?? 0,
+                      title: movie.title,
+                      posterUrl: movie.fullPosterPath,
+                      rating: movie.rating,
+                    );
+                    if (ctx.mounted) Navigator.pop(ctx);
+                    Get.snackbar(
+                      '✅ Added to ${col['name']}',
+                      movie.title,
+                      snackPosition: SnackPosition.BOTTOM,
+                      backgroundColor: AppColors.success.withValues(alpha: 0.9),
+                      colorText: Colors.white,
+                      margin: const EdgeInsets.all(16),
+                      duration: const Duration(seconds: 2),
+                    );
+                  },
+                ),
+              ),
+            const SizedBox(height: 16),
+          ],
+        ),
+      ),
+    );
   }
 
   Widget _buildSimilarMovies() {

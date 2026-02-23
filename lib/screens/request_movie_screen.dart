@@ -156,7 +156,9 @@ class _RequestMovieScreenState extends State<RequestMovieScreen>
         // Switch to My Requests tab
         _tabController.animateTo(1);
       }
-    } catch (e) {
+    } catch (e, stack) {
+      debugPrint('❌ Request submit error: $e');
+      debugPrint('Stack: $stack');
       setState(() => _isSubmitting = false);
       Get.snackbar(
         'Error',

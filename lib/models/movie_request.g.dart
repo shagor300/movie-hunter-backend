@@ -8,7 +8,7 @@ part of 'movie_request.dart';
 
 class MovieRequestAdapter extends TypeAdapter<MovieRequest> {
   @override
-  final int typeId = 10;
+  final int typeId = 20;
 
   @override
   MovieRequest read(BinaryReader reader) {

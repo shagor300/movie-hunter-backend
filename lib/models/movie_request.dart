@@ -2,7 +2,7 @@ import 'package:hive/hive.dart';
 
 part 'movie_request.g.dart';
 
-@HiveType(typeId: 10)
+@HiveType(typeId: 20)
 class MovieRequest extends HiveObject {
   @HiveField(0)
   final String id;

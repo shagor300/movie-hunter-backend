@@ -3,10 +3,25 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:introduction_screen/introduction_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../theme/app_colors.dart';
-import '../theme/app_text_styles.dart';
-import '../widgets/gradient_button.dart';
 import 'home_screen.dart';
+
+// ─── Hardcoded Onboarding Colors (never change with theme) ───
+class _OBColors {
+  static const Color bg = Color(0xFF0A0A18);
+  static const Color blue = Color(0xFF448AFF);
+  static const Color blueDark = Color(0xFF2962FF);
+  static const Color purple = Color(0xFF6C63FF);
+  static const Color textWhite = Color(0xFFFFFFFF);
+  static const Color textFaded = Color(0xFFB4B4C8);
+  static const Color surfaceLight = Color(0xFF2A2A40);
+  static const Color glass = Color(0x331A1A2E);
+  static const Color glassBorder = Color(0x1AFFFFFF);
+  static const LinearGradient btnGradient = LinearGradient(
+    colors: [purple, blueDark],
+    begin: Alignment.centerLeft,
+    end: Alignment.centerRight,
+  );
+}
 
 class OnboardingScreen extends StatelessWidget {
   const OnboardingScreen({super.key});
@@ -31,10 +46,10 @@ class OnboardingScreen extends StatelessWidget {
           height: 160,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            color: AppColors.primary.withValues(alpha: 0.2),
+            color: _OBColors.blue.withValues(alpha: 0.2),
             boxShadow: [
               BoxShadow(
-                color: AppColors.primary.withValues(alpha: 0.3),
+                color: _OBColors.blue.withValues(alpha: 0.3),
                 blurRadius: 60,
                 spreadRadius: 10,
               ),
@@ -50,13 +65,11 @@ class OnboardingScreen extends StatelessWidget {
               width: 200,
               height: 200,
               decoration: BoxDecoration(
-                color: AppColors.glassBackground, // 3% white
+                color: _OBColors.glass,
                 borderRadius: BorderRadius.circular(32),
-                border: Border.all(color: AppColors.glassBorder), // 8% white
+                border: Border.all(color: _OBColors.glassBorder),
               ),
-              child: Center(
-                child: Icon(icon, size: 80, color: AppColors.primary),
-              ),
+              child: Center(child: Icon(icon, size: 80, color: _OBColors.blue)),
             ),
           ),
         ),
@@ -64,12 +77,12 @@ class OnboardingScreen extends StatelessWidget {
         Positioned(
           top: 10,
           right: 10,
-          child: _buildFloatingElement(Icons.movie, AppColors.primary, 30),
+          child: _buildFloatingElement(Icons.movie, _OBColors.blue, 30),
         ),
         Positioned(
           bottom: 15,
           left: 15,
-          child: _buildFloatingElement(Icons.star, AppColors.accentPurple, 30),
+          child: _buildFloatingElement(Icons.star, _OBColors.purple, 30),
         ),
       ],
     );
@@ -80,9 +93,9 @@ class OnboardingScreen extends StatelessWidget {
       width: size,
       height: size,
       decoration: BoxDecoration(
-        color: AppColors.glassBackground,
+        color: _OBColors.glass,
         shape: BoxShape.circle,
-        border: Border.all(color: AppColors.glassBorder),
+        border: Border.all(color: _OBColors.glassBorder),
         boxShadow: const [
           BoxShadow(
             color: Colors.black26,
@@ -100,19 +113,30 @@ class OnboardingScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final pageDecoration = PageDecoration(
-      titleTextStyle: AppTextStyles.displayMedium.copyWith(fontSize: 28),
-      bodyTextStyle: AppTextStyles.bodyLarge,
+      titleTextStyle: const TextStyle(
+        fontFamily: 'Poppins',
+        fontSize: 28,
+        fontWeight: FontWeight.w700,
+        color: _OBColors.textWhite,
+      ),
+      bodyTextStyle: const TextStyle(
+        fontFamily: 'Inter',
+        fontSize: 16,
+        fontWeight: FontWeight.w400,
+        color: _OBColors.textFaded,
+        height: 1.5,
+      ),
       bodyPadding: const EdgeInsets.fromLTRB(24.0, 0.0, 24.0, 16.0),
-      pageColor: AppColors.backgroundDark,
+      pageColor: _OBColors.bg,
       imagePadding: const EdgeInsets.only(top: 80.0, bottom: 20.0),
       titlePadding: const EdgeInsets.only(bottom: 16.0),
     );
 
     return Scaffold(
-      backgroundColor: AppColors.backgroundDark,
+      backgroundColor: _OBColors.bg,
       body: Stack(
         children: [
-          // Background Glows
+          // Background blue glow
           Positioned(
             top: -100,
             left: -100,
@@ -121,10 +145,10 @@ class OnboardingScreen extends StatelessWidget {
               height: 400,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: AppColors.primary.withValues(alpha: 0.1),
+                color: _OBColors.blue.withValues(alpha: 0.1),
                 boxShadow: [
                   BoxShadow(
-                    color: AppColors.primary.withValues(alpha: 0.1),
+                    color: _OBColors.blue.withValues(alpha: 0.1),
                     blurRadius: 120,
                     spreadRadius: 60,
                   ),
@@ -135,7 +159,7 @@ class OnboardingScreen extends StatelessWidget {
 
           IntroductionScreen(
             key: GlobalKey<IntroductionScreenState>(),
-            globalBackgroundColor: Colors.transparent, // Let gradient show
+            globalBackgroundColor: Colors.transparent,
             allowImplicitScrolling: true,
             pages: [
               PageViewModel(
@@ -166,22 +190,24 @@ class OnboardingScreen extends StatelessWidget {
             skipOrBackFlex: 0,
             nextFlex: 0,
             showBackButton: false,
-            skip: Text(
+            skip: const Text(
               'Skip',
-              style: AppTextStyles.bodyMedium.copyWith(
-                color: AppColors.textSecondary,
+              style: TextStyle(
+                fontFamily: 'Inter',
+                fontSize: 15,
                 fontWeight: FontWeight.w600,
+                color: _OBColors.textFaded,
               ),
             ),
             next: Container(
               width: 56,
               height: 56,
               decoration: BoxDecoration(
-                gradient: AppColors.primaryGradient,
+                gradient: _OBColors.btnGradient,
                 shape: BoxShape.circle,
                 boxShadow: [
                   BoxShadow(
-                    color: AppColors.primary.withValues(alpha: 0.3),
+                    color: _OBColors.purple.withValues(alpha: 0.3),
                     blurRadius: 16,
                     offset: const Offset(0, 4),
                   ),
@@ -194,11 +220,39 @@ class OnboardingScreen extends StatelessWidget {
                 size: 32,
               ),
             ),
-            done: SizedBox(
+            done: Container(
               width: 160,
-              child: GradientButton(
-                text: "Get Started",
-                onPressed: () => _onIntroEnd(),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(12),
+                gradient: _OBColors.btnGradient,
+                boxShadow: [
+                  BoxShadow(
+                    color: _OBColors.purple.withValues(alpha: 0.3),
+                    blurRadius: 12,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: () => _onIntroEnd(),
+                  borderRadius: BorderRadius.circular(12),
+                  child: const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 16, horizontal: 24),
+                    child: Center(
+                      child: Text(
+                        'Get Started',
+                        style: TextStyle(
+                          fontFamily: 'Poppins',
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
               ),
             ),
             curve: Curves.fastLinearToSlowEaseIn,
@@ -209,9 +263,9 @@ class OnboardingScreen extends StatelessWidget {
             ),
             dotsDecorator: DotsDecorator(
               size: const Size(8.0, 8.0),
-              color: AppColors.surfaceLight,
+              color: _OBColors.surfaceLight,
               activeSize: const Size(24.0, 8.0),
-              activeColor: AppColors.primary,
+              activeColor: _OBColors.blue,
               spacing: const EdgeInsets.symmetric(horizontal: 4.0),
               activeShape: const RoundedRectangleBorder(
                 borderRadius: BorderRadius.all(Radius.circular(25.0)),

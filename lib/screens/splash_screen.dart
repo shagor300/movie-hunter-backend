@@ -6,11 +6,32 @@ import 'package:get/get.dart';
 import '../controllers/update_controller.dart';
 import '../services/update_service.dart';
 import '../widgets/update_dialog.dart';
-import '../theme/app_colors.dart';
-import '../theme/app_text_styles.dart';
 import 'home_screen.dart';
 import 'onboarding_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+// ─── Hardcoded Splash Colors (never change with theme) ───
+class _SplashColors {
+  static const Color bg1 = Color(0xFF0F0F2A);
+  static const Color bg2 = Color(0xFF141430);
+  static const Color bg3 = Color(0xFF1A1A40);
+  static const Color blue = Color(0xFF448AFF);
+  static const Color blueDark = Color(0xFF2962FF);
+  static const Color purple = Color(0xFF6C63FF);
+  static const Color textWhite = Color(0xFFFFFFFF);
+  static const Color textFaded = Color(0x99FFFFFF);
+  static const Color surface = Color(0xFF1E1E3A);
+  static const LinearGradient backgroundGradient = LinearGradient(
+    begin: Alignment.topCenter,
+    end: Alignment.bottomCenter,
+    colors: [bg3, bg2, bg1],
+  );
+  static const LinearGradient progressGradient = LinearGradient(
+    colors: [blue, blueDark],
+    begin: Alignment.centerLeft,
+    end: Alignment.centerRight,
+  );
+}
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -165,10 +186,20 @@ class _SplashScreenState extends State<SplashScreen>
   }
 
   @override
+  void dispose() {
+    _mainController.dispose();
+    _progressController.dispose();
+    _particleController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: Container(
-        decoration: const BoxDecoration(gradient: AppColors.cinematicGradient),
+        decoration: const BoxDecoration(
+          gradient: _SplashColors.backgroundGradient,
+        ),
         child: Stack(
           children: [
             // Floating particles
@@ -222,7 +253,7 @@ class _SplashScreenState extends State<SplashScreen>
               ),
             ),
 
-            // Decorative Blurs (From Stitch)
+            // Decorative bottom blue glow orb
             Positioned(
               bottom: -96,
               left: -96,
@@ -231,10 +262,10 @@ class _SplashScreenState extends State<SplashScreen>
                 height: 384,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: AppColors.primary.withValues(alpha: 0.1),
+                  color: _SplashColors.blue.withValues(alpha: 0.12),
                   boxShadow: [
                     BoxShadow(
-                      color: AppColors.primary.withValues(alpha: 0.1),
+                      color: _SplashColors.blue.withValues(alpha: 0.1),
                       blurRadius: 100,
                       spreadRadius: 50,
                     ),
@@ -242,6 +273,7 @@ class _SplashScreenState extends State<SplashScreen>
                 ),
               ),
             ),
+            // Decorative top purple glow orb
             Positioned(
               top: -96,
               right: -96,
@@ -250,10 +282,10 @@ class _SplashScreenState extends State<SplashScreen>
                 height: 384,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: AppColors.accentPurple.withValues(alpha: 0.1),
+                  color: _SplashColors.purple.withValues(alpha: 0.12),
                   boxShadow: [
                     BoxShadow(
-                      color: AppColors.accentPurple.withValues(alpha: 0.1),
+                      color: _SplashColors.purple.withValues(alpha: 0.1),
                       blurRadius: 100,
                       spreadRadius: 50,
                     ),
@@ -272,12 +304,12 @@ class _SplashScreenState extends State<SplashScreen>
       width: 96,
       height: 96,
       decoration: BoxDecoration(
-        color: AppColors.primary.withValues(alpha: 0.2),
+        color: _SplashColors.blue.withValues(alpha: 0.2),
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: AppColors.primary.withValues(alpha: 0.3)),
+        border: Border.all(color: _SplashColors.blue.withValues(alpha: 0.3)),
         boxShadow: [
           BoxShadow(
-            color: AppColors.primary.withValues(alpha: 0.2),
+            color: _SplashColors.blue.withValues(alpha: 0.2),
             blurRadius: 24,
             spreadRadius: 2,
           ),
@@ -292,7 +324,7 @@ class _SplashScreenState extends State<SplashScreen>
             return const Icon(
               Icons.movie_rounded,
               size: 56,
-              color: AppColors.primary,
+              color: _SplashColors.blue,
             );
           },
         ),
@@ -306,13 +338,21 @@ class _SplashScreenState extends State<SplashScreen>
       children: [
         Text(
           'Movie',
-          style: AppTextStyles.displayLarge.copyWith(
-            color: AppColors.textPrimary,
+          style: TextStyle(
+            fontFamily: 'Poppins',
+            fontSize: 36,
+            fontWeight: FontWeight.w700,
+            color: _SplashColors.textWhite,
           ),
         ),
         Text(
           'Hub',
-          style: AppTextStyles.displayLarge.copyWith(color: AppColors.primary),
+          style: TextStyle(
+            fontFamily: 'Poppins',
+            fontSize: 36,
+            fontWeight: FontWeight.w700,
+            color: _SplashColors.blue,
+          ),
         ),
       ],
     );
@@ -321,8 +361,11 @@ class _SplashScreenState extends State<SplashScreen>
   Widget _buildTagline() {
     return Text(
       'YOUR ULTIMATE CINEMA',
-      style: AppTextStyles.labelSmall.copyWith(
-        color: AppColors.textPrimary.withValues(alpha: 0.7),
+      style: TextStyle(
+        fontFamily: 'Inter',
+        fontSize: 11,
+        fontWeight: FontWeight.w500,
+        color: _SplashColors.textFaded,
         letterSpacing: 4.0,
       ),
     );
@@ -341,7 +384,7 @@ class _SplashScreenState extends State<SplashScreen>
                 height: 4,
                 width: double.infinity,
                 decoration: BoxDecoration(
-                  color: AppColors.surface,
+                  color: _SplashColors.surface,
                   borderRadius: BorderRadius.circular(4),
                 ),
                 child: FractionallySizedBox(
@@ -349,7 +392,7 @@ class _SplashScreenState extends State<SplashScreen>
                   widthFactor: _progressAnimation.value,
                   child: Container(
                     decoration: BoxDecoration(
-                      gradient: AppColors.primaryGradient,
+                      gradient: _SplashColors.progressGradient,
                       borderRadius: BorderRadius.circular(4),
                     ),
                   ),
@@ -362,9 +405,12 @@ class _SplashScreenState extends State<SplashScreen>
                 child: Text(
                   _statusText.toUpperCase(),
                   key: ValueKey(_statusText),
-                  style: AppTextStyles.labelSmall.copyWith(
-                    color: AppColors.textMuted,
+                  style: TextStyle(
+                    fontFamily: 'Inter',
                     fontSize: 10,
+                    fontWeight: FontWeight.w500,
+                    color: _SplashColors.textFaded.withValues(alpha: 0.5),
+                    letterSpacing: 3.0,
                   ),
                 ),
               ),

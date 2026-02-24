@@ -56,6 +56,12 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
   Duration? _lastSavedPosition;
   Timer? _initTimeout;
 
+  // ── Double-tap seek state ──
+  bool _showSeekForward = false;
+  bool _showSeekBackward = false;
+  int _seekSeconds = 0;
+  Timer? _seekTimer;
+
   @override
   void initState() {
     super.initState();
@@ -374,6 +380,7 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
   @override
   void dispose() {
     _initTimeout?.cancel();
+    _seekTimer?.cancel();
 
     // Save final position
     if (widget.tmdbId != null && _betterPlayerController != null) {
@@ -563,21 +570,197 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
     );
   }
 
+  /// Seek the video by [seconds] (positive = forward, negative = backward)
+  void _seekBy(int seconds) {
+    if (_betterPlayerController == null) return;
+    final vpValue = _betterPlayerController!.videoPlayerController?.value;
+    if (vpValue == null || !vpValue.initialized) return;
+
+    final current = vpValue.position;
+    final duration = vpValue.duration ?? Duration.zero;
+    final target = current + Duration(seconds: seconds);
+    final clamped = Duration(
+      milliseconds: target.inMilliseconds.clamp(0, duration.inMilliseconds),
+    );
+    _betterPlayerController!.seekTo(clamped);
+  }
+
+  void _onDoubleTapSeek(bool isForward) {
+    _seekTimer?.cancel();
+    _seekBy(isForward ? 10 : -10);
+    setState(() {
+      _seekSeconds += 10;
+      if (isForward) {
+        _showSeekForward = true;
+        _showSeekBackward = false;
+      } else {
+        _showSeekBackward = true;
+        _showSeekForward = false;
+      }
+    });
+    _seekTimer = Timer(const Duration(milliseconds: 700), () {
+      if (mounted) {
+        setState(() {
+          _showSeekForward = false;
+          _showSeekBackward = false;
+          _seekSeconds = 0;
+        });
+      }
+    });
+  }
+
   Widget _buildPlayer() {
     return Stack(
       children: [
+        // ── Video Player ──
         Center(
           child: _betterPlayerController != null
               ? BetterPlayer(controller: _betterPlayerController!)
               : const SizedBox.shrink(),
         ),
-        // Back button overlay
+
+        // ── Double-Tap Seek Overlay ──
+        Positioned.fill(
+          child: Row(
+            children: [
+              // Left half — seek backward
+              Expanded(
+                child: GestureDetector(
+                  behavior: HitTestBehavior.translucent,
+                  onDoubleTap: () => _onDoubleTapSeek(false),
+                  child: AnimatedOpacity(
+                    opacity: _showSeekBackward ? 1.0 : 0.0,
+                    duration: const Duration(milliseconds: 200),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.centerLeft,
+                          end: Alignment.centerRight,
+                          colors: [
+                            Colors.white.withValues(alpha: 0.15),
+                            Colors.transparent,
+                          ],
+                        ),
+                        borderRadius: const BorderRadius.only(
+                          topRight: Radius.circular(200),
+                          bottomRight: Radius.circular(200),
+                        ),
+                      ),
+                      child: Center(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(
+                              Icons.fast_rewind_rounded,
+                              color: Colors.white,
+                              size: 40,
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              '$_seekSeconds seconds',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              // Right half — seek forward
+              Expanded(
+                child: GestureDetector(
+                  behavior: HitTestBehavior.translucent,
+                  onDoubleTap: () => _onDoubleTapSeek(true),
+                  child: AnimatedOpacity(
+                    opacity: _showSeekForward ? 1.0 : 0.0,
+                    duration: const Duration(milliseconds: 200),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.centerRight,
+                          end: Alignment.centerLeft,
+                          colors: [
+                            Colors.white.withValues(alpha: 0.15),
+                            Colors.transparent,
+                          ],
+                        ),
+                        borderRadius: const BorderRadius.only(
+                          topLeft: Radius.circular(200),
+                          bottomLeft: Radius.circular(200),
+                        ),
+                      ),
+                      child: Center(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(
+                              Icons.fast_forward_rounded,
+                              color: Colors.white,
+                              size: 40,
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              '$_seekSeconds seconds',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+
+        // ── Back button overlay ──
         Positioned(
           top: MediaQuery.of(context).padding.top + 8,
           left: 8,
-          child: IconButton(
-            icon: const Icon(Icons.arrow_back, color: Colors.white, size: 28),
-            onPressed: () => Navigator.pop(context),
+          child: Container(
+            decoration: BoxDecoration(
+              color: Colors.black.withValues(alpha: 0.3),
+              shape: BoxShape.circle,
+            ),
+            child: IconButton(
+              icon: const Icon(Icons.arrow_back, color: Colors.white, size: 24),
+              onPressed: () => Navigator.pop(context),
+            ),
+          ),
+        ),
+
+        // ── PiP button overlay ──
+        Positioned(
+          top: MediaQuery.of(context).padding.top + 8,
+          right: 8,
+          child: Container(
+            decoration: BoxDecoration(
+              color: Colors.black.withValues(alpha: 0.3),
+              shape: BoxShape.circle,
+            ),
+            child: IconButton(
+              icon: const Icon(
+                Icons.picture_in_picture_alt_rounded,
+                color: Colors.white,
+                size: 22,
+              ),
+              tooltip: 'Picture in Picture',
+              onPressed: () {
+                _betterPlayerController?.enablePictureInPicture(
+                  _betterPlayerController!.betterPlayerGlobalKey!,
+                );
+              },
+            ),
           ),
         ),
       ],

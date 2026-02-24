@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:youtube_player_flutter/youtube_player_flutter.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../theme/app_colors.dart';
 
 /// Full-screen YouTube trailer player.
 class TrailerPlayerScreen extends StatefulWidget {
@@ -58,11 +57,13 @@ class _TrailerPlayerScreenState extends State<TrailerPlayerScreen> {
       player: YoutubePlayer(
         controller: _controller,
         showVideoProgressIndicator: true,
-        progressIndicatorColor: AppColors.primary,
+        progressIndicatorColor: Theme.of(context).colorScheme.primary,
         progressColors: ProgressBarColors(
-          playedColor: AppColors.primary,
-          handleColor: AppColors.primary,
-          bufferedColor: AppColors.primary.withValues(alpha: 0.3),
+          playedColor: Theme.of(context).colorScheme.primary,
+          handleColor: Theme.of(context).colorScheme.primary,
+          bufferedColor: Theme.of(
+            context,
+          ).colorScheme.primary.withValues(alpha: 0.3),
           backgroundColor: Colors.white24,
         ),
         topActions: [

@@ -14,7 +14,7 @@ dependencies:
   http: ^1.2.2
   url_launcher: ^6.3.1
   path_provider: ^2.1.4
-  shared_preferences: ^2.3.2
+  shared_preferences: ^2.5.4
   cached_network_image: ^3.4.1
   shimmer: ^3.0.0
   google_fonts: ^6.2.1
@@ -40,6 +40,10 @@ dependencies:
   wakelock_plus: ^1.1.4
   collection: ^1.19.1
   youtube_player_flutter: ^9.0.3
+  palette_generator: ^0.3.3+7
+  disk_space_plus: ^0.2.6
+  local_auth: ^3.0.0
+  crypto: ^3.0.7
 
 dev_dependencies:
   flutter_test:

@@ -21,13 +21,14 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   int _currentIndex = 0;
   DateTime? _lastBackPressed;
+  final _searchKey = GlobalKey<SearchScreenState>();
 
-  final _screens = const [
-    SearchScreen(),
-    RecommendationsScreen(),
-    HDHub4uTab(),
-    LibraryScreen(),
-    DownloadsScreen(),
+  late final _screens = [
+    SearchScreen(key: _searchKey),
+    const RecommendationsScreen(),
+    const HDHub4uTab(),
+    const LibraryScreen(),
+    const DownloadsScreen(),
   ];
 
   static const _navItems = [
@@ -175,6 +176,16 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _handleBackPress() {
+    // If on Search tab and has active search text → clear search first
+    if (_currentIndex == 0) {
+      final searchState = _searchKey.currentState;
+      if (searchState != null && searchState.hasActiveSearch) {
+        searchState.clearSearch();
+        return;
+      }
+    }
+
+    // If not on first tab → go to first tab
     if (_currentIndex != 0) {
       setState(() => _currentIndex = 0);
       return;

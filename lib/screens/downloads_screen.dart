@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:open_filex/open_filex.dart';
+import 'package:disk_space_plus/disk_space_plus.dart';
 
 import '../controllers/download_controller.dart';
 import '../models/download_item.dart';
@@ -19,6 +20,39 @@ class DownloadsScreen extends StatefulWidget {
 
 class _DownloadsScreenState extends State<DownloadsScreen> {
   final controller = Get.find<DownloadController>();
+  double _totalStorageGb = 0;
+  double _freeStorageGb = 0;
+  bool _storageLoaded = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadRealStorage();
+  }
+
+  Future<void> _loadRealStorage() async {
+    try {
+      final diskSpace = DiskSpacePlus();
+      final free = await diskSpace.getFreeDiskSpace ?? 0;
+      final total = await diskSpace.getTotalDiskSpace ?? 0;
+      if (mounted) {
+        setState(() {
+          _freeStorageGb = free / 1024; // MB → GB
+          _totalStorageGb = total / 1024; // MB → GB
+          _storageLoaded = true;
+        });
+      }
+    } catch (e) {
+      debugPrint('❌ Failed to read storage: $e');
+      if (mounted) {
+        setState(() {
+          _freeStorageGb = 0;
+          _totalStorageGb = 0;
+          _storageLoaded = true;
+        });
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -74,25 +108,18 @@ class _DownloadsScreenState extends State<DownloadsScreen> {
         final completed = controller.completedDownloads;
         final history = controller.historyDownloads;
 
-        // Calculate storage mock data based on downloads
+        // Calculate actual downloaded size
         double downloadedGb = 0;
         for (var d in completed) {
-          final sStr = d.fileSizeText
-              .toUpperCase()
-              .replaceAll(' GB', '')
-              .replaceAll(' MB', '');
-          final val = double.tryParse(sStr) ?? 0.0;
-          if (d.fileSizeText.toUpperCase().contains('MB')) {
-            downloadedGb += (val / 1024);
-          } else {
-            downloadedGb += val;
-          }
+          downloadedGb +=
+              (d.totalBytes > 0 ? d.totalBytes : 0) / (1024 * 1024 * 1024);
         }
 
-        // Mock data for the UI
-        final systemGb = 42.5;
-        final totalGb = 128.0;
-        final freeGb = totalGb - systemGb - downloadedGb;
+        // Use real storage data
+        final double totalGb = _totalStorageGb > 0 ? _totalStorageGb : 1.0;
+        final double freeGb = _freeStorageGb;
+        final double usedGb = totalGb - freeGb;
+        final double systemGb = (usedGb - downloadedGb).clamp(0.0, totalGb);
 
         return ListView(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -104,6 +131,7 @@ class _DownloadsScreenState extends State<DownloadsScreen> {
               downloadedGb: downloadedGb,
               totalGb: totalGb,
               freeGb: freeGb,
+              isLoaded: _storageLoaded,
             ),
 
             const SizedBox(height: 24),
@@ -192,12 +220,14 @@ class _DeviceStorageCard extends StatelessWidget {
   final double downloadedGb;
   final double totalGb;
   final double freeGb;
+  final bool isLoaded;
 
   const _DeviceStorageCard({
     required this.systemGb,
     required this.downloadedGb,
     required this.totalGb,
     required this.freeGb,
+    this.isLoaded = true,
   });
 
   @override
@@ -342,25 +372,29 @@ class _SectionTitle extends StatelessWidget {
     return Row(
       children: [
         if (icon != null) ...[
-          Icon(icon, color: AppColors.primary, size: 20),
+          Icon(icon, color: Theme.of(context).colorScheme.primary, size: 20),
           const SizedBox(width: 8),
         ],
         Text(title, style: AppTextStyles.headingLarge.copyWith(fontSize: 20)),
         if (badgeText != null) ...[
           const SizedBox(width: 12),
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+            padding: EdgeInsets.symmetric(horizontal: 10, vertical: 4),
             decoration: BoxDecoration(
-              color: AppColors.primary.withValues(alpha: 0.15),
+              color: Theme.of(
+                context,
+              ).colorScheme.primary.withValues(alpha: 0.15),
               borderRadius: BorderRadius.circular(6),
               border: Border.all(
-                color: AppColors.primary.withValues(alpha: 0.3),
+                color: Theme.of(
+                  context,
+                ).colorScheme.primary.withValues(alpha: 0.3),
               ),
             ),
             child: Text(
               badgeText!,
               style: AppTextStyles.bodySmall.copyWith(
-                color: AppColors.primary,
+                color: Theme.of(context).colorScheme.primary,
                 fontWeight: FontWeight.bold,
               ),
             ),
@@ -404,7 +438,9 @@ class _ActiveDownloadCard extends StatelessWidget {
       final progress = item.progress;
       final isPaused = item.status == 'paused';
 
-      final primaryGlow = isPaused ? Colors.orange : AppColors.primary;
+      final primaryGlow = isPaused
+          ? Colors.orange
+          : Theme.of(context).colorScheme.primary;
 
       return Container(
         margin: const EdgeInsets.only(bottom: 12),
@@ -793,9 +829,9 @@ class _CompletedCard extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             ListTile(
-              leading: const Icon(
+              leading: Icon(
                 Icons.play_circle_fill,
-                color: AppColors.primary,
+                color: Theme.of(context).colorScheme.primary,
               ),
               title: const Text('Play Movie'),
               onTap: () {
@@ -880,7 +916,10 @@ class _HistoricalCard extends StatelessWidget {
           ),
           if (isFailed)
             IconButton(
-              icon: const Icon(Icons.refresh, color: AppColors.primary),
+              icon: Icon(
+                Icons.refresh,
+                color: Theme.of(context).colorScheme.primary,
+              ),
               onPressed: () => controller.retryDownload(item),
               tooltip: 'Retry',
             ),

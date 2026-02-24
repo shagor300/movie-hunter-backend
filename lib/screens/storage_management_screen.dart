@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:disk_space_plus/disk_space_plus.dart';
 import '../services/storage_settings_service.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_text_styles.dart';
@@ -25,6 +26,10 @@ class _StorageManagementScreenState extends State<StorageManagementScreen> {
   late double downloadSpeedLimit;
   late double storageLimit;
 
+  // Real storage data
+  double _totalStorageGb = 0;
+  double _freeStorageGb = 0;
+
   @override
   void initState() {
     super.initState();
@@ -37,6 +42,23 @@ class _StorageManagementScreenState extends State<StorageManagementScreen> {
     scheduleTo = _settings.scheduleTo.value;
     downloadSpeedLimit = _settings.downloadSpeedLimit.value;
     storageLimit = _settings.storageLimit.value;
+    _loadRealStorage();
+  }
+
+  Future<void> _loadRealStorage() async {
+    try {
+      final diskSpace = DiskSpacePlus();
+      final free = await diskSpace.getFreeDiskSpace ?? 0;
+      final total = await diskSpace.getTotalDiskSpace ?? 0;
+      if (mounted) {
+        setState(() {
+          _freeStorageGb = free / 1024;
+          _totalStorageGb = total / 1024;
+        });
+      }
+    } catch (e) {
+      debugPrint('❌ Failed to read storage: $e');
+    }
   }
 
   void _saveChanges() {
@@ -95,7 +117,7 @@ class _StorageManagementScreenState extends State<StorageManagementScreen> {
         child: Column(
           children: [
             // Example circular storage graphic here (placeholder since we have the functional StorageDeviceCard in downloads_screen)
-            _buildChartMock(),
+            _buildStorageChart(),
 
             const SizedBox(height: 24),
 
@@ -114,14 +136,16 @@ class _StorageManagementScreenState extends State<StorageManagementScreen> {
                   Row(
                     children: [
                       Container(
-                        padding: const EdgeInsets.all(8),
+                        padding: EdgeInsets.all(8),
                         decoration: BoxDecoration(
-                          color: AppColors.primary.withValues(alpha: 0.15),
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.primary.withValues(alpha: 0.15),
                           borderRadius: BorderRadius.circular(10),
                         ),
-                        child: const Icon(
+                        child: Icon(
                           Icons.auto_awesome,
-                          color: AppColors.primary,
+                          color: Theme.of(context).colorScheme.primary,
                           size: 20,
                         ),
                       ),
@@ -214,7 +238,7 @@ class _StorageManagementScreenState extends State<StorageManagementScreen> {
                         onChanged: (val) =>
                             setState(() => customSchedule = val),
                         activeThumbColor: Colors.white,
-                        activeTrackColor: AppColors.primary,
+                        activeTrackColor: Theme.of(context).colorScheme.primary,
                         inactiveThumbColor: AppColors.textMuted,
                         inactiveTrackColor: Colors.white10,
                       ),
@@ -317,7 +341,9 @@ class _StorageManagementScreenState extends State<StorageManagementScreen> {
                         child: ElevatedButton(
                           onPressed: _saveChanges,
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.primary,
+                            backgroundColor: Theme.of(
+                              context,
+                            ).colorScheme.primary,
                             padding: const EdgeInsets.symmetric(vertical: 14),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12),
@@ -378,7 +404,7 @@ class _StorageManagementScreenState extends State<StorageManagementScreen> {
             value: value,
             onChanged: onChanged,
             activeThumbColor: Colors.white,
-            activeTrackColor: AppColors.primary,
+            activeTrackColor: Theme.of(context).colorScheme.primary,
             inactiveThumbColor: AppColors.textMuted,
             inactiveTrackColor: Colors.white10,
           ),
@@ -472,20 +498,22 @@ class _StorageManagementScreenState extends State<StorageManagementScreen> {
             Text(
               valueString,
               style: AppTextStyles.bodyMedium.copyWith(
-                color: AppColors.primary,
+                color: Theme.of(context).colorScheme.primary,
                 fontWeight: FontWeight.bold,
               ),
             ),
           ],
         ),
-        const SizedBox(height: 8),
+        SizedBox(height: 8),
         SliderTheme(
           data: SliderTheme.of(context).copyWith(
-            activeTrackColor: AppColors.primary,
+            activeTrackColor: Theme.of(context).colorScheme.primary,
             inactiveTrackColor: Colors.white10,
             thumbColor: Colors.white,
             trackHeight: 4,
-            overlayColor: AppColors.primary.withValues(alpha: 0.2),
+            overlayColor: Theme.of(
+              context,
+            ).colorScheme.primary.withValues(alpha: 0.2),
             thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 8),
           ),
           child: Slider(
@@ -517,7 +545,17 @@ class _StorageManagementScreenState extends State<StorageManagementScreen> {
     );
   }
 
-  Widget _buildChartMock() {
+  Widget _buildStorageChart() {
+    final freeStr = _freeStorageGb > 0
+        ? _freeStorageGb.toStringAsFixed(1)
+        : '...';
+    final totalStr = _totalStorageGb > 0
+        ? _totalStorageGb.toStringAsFixed(0)
+        : '...';
+    final usedPct = _totalStorageGb > 0
+        ? ((_totalStorageGb - _freeStorageGb) / _totalStorageGb).clamp(0.0, 1.0)
+        : 0.0;
+
     return Center(
       child: Container(
         width: 180,
@@ -525,18 +563,20 @@ class _StorageManagementScreenState extends State<StorageManagementScreen> {
         margin: const EdgeInsets.symmetric(vertical: 20),
         decoration: BoxDecoration(
           shape: BoxShape.circle,
-          gradient: const SweepGradient(
+          gradient: SweepGradient(
             colors: [
-              Color(0xFF4338CA),
-              Color(0xFF06B6D4),
-              Color(0xFF8B5CF6),
-              Color(0xFF1E293B),
+              const Color(0xFF4338CA),
+              const Color(0xFF06B6D4),
+              const Color(0xFF8B5CF6),
+              const Color(0xFF1E293B),
             ],
-            stops: [0.0, 0.4, 0.6, 1.0],
+            stops: [0.0, usedPct * 0.6, usedPct * 0.9, 1.0],
           ),
           boxShadow: [
             BoxShadow(
-              color: AppColors.primary.withValues(alpha: 0.2),
+              color: Theme.of(
+                context,
+              ).colorScheme.primary.withValues(alpha: 0.2),
               blurRadius: 40,
               spreadRadius: -10,
             ),
@@ -564,7 +604,7 @@ class _StorageManagementScreenState extends State<StorageManagementScreen> {
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
                     Text(
-                      '34.2',
+                      freeStr,
                       style: AppTextStyles.displayMedium.copyWith(
                         fontSize: 28,
                         height: 1.0,
@@ -583,7 +623,7 @@ class _StorageManagementScreenState extends State<StorageManagementScreen> {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'of 128 GB',
+                  'of $totalStr GB',
                   style: AppTextStyles.labelSmall.copyWith(
                     color: AppColors.textSecondary,
                   ),

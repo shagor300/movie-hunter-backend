@@ -18,15 +18,16 @@ import '../widgets/skeleton_loader.dart';
 import 'details_screen.dart';
 import 'settings_screen.dart';
 import 'voice_search/voice_search_screen.dart';
+import '../widgets/premium_transitions.dart';
 
 class SearchScreen extends StatefulWidget {
   const SearchScreen({super.key});
 
   @override
-  State<SearchScreen> createState() => _SearchScreenState();
+  State<SearchScreen> createState() => SearchScreenState();
 }
 
-class _SearchScreenState extends State<SearchScreen> {
+class SearchScreenState extends State<SearchScreen> {
   final TextEditingController _searchController = TextEditingController();
   final TmdbService _tmdbService = TmdbService();
   List<Movie> _searchResults = [];
@@ -58,6 +59,15 @@ class _SearchScreenState extends State<SearchScreen> {
     'Top Rated',
   ];
   String _activeQuickFilter = 'All';
+
+  /// Whether search has active text or results (for back-press handling)
+  bool get hasActiveSearch => _searchController.text.isNotEmpty;
+
+  /// Clear search and go back to trending
+  void clearSearch() {
+    _searchController.clear();
+    _fetchTrending();
+  }
 
   @override
   void initState() {
@@ -518,9 +528,7 @@ class _SearchScreenState extends State<SearchScreen> {
               onTap: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(
-                    builder: (context) => DetailsScreen(movie: movie),
-                  ),
+                  PremiumPageRoute(page: DetailsScreen(movie: movie)),
                 );
               },
             );

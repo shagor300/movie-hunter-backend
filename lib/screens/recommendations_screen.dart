@@ -281,7 +281,7 @@ class _RecommendationsScreenState extends State<RecommendationsScreen>
           : _sections.isEmpty
           ? RefreshIndicator(
               onRefresh: _loadRecommendations,
-              color: AppColors.primary,
+              color: Theme.of(context).colorScheme.primary,
               child: ListView(
                 physics: const AlwaysScrollableScrollPhysics(),
                 children: [
@@ -294,7 +294,7 @@ class _RecommendationsScreenState extends State<RecommendationsScreen>
               opacity: _fadeAnim,
               child: RefreshIndicator(
                 onRefresh: _loadRecommendations,
-                color: AppColors.primary,
+                color: Theme.of(context).colorScheme.primary,
                 child: CustomScrollView(
                   physics: const BouncingScrollPhysics(
                     parent: AlwaysScrollableScrollPhysics(),
@@ -332,7 +332,7 @@ class _RecommendationsScreenState extends State<RecommendationsScreen>
               'Hub',
               style: AppTextStyles.headingLarge.copyWith(
                 fontSize: 22,
-                color: AppColors.primary,
+                color: Theme.of(context).colorScheme.primary,
               ),
             ),
           ],
@@ -372,7 +372,7 @@ class _RecommendationsScreenState extends State<RecommendationsScreen>
             'Hub',
             style: AppTextStyles.headingLarge.copyWith(
               fontSize: 22,
-              color: AppColors.primary,
+              color: Theme.of(context).colorScheme.primary,
             ),
           ),
         ],
@@ -506,9 +506,9 @@ class _RecommendationsScreenState extends State<RecommendationsScreen>
                               borderRadius: BorderRadius.circular(12),
                               boxShadow: [
                                 BoxShadow(
-                                  color: AppColors.primary.withValues(
-                                    alpha: 0.3,
-                                  ),
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.primary.withValues(alpha: 0.3),
                                   blurRadius: 16,
                                   offset: const Offset(0, 4),
                                 ),
@@ -663,15 +663,19 @@ class _RecommendationsScreenState extends State<RecommendationsScreen>
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Container(
-            padding: const EdgeInsets.all(28),
+            padding: EdgeInsets.all(28),
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: AppColors.primary.withValues(alpha: 0.1),
+              color: Theme.of(
+                context,
+              ).colorScheme.primary.withValues(alpha: 0.1),
             ),
             child: Icon(
               _hasError ? Icons.wifi_off_rounded : Icons.movie_filter,
               size: 56,
-              color: AppColors.primary.withValues(alpha: 0.5),
+              color: Theme.of(
+                context,
+              ).colorScheme.primary.withValues(alpha: 0.5),
             ),
           ),
           const SizedBox(height: 20),
@@ -695,7 +699,9 @@ class _RecommendationsScreenState extends State<RecommendationsScreen>
               borderRadius: BorderRadius.circular(12),
               boxShadow: [
                 BoxShadow(
-                  color: AppColors.primary.withValues(alpha: 0.25),
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.primary.withValues(alpha: 0.25),
                   blurRadius: 16,
                   offset: const Offset(0, 4),
                 ),
@@ -751,12 +757,18 @@ class _RecommendationsScreenState extends State<RecommendationsScreen>
             child: Row(
               children: [
                 Container(
-                  padding: const EdgeInsets.all(8),
+                  padding: EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: AppColors.primary.withValues(alpha: 0.1),
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.primary.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  child: Icon(section.icon, color: AppColors.primary, size: 18),
+                  child: Icon(
+                    section.icon,
+                    color: Theme.of(context).colorScheme.primary,
+                    size: 18,
+                  ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -770,13 +782,13 @@ class _RecommendationsScreenState extends State<RecommendationsScreen>
                 Text(
                   'See All',
                   style: AppTextStyles.labelSmall.copyWith(
-                    color: AppColors.primary,
+                    color: Theme.of(context).colorScheme.primary,
                   ),
                 ),
-                const SizedBox(width: 4),
-                const Icon(
+                SizedBox(width: 4),
+                Icon(
                   Icons.arrow_forward_ios,
-                  color: AppColors.primary,
+                  color: Theme.of(context).colorScheme.primary,
                   size: 12,
                 ),
               ],

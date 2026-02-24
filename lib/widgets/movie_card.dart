@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:shimmer/shimmer.dart';
+import 'package:get/get.dart';
 import '../models/movie.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_text_styles.dart';
 import '../theme/app_dimensions.dart';
+import '../theme/theme_controller.dart';
 
 class MovieCard extends StatelessWidget {
   final Movie movie;
@@ -27,14 +29,14 @@ class MovieCard extends StatelessWidget {
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
                 border: Border.all(color: AppColors.glassBorder),
-                color: AppColors.surface, // Fallback bg
+                color: AppColors.surface,
               ),
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
                 child: Stack(
                   fit: StackFit.expand,
                   children: [
-                    // Image
+                    // Image with Hero
                     Hero(
                       tag: 'poster-${movie.title}',
                       child: movie.fullPosterPath.isNotEmpty
@@ -65,7 +67,7 @@ class MovieCard extends StatelessWidget {
                             ),
                     ),
 
-                    // Bottom Gradient (for rating text visibility)
+                    // Bottom Gradient
                     Positioned(
                       bottom: 0,
                       left: 0,
@@ -85,43 +87,11 @@ class MovieCard extends StatelessWidget {
                       ),
                     ),
 
-                    // Top Right Quality Badge
-                    Positioned(
-                      top: 8,
-                      right: 8,
-                      child: _buildGlassBadge(
-                        child: Text(
-                          "HD",
-                          style: AppTextStyles.labelSmall.copyWith(fontSize: 9),
-                        ),
-                      ),
-                    ),
+                    // Top Right Quality Badge — accent colored
+                    Positioned(top: 8, right: 8, child: _buildQualityBadge()),
 
                     // Bottom Left Rating Badge
-                    Positioned(
-                      bottom: 8,
-                      left: 8,
-                      child: _buildGlassBadge(
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              Icons.star,
-                              color: AppColors.starGold,
-                              size: 14,
-                            ),
-                            const SizedBox(width: 2),
-                            Text(
-                              movie.rating.toStringAsFixed(1),
-                              style: AppTextStyles.labelSmall.copyWith(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
+                    Positioned(bottom: 8, left: 8, child: _buildRatingBadge()),
                   ],
                 ),
               ),
@@ -138,7 +108,7 @@ class MovieCard extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
           ),
 
-          // Subtitle (Year & Sources)
+          // Subtitle
           const SizedBox(height: 2),
           Text(
             "${movie.year} • ${movie.sources.length} Sources",
@@ -151,18 +121,71 @@ class MovieCard extends StatelessWidget {
     );
   }
 
-  Widget _buildGlassBadge({required Widget child}) {
+  Widget _buildQualityBadge() {
+    final tc = Get.find<ThemeController>();
+    return Obx(
+      () => Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+        decoration: BoxDecoration(
+          color: tc.accentColor.withValues(alpha: 0.15),
+          borderRadius: BorderRadius.circular(6),
+          border: Border.all(
+            color: tc.accentColor.withValues(alpha: 0.3),
+            width: 0.5,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.3),
+              blurRadius: 4,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Text(
+          "HD",
+          style: AppTextStyles.labelSmall.copyWith(
+            fontSize: 9,
+            fontWeight: FontWeight.w700,
+            color: tc.accentColor,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildRatingBadge() {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
       decoration: BoxDecoration(
-        color: AppColors.glassBackground.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(AppDimensions.radiusSm),
-        border: Border.all(color: AppColors.glassBorder.withValues(alpha: 0.2)),
-        boxShadow: const [
-          BoxShadow(color: Colors.black26, blurRadius: 4, offset: Offset(0, 2)),
+        color: Colors.black.withValues(alpha: 0.5),
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(
+          color: Colors.white.withValues(alpha: 0.1),
+          width: 0.5,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.3),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
         ],
       ),
-      child: child,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(Icons.star, color: AppColors.starGold, size: 13),
+          const SizedBox(width: 3),
+          Text(
+            movie.rating.toStringAsFixed(1),
+            style: AppTextStyles.labelSmall.copyWith(
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+              fontSize: 11,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

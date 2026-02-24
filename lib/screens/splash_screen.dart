@@ -5,8 +5,10 @@ import 'package:get/get.dart';
 
 import '../controllers/update_controller.dart';
 import '../services/update_service.dart';
+import '../services/app_lock_service.dart';
 import '../widgets/update_dialog.dart';
 import 'home_screen.dart';
+import 'app_lock_screen.dart';
 import 'onboarding_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -132,6 +134,9 @@ class _SplashScreenState extends State<SplashScreen>
       await Future.delayed(const Duration(seconds: 3));
       if (!mounted) return;
 
+      // Initialize App Lock
+      await AppLockService.instance.init();
+
       unawaited(_checkUpdateInBackground());
 
       final prefs = await SharedPreferences.getInstance();
@@ -143,6 +148,21 @@ class _SplashScreenState extends State<SplashScreen>
         debugPrint('🎬 SplashScreen: Navigating to OnboardingScreen');
         Get.offAll(
           () => const OnboardingScreen(),
+          transition: Transition.fade,
+          duration: const Duration(milliseconds: 800),
+        );
+      } else if (AppLockService.instance.isLockEnabled) {
+        debugPrint('🔒 SplashScreen: App Lock enabled, showing lock screen');
+        Get.offAll(
+          () => AppLockScreen(
+            onUnlocked: () {
+              Get.offAll(
+                () => const HomeScreen(),
+                transition: Transition.fade,
+                duration: const Duration(milliseconds: 500),
+              );
+            },
+          ),
           transition: Transition.fade,
           duration: const Duration(milliseconds: 800),
         );

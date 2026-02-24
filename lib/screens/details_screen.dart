@@ -309,10 +309,13 @@ class _DetailsScreenState extends State<DetailsScreen> {
                           fontSize: 28,
                         ),
                       ),
-                      const SizedBox(height: 12),
+                      SizedBox(height: 12),
                       Row(
                         children: [
-                          _buildChip(widget.movie.year, AppColors.primary),
+                          _buildChip(
+                            widget.movie.year,
+                            Theme.of(context).colorScheme.primary,
+                          ),
                           const SizedBox(width: 8),
                           _buildChip("HD 4K", AppColors.primaryDark),
                           const SizedBox(width: 8),
@@ -368,16 +371,20 @@ class _DetailsScreenState extends State<DetailsScreen> {
                               if (_linkController.embedLinks.isNotEmpty) ...[
                                 Row(
                                   children: [
-                                    const Icon(
+                                    Icon(
                                       Icons.play_circle_fill,
-                                      color: AppColors.primary,
+                                      color: Theme.of(
+                                        context,
+                                      ).colorScheme.primary,
                                       size: 20,
                                     ),
                                     const SizedBox(width: 8),
                                     Text(
                                       'Stream Online',
                                       style: AppTextStyles.titleMedium.copyWith(
-                                        color: AppColors.primary,
+                                        color: Theme.of(
+                                          context,
+                                        ).colorScheme.primary,
                                       ),
                                     ),
                                   ],
@@ -950,7 +957,7 @@ class _DetailsScreenState extends State<DetailsScreen> {
         gradient: AppColors.primaryGradient,
         boxShadow: [
           BoxShadow(
-            color: AppColors.primary.withValues(alpha: 0.3),
+            color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.3),
             blurRadius: 15,
             offset: const Offset(0, 5),
           ),
@@ -1039,10 +1046,12 @@ class _DetailsScreenState extends State<DetailsScreen> {
                     height: 110,
                     child: CircularProgressIndicator(
                       strokeWidth: 3,
-                      valueColor: const AlwaysStoppedAnimation<Color>(
-                        AppColors.primary,
+                      valueColor: AlwaysStoppedAnimation<Color>(
+                        Theme.of(context).colorScheme.primary,
                       ),
-                      backgroundColor: AppColors.primary.withValues(alpha: 0.1),
+                      backgroundColor: Theme.of(
+                        context,
+                      ).colorScheme.primary.withValues(alpha: 0.1),
                     ),
                   ),
                   TweenAnimationBuilder<double>(
@@ -1056,11 +1065,13 @@ class _DetailsScreenState extends State<DetailsScreen> {
                       height: 70,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: AppColors.primary.withValues(alpha: 0.15),
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.primary.withValues(alpha: 0.15),
                       ),
-                      child: const Icon(
+                      child: Icon(
                         Icons.satellite_alt_rounded,
-                        color: AppColors.primary,
+                        color: Theme.of(context).colorScheme.primary,
                         size: 32,
                       ),
                     ),
@@ -1103,11 +1114,11 @@ class _DetailsScreenState extends State<DetailsScreen> {
                 padding: const EdgeInsets.symmetric(horizontal: 60),
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(4),
-                  child: const LinearProgressIndicator(
+                  child: LinearProgressIndicator(
                     minHeight: 4,
                     backgroundColor: AppColors.surfaceLight,
                     valueColor: AlwaysStoppedAnimation<Color>(
-                      AppColors.primary,
+                      Theme.of(context).colorScheme.primary,
                     ),
                   ),
                 ),
@@ -1160,7 +1171,7 @@ class _DetailsScreenState extends State<DetailsScreen> {
                       skyMoviesHDUrl: widget.movie.skyMoviesHDUrl,
                     ),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primary,
+                      backgroundColor: Theme.of(context).colorScheme.primary,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
@@ -1222,7 +1233,9 @@ class _DetailsScreenState extends State<DetailsScreen> {
               borderRadius: BorderRadius.circular(20),
               boxShadow: [
                 BoxShadow(
-                  color: AppColors.primary.withValues(alpha: 0.3),
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.primary.withValues(alpha: 0.3),
                   blurRadius: 30,
                   spreadRadius: 2,
                 ),
@@ -1231,11 +1244,11 @@ class _DetailsScreenState extends State<DetailsScreen> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const SizedBox(
+                SizedBox(
                   width: 50,
                   height: 50,
                   child: CircularProgressIndicator(
-                    color: AppColors.primary,
+                    color: Theme.of(context).colorScheme.primary,
                     strokeWidth: 3,
                   ),
                 ),
@@ -1351,12 +1364,17 @@ class _DetailsScreenState extends State<DetailsScreen> {
             vertical: 8,
           ),
           leading: Container(
-            padding: const EdgeInsets.all(10),
+            padding: EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: AppColors.primary.withValues(alpha: 0.1),
+              color: Theme.of(
+                context,
+              ).colorScheme.primary.withValues(alpha: 0.1),
               shape: BoxShape.circle,
             ),
-            child: const Icon(Icons.cloud_download, color: AppColors.primary),
+            child: Icon(
+              Icons.cloud_download,
+              color: Theme.of(context).colorScheme.primary,
+            ),
           ),
           title: Text(
             link['name'] ?? "Source ${index + 1}",
@@ -1371,9 +1389,9 @@ class _DetailsScreenState extends State<DetailsScreen> {
             children: [
               // Stream/Play button — resolves link and opens in-app player
               IconButton(
-                icon: const Icon(
+                icon: Icon(
                   Icons.play_circle_outline,
-                  color: AppColors.primary,
+                  color: Theme.of(context).colorScheme.primary,
                   size: 22,
                 ),
                 tooltip: 'Play Video',
@@ -1414,7 +1432,9 @@ class _DetailsScreenState extends State<DetailsScreen> {
                     "Link Copied",
                     "Ready to paste in your browser",
                     snackPosition: SnackPosition.BOTTOM,
-                    backgroundColor: AppColors.primary.withValues(alpha: 0.8),
+                    backgroundColor: Theme.of(
+                      context,
+                    ).colorScheme.primary.withValues(alpha: 0.8),
                     colorText: Colors.white,
                     margin: const EdgeInsets.all(20),
                     duration: const Duration(seconds: 2),
@@ -1437,7 +1457,10 @@ class _DetailsScreenState extends State<DetailsScreen> {
   Widget _buildEmbedLinkItem(Map<String, String> link, int index) {
     // Gradient colors based on player priority
     final gradients = <List<Color>>[
-      [AppColors.primary, AppColors.primaryDark], // Emerald - Recommended
+      [
+        Theme.of(context).colorScheme.primary,
+        AppColors.primaryDark,
+      ], // Emerald - Recommended
       [const Color(0xFF2563EB), const Color(0xFF3B82F6)], // Blue - High Speed
       [const Color(0xFF059669), const Color(0xFF10B981)], // Green - Standard
       [const Color(0xFFD97706), const Color(0xFFF59E0B)], // Orange - Backup

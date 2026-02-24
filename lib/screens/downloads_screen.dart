@@ -342,25 +342,25 @@ class _SectionTitle extends StatelessWidget {
     return Row(
       children: [
         if (icon != null) ...[
-          Icon(icon, color: AppColors.primary, size: 20),
+          Icon(icon, color: Theme.of(context).colorScheme.primary, size: 20),
           const SizedBox(width: 8),
         ],
         Text(title, style: AppTextStyles.headingLarge.copyWith(fontSize: 20)),
         if (badgeText != null) ...[
           const SizedBox(width: 12),
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+            padding: EdgeInsets.symmetric(horizontal: 10, vertical: 4),
             decoration: BoxDecoration(
-              color: AppColors.primary.withValues(alpha: 0.15),
+              color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.15),
               borderRadius: BorderRadius.circular(6),
               border: Border.all(
-                color: AppColors.primary.withValues(alpha: 0.3),
+                color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.3),
               ),
             ),
             child: Text(
               badgeText!,
               style: AppTextStyles.bodySmall.copyWith(
-                color: AppColors.primary,
+                color: Theme.of(context).colorScheme.primary,
                 fontWeight: FontWeight.bold,
               ),
             ),
@@ -404,7 +404,7 @@ class _ActiveDownloadCard extends StatelessWidget {
       final progress = item.progress;
       final isPaused = item.status == 'paused';
 
-      final primaryGlow = isPaused ? Colors.orange : AppColors.primary;
+      final primaryGlow = isPaused ? Colors.orange : Theme.of(context).colorScheme.primary;
 
       return Container(
         margin: const EdgeInsets.only(bottom: 12),
@@ -793,9 +793,9 @@ class _CompletedCard extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             ListTile(
-              leading: const Icon(
+              leading: Icon(
                 Icons.play_circle_fill,
-                color: AppColors.primary,
+                color: Theme.of(context).colorScheme.primary,
               ),
               title: const Text('Play Movie'),
               onTap: () {
@@ -880,7 +880,7 @@ class _HistoricalCard extends StatelessWidget {
           ),
           if (isFailed)
             IconButton(
-              icon: const Icon(Icons.refresh, color: AppColors.primary),
+              icon: Icon(Icons.refresh, color: Theme.of(context).colorScheme.primary),
               onPressed: () => controller.retryDownload(item),
               tooltip: 'Retry',
             ),

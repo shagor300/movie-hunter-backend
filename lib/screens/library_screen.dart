@@ -66,9 +66,9 @@ class _LibraryScreenState extends State<LibraryScreen>
         bottom: TabBar(
           controller: _tabController,
           isScrollable: true,
-          indicatorColor: AppColors.primary,
+          indicatorColor: Theme.of(context).colorScheme.primary,
           indicatorWeight: 3,
-          labelColor: AppColors.primary,
+          labelColor: Theme.of(context).colorScheme.primary,
           unselectedLabelColor: AppColors.textMuted,
           labelStyle: AppTextStyles.titleMedium.copyWith(
             fontWeight: FontWeight.w600,

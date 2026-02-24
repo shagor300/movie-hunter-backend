@@ -165,7 +165,7 @@ class _VoiceSearchScreenState extends State<VoiceSearchScreen>
               },
               child: AvatarGlow(
                 animate: _voiceService.isListening.value,
-                glowColor: AppColors.primary,
+                glowColor: Theme.of(context).colorScheme.primary,
                 duration: const Duration(milliseconds: 2000),
                 repeat: true,
                 child: Container(
@@ -173,13 +173,13 @@ class _VoiceSearchScreenState extends State<VoiceSearchScreen>
                   height: 140,
                   decoration: BoxDecoration(
                     color: _voiceService.isListening.value
-                        ? AppColors.primary
+                        ? Theme.of(context).colorScheme.primary
                         : AppColors.surface.withValues(alpha: 0.12),
                     shape: BoxShape.circle,
                     boxShadow: _voiceService.isListening.value
                         ? [
                             BoxShadow(
-                              color: AppColors.primary.withValues(alpha: 0.4),
+                              color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.4),
                               blurRadius: 30,
                               spreadRadius: 5,
                             ),
@@ -221,7 +221,7 @@ class _VoiceSearchScreenState extends State<VoiceSearchScreen>
                   fontSize: 18,
                   color: _voiceService.recognizedText.value.isEmpty
                       ? AppColors.textSecondary.withValues(alpha: 0.5)
-                      : AppColors.primary,
+                      : Theme.of(context).colorScheme.primary,
                 ),
                 textAlign: TextAlign.center,
               ),
@@ -284,7 +284,7 @@ class _VoiceSearchScreenState extends State<VoiceSearchScreen>
                       ),
                     ),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primary,
+                      backgroundColor: Theme.of(context).colorScheme.primary,
                       foregroundColor: Colors.black,
                       padding: const EdgeInsets.symmetric(
                         horizontal: 24,
@@ -336,7 +336,7 @@ class _VoiceSearchScreenState extends State<VoiceSearchScreen>
               height: height,
               margin: const EdgeInsets.symmetric(horizontal: 3),
               decoration: BoxDecoration(
-                color: AppColors.primary.withValues(alpha: 0.8),
+                color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.8),
                 borderRadius: BorderRadius.circular(2),
               ),
             );

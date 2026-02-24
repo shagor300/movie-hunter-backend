@@ -97,7 +97,7 @@ class _WebViewPlayerState extends State<WebViewPlayer> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const CircularProgressIndicator(color: AppColors.primary),
+                      CircularProgressIndicator(color: Theme.of(context).colorScheme.primary),
                       const SizedBox(height: 20),
                       Text(
                         'Loading player...',

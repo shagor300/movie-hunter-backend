@@ -299,7 +299,7 @@ class NotificationSettingsScreen extends StatelessWidget {
                         HapticFeedback.lightImpact();
                         nc.toggleQuietHours(v);
                       },
-                      activeTrackColor: AppColors.primary,
+                      activeTrackColor: accent,
                     ),
                   ],
                 ),
@@ -441,17 +441,13 @@ class _MasterToggle extends StatelessWidget {
                     ? 'Notifications are enabled'
                     : 'All notifications silenced',
                 style: AppTextStyles.bodySmall.copyWith(
-                  color: enabled ? AppColors.primary : AppColors.textSecondary,
+                  color: enabled ? accent : AppColors.textSecondary,
                 ),
               ),
             ],
           ),
         ),
-        Switch(
-          value: enabled,
-          onChanged: onChanged,
-          activeTrackColor: AppColors.primary,
-        ),
+        Switch(value: enabled, onChanged: onChanged, activeTrackColor: accent),
       ],
     );
   }
@@ -533,7 +529,7 @@ class _CategoryTile extends StatelessWidget {
           Switch(
             value: value,
             onChanged: enabled && !locked ? onChanged : null,
-            activeTrackColor: AppColors.primary,
+            activeTrackColor: accent,
           ),
         ],
       ),
@@ -598,13 +594,13 @@ class _TimePicker extends StatelessWidget {
                   vertical: 4,
                 ),
                 decoration: BoxDecoration(
-                  color: AppColors.primary.withValues(alpha: 0.12),
+                  color: accent.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
                   formatted,
                   style: AppTextStyles.bodyMedium.copyWith(
-                    color: AppColors.primary,
+                    color: accent,
                     fontWeight: FontWeight.bold,
                     fontSize: 13,
                   ),

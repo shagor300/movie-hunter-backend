@@ -114,14 +114,14 @@ class _StorageManagementScreenState extends State<StorageManagementScreen> {
                   Row(
                     children: [
                       Container(
-                        padding: const EdgeInsets.all(8),
+                        padding: EdgeInsets.all(8),
                         decoration: BoxDecoration(
-                          color: AppColors.primary.withValues(alpha: 0.15),
+                          color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.15),
                           borderRadius: BorderRadius.circular(10),
                         ),
-                        child: const Icon(
+                        child: Icon(
                           Icons.auto_awesome,
-                          color: AppColors.primary,
+                          color: Theme.of(context).colorScheme.primary,
                           size: 20,
                         ),
                       ),
@@ -214,7 +214,7 @@ class _StorageManagementScreenState extends State<StorageManagementScreen> {
                         onChanged: (val) =>
                             setState(() => customSchedule = val),
                         activeThumbColor: Colors.white,
-                        activeTrackColor: AppColors.primary,
+                        activeTrackColor: Theme.of(context).colorScheme.primary,
                         inactiveThumbColor: AppColors.textMuted,
                         inactiveTrackColor: Colors.white10,
                       ),
@@ -317,7 +317,7 @@ class _StorageManagementScreenState extends State<StorageManagementScreen> {
                         child: ElevatedButton(
                           onPressed: _saveChanges,
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.primary,
+                            backgroundColor: Theme.of(context).colorScheme.primary,
                             padding: const EdgeInsets.symmetric(vertical: 14),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12),
@@ -378,7 +378,7 @@ class _StorageManagementScreenState extends State<StorageManagementScreen> {
             value: value,
             onChanged: onChanged,
             activeThumbColor: Colors.white,
-            activeTrackColor: AppColors.primary,
+            activeTrackColor: Theme.of(context).colorScheme.primary,
             inactiveThumbColor: AppColors.textMuted,
             inactiveTrackColor: Colors.white10,
           ),
@@ -472,20 +472,20 @@ class _StorageManagementScreenState extends State<StorageManagementScreen> {
             Text(
               valueString,
               style: AppTextStyles.bodyMedium.copyWith(
-                color: AppColors.primary,
+                color: Theme.of(context).colorScheme.primary,
                 fontWeight: FontWeight.bold,
               ),
             ),
           ],
         ),
-        const SizedBox(height: 8),
+        SizedBox(height: 8),
         SliderTheme(
           data: SliderTheme.of(context).copyWith(
-            activeTrackColor: AppColors.primary,
+            activeTrackColor: Theme.of(context).colorScheme.primary,
             inactiveTrackColor: Colors.white10,
             thumbColor: Colors.white,
             trackHeight: 4,
-            overlayColor: AppColors.primary.withValues(alpha: 0.2),
+            overlayColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.2),
             thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 8),
           ),
           child: Slider(
@@ -536,7 +536,7 @@ class _StorageManagementScreenState extends State<StorageManagementScreen> {
           ),
           boxShadow: [
             BoxShadow(
-              color: AppColors.primary.withValues(alpha: 0.2),
+              color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.2),
               blurRadius: 40,
               spreadRadius: -10,
             ),

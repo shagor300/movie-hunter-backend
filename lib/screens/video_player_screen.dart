@@ -263,8 +263,8 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
             enableRetry: true,
             skipBackIcon: Icons.replay_10,
             skipForwardIcon: Icons.forward_10,
-            progressBarPlayedColor: AppColors.primary,
-            progressBarHandleColor: AppColors.primary,
+            progressBarPlayedColor: Theme.of(context).colorScheme.primary,
+            progressBarHandleColor: Theme.of(context).colorScheme.primary,
             progressBarBufferedColor: AppColors.surfaceLight,
             progressBarBackgroundColor: AppColors.surface,
             controlBarHeight: 48,
@@ -273,7 +273,7 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const CircularProgressIndicator(color: AppColors.primary),
+                  CircularProgressIndicator(color: Theme.of(context).colorScheme.primary),
                   const SizedBox(height: 16),
                   Text('Loading video...', style: AppTextStyles.bodySmall),
                 ],
@@ -425,7 +425,7 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const CircularProgressIndicator(color: AppColors.primary),
+          CircularProgressIndicator(color: Theme.of(context).colorScheme.primary),
           const SizedBox(height: 20),
           Text(
             'Preparing Video...',
@@ -451,7 +451,7 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const CircularProgressIndicator(color: AppColors.primary),
+          CircularProgressIndicator(color: Theme.of(context).colorScheme.primary),
           const SizedBox(height: 20),
           Text('Loading video...', style: AppTextStyles.bodySmall),
         ],
@@ -506,7 +506,7 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
                   icon: const Icon(Icons.refresh),
                   label: const Text('Retry'),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
+                    backgroundColor: Theme.of(context).colorScheme.primary,
                     padding: const EdgeInsets.symmetric(
                       horizontal: 20,
                       vertical: 12,

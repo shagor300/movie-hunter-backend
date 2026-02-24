@@ -41,6 +41,7 @@ dependencies:
   collection: ^1.19.1
   youtube_player_flutter: ^9.0.3
   palette_generator: ^0.3.3+7
+  disk_space_plus: ^0.2.6
 
 dev_dependencies:
   flutter_test:

@@ -268,7 +268,9 @@ class DownloadController extends GetxController {
         speed: 'Starting...',
         eta: '--',
       );
-    } catch (_) {}
+    } catch (e) {
+      debugPrint('⚠️ Start notification error: $e');
+    }
 
     // Start engine
     _startEngine(id, url, savePath, {});
@@ -325,7 +327,9 @@ class DownloadController extends GetxController {
               speed: _fmtSpeed(speed),
               eta: _fmtEta(eta),
             );
-          } catch (_) {}
+          } catch (e) {
+            debugPrint('⚠️ Progress notification error: $e');
+          }
         }
       },
       onComplete: (filePath) async {
@@ -356,7 +360,9 @@ class DownloadController extends GetxController {
           await NotificationService.instance.cancelNotification(
             id.hashCode.abs() % 100000,
           );
-        } catch (_) {}
+        } catch (e) {
+          debugPrint('⚠️ Cancel notification error: $e');
+        }
 
         // Show completion notification
         try {
@@ -365,7 +371,9 @@ class DownloadController extends GetxController {
             item.quality,
             item.fileSizeText,
           );
-        } catch (_) {}
+        } catch (e) {
+          debugPrint('⚠️ Completion notification error: $e');
+        }
 
         Get.snackbar(
           '✅ Download Complete!',
@@ -379,6 +387,50 @@ class DownloadController extends GetxController {
         );
       },
       onError: (error) async {
+        // Check if file was actually saved despite the error
+        // (common with streaming — server closes connection after data is sent)
+        final item = downloads[id];
+        if (item != null) {
+          final file = File(item.filePath);
+          final exists = await file.exists();
+          final size = exists ? await file.length() : 0;
+          if (exists && size > 1024 * 100) {
+            // File > 100KB exists — treat as successful download
+            debugPrint(
+              '✅ Download [$id] reported error but file exists ($size bytes), marking as complete',
+            );
+            item.status = 'completed';
+            item.downloadedBytes = size;
+            item.totalBytes = size;
+            item.completedAt = DateTime.now();
+            await item.save();
+            downloads.refresh();
+            _engines.remove(id);
+            try {
+              await NotificationService.instance.cancelNotification(
+                id.hashCode.abs() % 100000,
+              );
+              NotificationService.instance.showDownloadComplete(
+                item.movieTitle,
+                item.quality,
+                item.fileSizeText,
+              );
+            } catch (e) {
+              debugPrint('⚠️ Notification error: $e');
+            }
+            Get.snackbar(
+              '✅ Download Complete!',
+              '${item.movieTitle} (${item.quality}) · ${item.fileSizeText}',
+              snackPosition: SnackPosition.BOTTOM,
+              backgroundColor: Colors.green.withValues(alpha: 0.9),
+              colorText: Colors.white,
+              margin: const EdgeInsets.all(20),
+              duration: const Duration(seconds: 5),
+              icon: const Icon(Icons.check_circle, color: Colors.white),
+            );
+            return;
+          }
+        }
         await _setFailed(id, error);
       },
     );
@@ -409,7 +461,9 @@ class DownloadController extends GetxController {
       await NotificationService.instance.cancelNotification(
         id.hashCode.abs() % 100000,
       );
-    } catch (_) {}
+    } catch (e) {
+      debugPrint('⚠️ Pause cancel notification error: $e');
+    }
   }
 
   Future<void> resumeDownload(dynamic download) async {
@@ -445,7 +499,9 @@ class DownloadController extends GetxController {
       await NotificationService.instance.cancelNotification(
         id.hashCode.abs() % 100000,
       );
-    } catch (_) {}
+    } catch (e) {
+      debugPrint('⚠️ Cancel notification error: $e');
+    }
   }
 
   Future<void> retryDownload(dynamic download) async {
@@ -532,14 +588,18 @@ class DownloadController extends GetxController {
       await NotificationService.instance.cancelNotification(
         id.hashCode.abs() % 100000,
       );
-    } catch (_) {}
+    } catch (e) {
+      debugPrint('⚠️ Failed cancel notification error: $e');
+    }
 
     try {
       NotificationService.instance.showDownloadFailed(
         item.movieTitle,
         'Download failed. Tap to retry.',
       );
-    } catch (_) {}
+    } catch (e) {
+      debugPrint('⚠️ Failed notification error: $e');
+    }
 
     debugPrint('❌ Download failed [$id]: $error');
   }

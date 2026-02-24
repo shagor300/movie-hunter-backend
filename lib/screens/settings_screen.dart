@@ -305,9 +305,8 @@ class SettingsScreen extends StatelessWidget {
                         '✅ Cache Cleared',
                         'Movie & image cache has been cleared',
                         snackPosition: SnackPosition.BOTTOM,
-                        backgroundColor: Theme.of(context).colorScheme.primary.withValues(
-                          alpha: 0.85,
-                        ),
+                        backgroundColor: Get.find<ThemeController>().accentColor
+                            .withValues(alpha: 0.85),
                         colorText: Colors.black,
                         margin: const EdgeInsets.all(20),
                         duration: const Duration(seconds: 2),
@@ -337,9 +336,8 @@ class SettingsScreen extends StatelessWidget {
                         '✅ Watchlist Cleared',
                         'All watchlist items removed',
                         snackPosition: SnackPosition.BOTTOM,
-                        backgroundColor: Theme.of(context).colorScheme.primary.withValues(
-                          alpha: 0.85,
-                        ),
+                        backgroundColor: Get.find<ThemeController>().accentColor
+                            .withValues(alpha: 0.85),
                         colorText: Colors.black,
                         margin: const EdgeInsets.all(20),
                         duration: const Duration(seconds: 2),
@@ -365,9 +363,8 @@ class SettingsScreen extends StatelessWidget {
                         '✅ History Cleared',
                         'Download history has been cleared',
                         snackPosition: SnackPosition.BOTTOM,
-                        backgroundColor: Theme.of(context).colorScheme.primary.withValues(
-                          alpha: 0.85,
-                        ),
+                        backgroundColor: Get.find<ThemeController>().accentColor
+                            .withValues(alpha: 0.85),
                         colorText: Colors.black,
                         margin: const EdgeInsets.all(20),
                         duration: const Duration(seconds: 2),
@@ -399,9 +396,9 @@ class SettingsScreen extends StatelessWidget {
                         '✅ Settings Reset',
                         'All settings restored to default',
                         snackPosition: SnackPosition.BOTTOM,
-                        backgroundColor: Theme.of(context).colorScheme.primary.withValues(
-                          alpha: 0.85,
-                        ),
+                        backgroundColor: Theme.of(
+                          context,
+                        ).colorScheme.primary.withValues(alpha: 0.85),
                         colorText: Colors.black,
                         margin: const EdgeInsets.all(20),
                         duration: const Duration(seconds: 2),
@@ -530,7 +527,9 @@ class SettingsScreen extends StatelessWidget {
                                   ),
                                   style:
                                       ElevatedButton.styleFrom(
-                                        backgroundColor: Theme.of(context).colorScheme.primary,
+                                        backgroundColor: Theme.of(
+                                          context,
+                                        ).colorScheme.primary,
                                         foregroundColor: Colors.black,
                                         shape: RoundedRectangleBorder(
                                           borderRadius: BorderRadius.circular(

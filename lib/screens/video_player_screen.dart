@@ -10,6 +10,7 @@ import '../controllers/video_player_controller.dart';
 import '../services/api_service.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_text_styles.dart';
+import '../theme/theme_controller.dart';
 
 class VideoPlayerScreen extends StatefulWidget {
   final String videoUrl;
@@ -42,6 +43,7 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
   BetterPlayerController? _betterPlayerController;
   final VideoPlayerGetxController _positionController =
       Get.find<VideoPlayerGetxController>();
+  final Color _accent = Get.find<ThemeController>().accentColor;
 
   bool _isResolving = false;
   bool _isInitializing = true;
@@ -263,8 +265,8 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
             enableRetry: true,
             skipBackIcon: Icons.replay_10,
             skipForwardIcon: Icons.forward_10,
-            progressBarPlayedColor: Theme.of(context).colorScheme.primary,
-            progressBarHandleColor: Theme.of(context).colorScheme.primary,
+            progressBarPlayedColor: _accent,
+            progressBarHandleColor: _accent,
             progressBarBufferedColor: AppColors.surfaceLight,
             progressBarBackgroundColor: AppColors.surface,
             controlBarHeight: 48,
@@ -273,7 +275,7 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  CircularProgressIndicator(color: Theme.of(context).colorScheme.primary),
+                  CircularProgressIndicator(color: _accent),
                   const SizedBox(height: 16),
                   Text('Loading video...', style: AppTextStyles.bodySmall),
                 ],
@@ -425,7 +427,9 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          CircularProgressIndicator(color: Theme.of(context).colorScheme.primary),
+          CircularProgressIndicator(
+            color: Theme.of(context).colorScheme.primary,
+          ),
           const SizedBox(height: 20),
           Text(
             'Preparing Video...',
@@ -451,7 +455,9 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          CircularProgressIndicator(color: Theme.of(context).colorScheme.primary),
+          CircularProgressIndicator(
+            color: Theme.of(context).colorScheme.primary,
+          ),
           const SizedBox(height: 20),
           Text('Loading video...', style: AppTextStyles.bodySmall),
         ],

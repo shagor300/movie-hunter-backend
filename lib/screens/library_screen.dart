@@ -243,15 +243,6 @@ class _LibraryScreenState extends State<LibraryScreen>
               overflow: TextOverflow.ellipsis,
             ),
             const SizedBox(height: 16),
-            // Move to category
-            ListTile(
-              leading: Icon(Icons.swap_horiz, color: colorScheme.primary),
-              title: Text('Move to...', style: GoogleFonts.inter()),
-              onTap: () {
-                Navigator.pop(context);
-                _showCategoryPicker(movie, controller);
-              },
-            ),
             // Toggle favorite
             ListTile(
               leading: Icon(
@@ -288,59 +279,6 @@ class _LibraryScreenState extends State<LibraryScreen>
     );
   }
 
-  void _showCategoryPicker(
-    WatchlistMovie movie,
-    WatchlistController controller,
-  ) {
-    final colorScheme = Theme.of(context).colorScheme;
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: colorScheme.surface,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (context) => Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text('Move to', style: AppTextStyles.headingLarge),
-            const SizedBox(height: 16),
-            ...WatchlistCategory.values.map((cat) {
-              final isSelected = movie.category == cat;
-              final label = _categoryLabel(cat);
-              final icon = _categoryIcon(cat);
-              return ListTile(
-                leading: Icon(
-                  icon,
-                  color: isSelected
-                      ? colorScheme.primary
-                      : colorScheme.onSurface.withValues(alpha: 0.38),
-                ),
-                title: Text(
-                  label,
-                  style: GoogleFonts.inter(
-                    color: isSelected ? colorScheme.primary : null,
-                    fontWeight: isSelected
-                        ? FontWeight.bold
-                        : FontWeight.normal,
-                  ),
-                ),
-                trailing: isSelected
-                    ? Icon(Icons.check, color: colorScheme.primary)
-                    : null,
-                onTap: () {
-                  controller.updateCategory(movie.tmdbId, cat);
-                  Navigator.pop(context);
-                },
-              );
-            }),
-          ],
-        ),
-      ),
-    );
-  }
-
   Widget _buildEmptyState(
     WatchlistCategory category,
     WatchlistController controller,
@@ -368,31 +306,5 @@ class _LibraryScreenState extends State<LibraryScreen>
     }
 
     return EmptyState(icon: icon, title: title, message: message);
-  }
-
-  String _categoryLabel(WatchlistCategory cat) {
-    switch (cat) {
-      case WatchlistCategory.watchlist:
-        return 'Watchlist';
-      case WatchlistCategory.watching:
-        return 'Watching';
-      case WatchlistCategory.completed:
-        return 'Completed';
-      case WatchlistCategory.favorites:
-        return 'Favorites';
-    }
-  }
-
-  IconData _categoryIcon(WatchlistCategory cat) {
-    switch (cat) {
-      case WatchlistCategory.watchlist:
-        return Icons.bookmark;
-      case WatchlistCategory.watching:
-        return Icons.play_circle;
-      case WatchlistCategory.completed:
-        return Icons.check_circle;
-      case WatchlistCategory.favorites:
-        return Icons.favorite;
-    }
   }
 }

@@ -1,7 +1,6 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import '../theme/app_colors.dart';
 import '../theme/app_text_styles.dart';
 import 'package:get/get.dart';
 import '../theme/theme_controller.dart';
@@ -196,33 +195,7 @@ class _HomeScreenState extends State<HomeScreen> {
     if (_lastBackPressed == null ||
         now.difference(_lastBackPressed!) > const Duration(seconds: 2)) {
       _lastBackPressed = now;
-
-      ScaffoldMessenger.of(context).removeCurrentSnackBar();
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Row(
-            children: [
-              const Icon(Icons.exit_to_app, color: Colors.white, size: 20),
-              const SizedBox(width: 12),
-              Text(
-                'Press back again to exit',
-                style: AppTextStyles.bodyMedium.copyWith(
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ],
-          ),
-          duration: const Duration(seconds: 2),
-          behavior: SnackBarBehavior.floating,
-          backgroundColor: AppColors.surface,
-          margin: const EdgeInsets.only(left: 16, right: 16, bottom: 100),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-            side: const BorderSide(color: AppColors.glassBorder),
-          ),
-        ),
-      );
+      // Silent double-back — no snackbar, just exit on second press
     } else {
       SystemNavigator.pop();
     }

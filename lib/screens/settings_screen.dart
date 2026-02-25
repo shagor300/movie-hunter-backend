@@ -737,16 +737,17 @@ class SettingsScreen extends StatelessWidget {
   // ═══════════════════════════════════════════════════════════════
 
   void _showPinSetupDialog(BuildContext context, StateSetter parentSetState) {
+    final pinController = TextEditingController();
     String pin1 = '';
-    String pin2 = '';
     bool isConfirm = false;
     bool isError = false;
+    String errorMsg = '';
 
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setState) => AlertDialog(
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setState) => AlertDialog(
           backgroundColor: const Color(0xFF1A1A2E),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
@@ -762,24 +763,76 @@ class SettingsScreen extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(
-                isConfirm ? 'Enter PIN again to confirm' : 'Enter 4-digit PIN',
+                isConfirm
+                    ? 'Enter your PIN again to confirm'
+                    : 'Enter a 4-digit PIN',
                 style: GoogleFonts.inter(color: Colors.white70),
               ),
               const SizedBox(height: 24),
-              Text(
-                isConfirm ? pin2.padRight(4, '·') : pin1.padRight(4, '·'),
+              TextField(
+                controller: pinController,
+                autofocus: true,
+                obscureText: true,
+                keyboardType: TextInputType.number,
+                maxLength: 4,
+                textAlign: TextAlign.center,
                 style: GoogleFonts.poppins(
-                  color: isError
-                      ? Colors.redAccent
-                      : Theme.of(context).colorScheme.primary,
-                  fontSize: 32,
-                  letterSpacing: 8,
+                  color: Colors.white,
+                  fontSize: 28,
+                  letterSpacing: 12,
                 ),
+                decoration: InputDecoration(
+                  counterText: '',
+                  hintText: '• • • •',
+                  hintStyle: GoogleFonts.poppins(
+                    color: Colors.white24,
+                    fontSize: 28,
+                    letterSpacing: 12,
+                  ),
+                  enabledBorder: UnderlineInputBorder(
+                    borderSide: BorderSide(
+                      color: Colors.white.withValues(alpha: 0.2),
+                    ),
+                  ),
+                  focusedBorder: UnderlineInputBorder(
+                    borderSide: BorderSide(
+                      color: Theme.of(ctx).colorScheme.primary,
+                    ),
+                  ),
+                ),
+                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                onChanged: (value) {
+                  if (value.length == 4) {
+                    if (!isConfirm) {
+                      pin1 = value;
+                      pinController.clear();
+                      setState(() {
+                        isConfirm = true;
+                        isError = false;
+                      });
+                    } else {
+                      if (value == pin1) {
+                        AppLockService.instance.setPin(value).then((_) {
+                          parentSetState(() {});
+                          Navigator.pop(ctx);
+                        });
+                      } else {
+                        pinController.clear();
+                        setState(() {
+                          isConfirm = false;
+                          isError = true;
+                          errorMsg = 'PINs do not match. Try again.';
+                          pin1 = '';
+                        });
+                      }
+                    }
+                  }
+                },
               ),
               if (isError) ...[
-                const SizedBox(height: 8),
+                const SizedBox(height: 12),
                 Text(
-                  'PINs do not match',
+                  errorMsg,
                   style: GoogleFonts.inter(
                     color: Colors.redAccent,
                     fontSize: 13,
@@ -790,7 +843,7 @@ class SettingsScreen extends StatelessWidget {
           ),
           actions: [
             TextButton(
-              onPressed: () => Navigator.pop(context),
+              onPressed: () => Navigator.pop(ctx),
               child: Text(
                 'Cancel',
                 style: GoogleFonts.inter(color: Colors.white54),
@@ -800,39 +853,6 @@ class SettingsScreen extends StatelessWidget {
         ),
       ),
     );
-
-    // Let user type
-    _listenToKeyboardForPin(context, (digit) {
-      if (isConfirm) {
-        if (pin2.length < 4) pin2 += digit;
-        if (pin2.length == 4) {
-          if (pin1 == pin2) {
-            AppLockService.instance.setPin(pin2).then((_) {
-              parentSetState(() {});
-              Navigator.pop(context); // Close dialog
-            });
-          } else {
-            // Error, reset
-            pin1 = '';
-            pin2 = '';
-            isConfirm = false;
-            isError = true;
-            Navigator.pop(
-              context,
-            ); // Close and reopen to refresh completely or just update state?
-            // Actually, we'd need to update the dialog state. Since we can't easily pass the dialog's setState out,
-            // we'll just handle it simply here.
-          }
-        }
-      } else {
-        if (pin1.length < 4) pin1 += digit;
-        if (pin1.length == 4) {
-          isConfirm = true;
-          isError = false;
-          // Refresh dialog
-        }
-      }
-    });
   }
 
   void _showPinVerifyDialog(
@@ -840,14 +860,14 @@ class SettingsScreen extends StatelessWidget {
     StateSetter parentSetState,
     VoidCallback onSuccess,
   ) {
-    String pin = '';
+    final pinController = TextEditingController();
     bool isError = false;
 
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setState) => AlertDialog(
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setState) => AlertDialog(
           backgroundColor: const Color(0xFF1A1A2E),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
@@ -867,18 +887,55 @@ class SettingsScreen extends StatelessWidget {
                 style: GoogleFonts.inter(color: Colors.white70),
               ),
               const SizedBox(height: 24),
-              Text(
-                pin.padRight(4, '·'),
+              TextField(
+                controller: pinController,
+                autofocus: true,
+                obscureText: true,
+                keyboardType: TextInputType.number,
+                maxLength: 4,
+                textAlign: TextAlign.center,
                 style: GoogleFonts.poppins(
-                  color: isError
-                      ? Colors.redAccent
-                      : Theme.of(context).colorScheme.primary,
-                  fontSize: 32,
-                  letterSpacing: 8,
+                  color: Colors.white,
+                  fontSize: 28,
+                  letterSpacing: 12,
                 ),
+                decoration: InputDecoration(
+                  counterText: '',
+                  hintText: '• • • •',
+                  hintStyle: GoogleFonts.poppins(
+                    color: Colors.white24,
+                    fontSize: 28,
+                    letterSpacing: 12,
+                  ),
+                  enabledBorder: UnderlineInputBorder(
+                    borderSide: BorderSide(
+                      color: Colors.white.withValues(alpha: 0.2),
+                    ),
+                  ),
+                  focusedBorder: UnderlineInputBorder(
+                    borderSide: BorderSide(
+                      color: Theme.of(ctx).colorScheme.primary,
+                    ),
+                  ),
+                ),
+                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                onChanged: (value) {
+                  if (value.length == 4) {
+                    if (AppLockService.instance.verifyPin(value)) {
+                      Navigator.pop(ctx);
+                      onSuccess();
+                      parentSetState(() {});
+                    } else {
+                      pinController.clear();
+                      setState(() {
+                        isError = true;
+                      });
+                    }
+                  }
+                },
               ),
               if (isError) ...[
-                const SizedBox(height: 8),
+                const SizedBox(height: 12),
                 Text(
                   'Incorrect PIN',
                   style: GoogleFonts.inter(
@@ -891,7 +948,7 @@ class SettingsScreen extends StatelessWidget {
           ),
           actions: [
             TextButton(
-              onPressed: () => Navigator.pop(context),
+              onPressed: () => Navigator.pop(ctx),
               child: Text(
                 'Cancel',
                 style: GoogleFonts.inter(color: Colors.white54),
@@ -903,10 +960,7 @@ class SettingsScreen extends StatelessWidget {
     );
   }
 
-  // Not ideal but works for simple intercept
-  void _listenToKeyboardForPin(BuildContext context, Function(String) onDigit) {
-    // Basic dialog typing intercept
-  }
+  // PIN dialogs now use TextField directly — no stub needed
 
   void _confirmAction(
     BuildContext context, {
@@ -982,20 +1036,14 @@ class _SectionHeader extends StatelessWidget {
       padding: const EdgeInsets.only(left: 4, top: 16, bottom: 8),
       child: Row(
         children: [
-          Obx(
-            () => Icon(
-              icon,
-              color: Theme.of(context).colorScheme.primary,
-              size: 18,
-            ),
-          ),
+          Obx(() => Icon(icon, color: tc.accentColor, size: 18)),
           const SizedBox(width: 8),
           Obx(
             () => Text(
               title.toUpperCase(),
               style: AppTextStyles.headingLarge
                   .copyWith(
-                    color: Theme.of(context).colorScheme.primary,
+                    color: tc.accentColor,
                     fontSize: 12,
                     fontWeight: FontWeight.w700,
                   )

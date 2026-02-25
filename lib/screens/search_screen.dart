@@ -504,111 +504,246 @@ class SearchScreenState extends State<SearchScreen> {
   }
 
   Widget _buildResultsGrid() {
+    final tc = Get.find<ThemeController>();
+    final hasQuery = _searchController.text.isNotEmpty;
+
     return Expanded(
       child: RefreshIndicator(
         onRefresh: _fetchTrending,
-        color: Get.find<ThemeController>().accentColor,
+        color: tc.accentColor,
         backgroundColor: AppColors.backgroundDark,
-        child: GridView.builder(
-          padding: const EdgeInsets.fromLTRB(20, 16, 20, 100),
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 2,
-            childAspectRatio: 0.58,
-            crossAxisSpacing: 16,
-            mainAxisSpacing: 20,
-          ),
+        child: CustomScrollView(
           physics: const AlwaysScrollableScrollPhysics(
             parent: BouncingScrollPhysics(),
           ),
-          itemCount: _searchResults.length,
-          itemBuilder: (context, index) {
-            final movie = _searchResults[index];
-            return MovieCard(
-              movie: movie,
-              onTap: () {
-                Navigator.push(
-                  context,
-                  PremiumPageRoute(page: DetailsScreen(movie: movie)),
-                );
-              },
-            );
-          },
+          slivers: [
+            // ── Results count header ──
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(20, 12, 20, 8),
+                child: Row(
+                  children: [
+                    Icon(
+                      hasQuery
+                          ? Icons.search_rounded
+                          : Icons.trending_up_rounded,
+                      color: AppColors.textMuted,
+                      size: 16,
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      hasQuery
+                          ? '${_searchResults.length} results found'
+                          : 'Trending Now',
+                      style: AppTextStyles.labelSmall.copyWith(
+                        color: AppColors.textMuted,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                    const Spacer(),
+                    if (hasQuery)
+                      Obx(
+                        () => Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 3,
+                          ),
+                          decoration: BoxDecoration(
+                            color: tc.accentColor.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Text(
+                            _searchController.text,
+                            style: AppTextStyles.labelSmall.copyWith(
+                              color: tc.accentColor,
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ),
+            // ── Grid ──
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(20, 4, 20, 100),
+              sliver: SliverGrid(
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 2,
+                  childAspectRatio: 0.58,
+                  crossAxisSpacing: 16,
+                  mainAxisSpacing: 20,
+                ),
+                delegate: SliverChildBuilderDelegate((context, index) {
+                  final movie = _searchResults[index];
+                  return MovieCard(
+                    movie: movie,
+                    index: index,
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        PremiumPageRoute(page: DetailsScreen(movie: movie)),
+                      );
+                    },
+                  );
+                }, childCount: _searchResults.length),
+              ),
+            ),
+          ],
         ),
       ),
     );
   }
 
   Widget _buildRecentSearches() {
+    final tc = Get.find<ThemeController>();
     return Expanded(
-      child: Padding(
+      child: SingleChildScrollView(
         padding: const EdgeInsets.symmetric(horizontal: 20),
+        physics: const BouncingScrollPhysics(),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const SizedBox(height: 16),
+            const SizedBox(height: 20),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text('RECENT SEARCHES', style: AppTextStyles.labelSmall),
+                Row(
+                  children: [
+                    Icon(
+                      Icons.history_rounded,
+                      size: 16,
+                      color: tc.accentColor,
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      'RECENT SEARCHES',
+                      style: AppTextStyles.labelSmall.copyWith(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 1.2,
+                        color: AppColors.textMuted,
+                      ),
+                    ),
+                  ],
+                ),
                 GestureDetector(
                   onTap: _clearRecentSearches,
-                  child: Text(
-                    'Clear All',
-                    style: AppTextStyles.bodyMedium.copyWith(
-                      fontWeight: FontWeight.w600,
-                      color: Get.find<ThemeController>().accentColor,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.redAccent.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      'Clear All',
+                      style: AppTextStyles.labelSmall.copyWith(
+                        fontWeight: FontWeight.w600,
+                        color: Colors.redAccent,
+                        fontSize: 11,
+                      ),
                     ),
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 16),
-            Wrap(
-              spacing: 8,
-              runSpacing: 12,
-              children: _recentSearches.take(6).map((search) {
-                return GestureDetector(
-                  onTap: () {
-                    _searchController.text = search;
-                    _onSearch(search);
-                  },
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 14,
-                      vertical: 10,
-                    ),
-                    decoration: BoxDecoration(
-                      color: AppColors.surfaceLight.withValues(alpha: 0.5),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: AppColors.glassBorder),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Icon(
-                          Icons.history,
-                          size: 16,
-                          color: AppColors.textSecondary,
+            const SizedBox(height: 14),
+            ...List.generate(_recentSearches.take(8).length, (i) {
+              final search = _recentSearches[i];
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 4),
+                child: Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    onTap: () {
+                      _searchController.text = search;
+                      _onSearch(search);
+                    },
+                    borderRadius: BorderRadius.circular(12),
+                    splashColor: tc.accentColor.withValues(alpha: 0.08),
+                    highlightColor: tc.accentColor.withValues(alpha: 0.04),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 12,
+                      ),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: AppColors.glassBorder.withValues(alpha: 0.3),
                         ),
-                        const SizedBox(width: 8),
-                        Text(search, style: AppTextStyles.bodyMedium),
-                        const SizedBox(width: 8),
-                        GestureDetector(
-                          onTap: () {
-                            setState(() => _recentSearches.remove(search));
-                          },
-                          child: const Icon(
-                            Icons.close,
-                            size: 16,
-                            color: AppColors.textMuted,
+                      ),
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 32,
+                            height: 32,
+                            decoration: BoxDecoration(
+                              color: AppColors.surfaceLight.withValues(
+                                alpha: 0.6,
+                              ),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: const Icon(
+                              Icons.history_rounded,
+                              size: 16,
+                              color: AppColors.textSecondary,
+                            ),
                           ),
-                        ),
-                      ],
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              search,
+                              style: AppTextStyles.bodyMedium.copyWith(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w500,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          GestureDetector(
+                            onTap: () {
+                              setState(() => _recentSearches.remove(search));
+                            },
+                            child: Container(
+                              width: 28,
+                              height: 28,
+                              decoration: BoxDecoration(
+                                color: AppColors.surfaceLight.withValues(
+                                  alpha: 0.5,
+                                ),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: const Icon(
+                                Icons.close_rounded,
+                                size: 14,
+                                color: AppColors.textMuted,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 4),
+                          Icon(
+                            Icons.north_west_rounded,
+                            size: 14,
+                            color: AppColors.textMuted.withValues(alpha: 0.5),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
-                );
-              }).toList(),
-            ),
+                ),
+              );
+            }),
           ],
         ),
       ),

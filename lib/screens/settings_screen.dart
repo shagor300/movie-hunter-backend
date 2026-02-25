@@ -814,7 +814,7 @@ class SettingsScreen extends StatelessWidget {
                       if (value == pin1) {
                         AppLockService.instance.setPin(value).then((_) {
                           parentSetState(() {});
-                          Navigator.pop(ctx);
+                          if (ctx.mounted) Navigator.pop(ctx);
                         });
                       } else {
                         pinController.clear();

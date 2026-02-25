@@ -23,17 +23,10 @@ class _LibraryScreenState extends State<LibraryScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
 
-  final _tabs = const [
-    Tab(text: 'Watchlist'),
-    Tab(text: 'Watching'),
-    Tab(text: 'Completed'),
-    Tab(text: 'Favorites'),
-  ];
+  final _tabs = const [Tab(text: 'Watchlist'), Tab(text: 'Favorites')];
 
   final _categories = const [
     WatchlistCategory.watchlist,
-    WatchlistCategory.watching,
-    WatchlistCategory.completed,
     WatchlistCategory.favorites,
   ];
 
@@ -362,20 +355,15 @@ class _LibraryScreenState extends State<LibraryScreen>
         message = 'Add movies to watch them later';
         icon = Icons.bookmark_border;
         break;
-      case WatchlistCategory.watching:
-        title = 'Nothing Playing';
-        message = 'Movies you\'re currently watching appear here';
-        icon = Icons.play_circle_outline;
-        break;
-      case WatchlistCategory.completed:
-        title = 'No Completed Movies';
-        message = 'Finished watching a movie? Move it here!';
-        icon = Icons.check_circle_outline;
-        break;
       case WatchlistCategory.favorites:
         title = 'No Favorites Yet';
         message = 'Heart a movie to add it to favorites';
         icon = Icons.favorite_border;
+        break;
+      default:
+        title = 'Empty';
+        message = '';
+        icon = Icons.inbox;
         break;
     }
 

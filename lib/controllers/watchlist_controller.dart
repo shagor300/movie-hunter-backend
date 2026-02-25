@@ -53,6 +53,9 @@ class WatchlistController extends GetxController {
   }
 
   List<WatchlistMovie> getByCategory(WatchlistCategory category) {
+    if (category == WatchlistCategory.favorites) {
+      return allMovies.where((m) => m.favorite).toList();
+    }
     return allMovies.where((m) => m.category == category).toList();
   }
 

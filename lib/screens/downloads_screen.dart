@@ -76,23 +76,6 @@ class _DownloadsScreenState extends State<DownloadsScreen> {
             ),
             child: IconButton(
               icon: const Icon(
-                Icons.cleaning_services_rounded,
-                size: 20,
-                color: AppColors.textSecondary,
-              ),
-              onPressed: () => _clearCompleted(controller),
-              tooltip: 'Clear completed',
-            ),
-          ),
-          Container(
-            margin: const EdgeInsets.only(right: 16),
-            decoration: BoxDecoration(
-              color: AppColors.surface,
-              shape: BoxShape.circle,
-              border: Border.all(color: Colors.white10),
-            ),
-            child: IconButton(
-              icon: const Icon(
                 Icons.settings,
                 size: 20,
                 color: AppColors.textSecondary,
@@ -197,18 +180,6 @@ class _DownloadsScreenState extends State<DownloadsScreen> {
         );
       }),
     );
-  }
-
-  void _clearCompleted(DownloadController controller) {
-    final completed = controller.allDownloads
-        .where((d) => d.status == 'completed' || d.status == 'cancelled')
-        .toList();
-
-    for (final item in completed) {
-      if (item.status == 'cancelled') {
-        controller.deleteDownload(item);
-      }
-    }
   }
 }
 

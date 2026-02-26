@@ -251,12 +251,37 @@ class NotificationService {
       color: _accentColor,
     );
 
-    await _plugin.show(
-      notifId,
-      '⬇️ $movieTitle',
-      '$progress% · $speed · $eta remaining',
-      NotificationDetails(android: androidDetails),
-    );
+    if (Platform.isAndroid) {
+      await _plugin
+          .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin
+          >()
+          ?.startForegroundService(
+            notifId,
+            '⬇️ $movieTitle',
+            '$progress% · $speed · $eta remaining',
+            notificationDetails: androidDetails,
+            payload: 'download_progress',
+          );
+    } else {
+      await _plugin.show(
+        notifId,
+        '⬇️ $movieTitle',
+        '$progress% · $speed · $eta remaining',
+        NotificationDetails(android: androidDetails),
+      );
+    }
+  }
+
+  /// Stop foreground service (when all downloads are done/canceled).
+  Future<void> stopForegroundService() async {
+    if (Platform.isAndroid) {
+      await _plugin
+          .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin
+          >()
+          ?.stopForegroundService();
+    }
   }
 
   /// Cancel a notification by ID.

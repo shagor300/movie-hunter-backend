@@ -1416,6 +1416,7 @@ class _DetailsScreenState extends State<DetailsScreen> {
                     tmdbId: widget.movie.tmdbId,
                     quality: link['quality'],
                     movieTitle: widget.movie.title,
+                    posterUrl: widget.movie.fullPosterPath,
                   );
                 },
               ),

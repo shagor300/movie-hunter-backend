@@ -34,13 +34,22 @@ class _MovieCardState extends State<MovieCard>
   late final Animation<double> _fadeAnimation;
   late final Animation<Offset> _slideAnimation;
 
+  // Track cards that already animated so they don't replay on navigation return
+  static final Set<int> _animatedCards = {};
+
   @override
   void initState() {
     super.initState();
 
+    final alreadyAnimated =
+        widget.movie.tmdbId != null &&
+        _animatedCards.contains(widget.movie.tmdbId);
+
     _entranceController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 350),
+      // If already animated before, start at completed state
+      value: alreadyAnimated ? 1.0 : 0.0,
     );
 
     _fadeAnimation = CurvedAnimation(
@@ -56,9 +65,12 @@ class _MovieCardState extends State<MovieCard>
           ),
         );
 
-    // Start animation immediately — no stagger delay.
-    // This ensures every card animates consistently regardless of index.
-    _entranceController.forward();
+    if (!alreadyAnimated) {
+      _entranceController.forward();
+      if (widget.movie.tmdbId != null) {
+        _animatedCards.add(widget.movie.tmdbId!);
+      }
+    }
   }
 
   @override

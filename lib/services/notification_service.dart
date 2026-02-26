@@ -1,6 +1,8 @@
+import 'dart:io';
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:timezone/data/latest_all.dart' as tz;
 
 import 'package:get/get.dart';
@@ -55,6 +57,15 @@ class NotificationService {
       initSettings,
       onDidReceiveNotificationResponse: _onNotificationTap,
     );
+
+    // Request notification permission (required for Android 13+ / API 33+)
+    if (Platform.isAndroid) {
+      final status = await Permission.notification.status;
+      if (!status.isGranted) {
+        final result = await Permission.notification.request();
+        debugPrint('🔔 Notification permission: $result');
+      }
+    }
 
     // Create channels
     await _createChannels();

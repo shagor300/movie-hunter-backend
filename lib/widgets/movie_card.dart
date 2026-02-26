@@ -29,44 +29,46 @@ class _MovieCardState extends State<MovieCard>
   // ── Press scale animation ──
   double _scale = 1.0;
 
-  // ── Fade-in entrance animation ──
-  late final AnimationController _fadeController;
+  // ── Smooth entrance animation ──
+  late final AnimationController _entranceController;
   late final Animation<double> _fadeAnimation;
   late final Animation<Offset> _slideAnimation;
 
   @override
   void initState() {
     super.initState();
-    _fadeController = AnimationController(
+
+    _entranceController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 400),
+      duration: const Duration(milliseconds: 350),
     );
+
     _fadeAnimation = CurvedAnimation(
-      parent: _fadeController,
+      parent: _entranceController,
       curve: Curves.easeOut,
     );
+
     _slideAnimation =
-        Tween<Offset>(begin: const Offset(0, 0.08), end: Offset.zero).animate(
-          CurvedAnimation(parent: _fadeController, curve: Curves.easeOutCubic),
+        Tween<Offset>(begin: const Offset(0, 0.05), end: Offset.zero).animate(
+          CurvedAnimation(
+            parent: _entranceController,
+            curve: Curves.easeOutCubic,
+          ),
         );
 
-    // Stagger entrance by index
-    Future.delayed(
-      Duration(milliseconds: (widget.index * 50).clamp(0, 300)),
-      () {
-        if (mounted) _fadeController.forward();
-      },
-    );
+    // Start animation immediately — no stagger delay.
+    // This ensures every card animates consistently regardless of index.
+    _entranceController.forward();
   }
 
   @override
   void dispose() {
-    _fadeController.dispose();
+    _entranceController.dispose();
     super.dispose();
   }
 
   void _onTapDown(TapDownDetails _) {
-    setState(() => _scale = 0.95);
+    setState(() => _scale = 0.96);
   }
 
   void _onTapUp(TapUpDetails _) {
@@ -91,7 +93,7 @@ class _MovieCardState extends State<MovieCard>
           behavior: HitTestBehavior.opaque,
           child: AnimatedScale(
             scale: _scale,
-            duration: const Duration(milliseconds: 150),
+            duration: const Duration(milliseconds: 120),
             curve: Curves.easeOutCubic,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,

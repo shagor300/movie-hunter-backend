@@ -27,7 +27,7 @@
     </queries>
 
     <application
-        android:label="moviehub"
+        android:label="FlixHub"
         android:name="${applicationName}"
         android:icon="@mipmap/launcher_icon"
         android:usesCleartextTraffic="true"

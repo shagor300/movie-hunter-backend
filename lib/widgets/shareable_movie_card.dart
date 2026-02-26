@@ -89,7 +89,7 @@ class ShareableMovieCard extends StatelessWidget {
                       Icon(Icons.movie_filter, color: accentColor, size: 22),
                       const SizedBox(width: 8),
                       Text(
-                        'MovieHub',
+                        'FlixHub',
                         style: GoogleFonts.poppins(
                           color: Colors.white,
                           fontSize: 18,
@@ -215,7 +215,7 @@ class ShareableMovieCard extends StatelessWidget {
                       ),
                     ),
                     child: Text(
-                      'Download on MovieHub',
+                      'Download on FlixHub',
                       style: GoogleFonts.inter(
                         color: Colors.white60,
                         fontSize: 12,

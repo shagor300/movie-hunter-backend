@@ -2,7 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 
-/// Centralized HTTP service for the MovieHub backend API.
+/// Centralized HTTP service for the FlixHub backend API.
 class ApiService {
   static const String baseUrl = String.fromEnvironment(
     'API_URL',

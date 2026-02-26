@@ -133,7 +133,7 @@ class AppLockService {
 
       debugPrint('🔐 Starting biometric authentication...');
       final result = await _localAuth.authenticate(
-        localizedReason: 'Unlock MovieHub',
+        localizedReason: 'Unlock FlixHub',
         biometricOnly: true,
         sensitiveTransaction: false,
         persistAcrossBackgrounding: true,

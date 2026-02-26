@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-/// Complete color system for MovieHub
+/// Complete color system for FlixHub
 class AppColors {
   // ══════════════════════════════════════════════════════════
   // ACCENT COLORS (User Selectable)

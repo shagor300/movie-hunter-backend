@@ -469,7 +469,7 @@ class NotificationService {
         channelId = chSystem;
         break;
       default:
-        title = '🎬 MovieHub';
+        title = '🎬 FlixHub';
         body = 'Notification preview for "$category"';
         channelId = chSystem;
     }
@@ -542,7 +542,7 @@ class NotificationService {
       case chSystem:
         return 'System';
       default:
-        return 'MovieHub';
+        return 'FlixHub';
     }
   }
 

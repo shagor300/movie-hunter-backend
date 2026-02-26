@@ -58,7 +58,7 @@ class UpdateController extends GetxController {
       }
 
       final savePath = dir.path;
-      final fileName = 'MovieHub_v${info.latestVersionName}.apk';
+      final fileName = 'FlixHub_v${info.latestVersionName}.apk';
 
       // Remove old APK if exists
       final oldFile = File('$savePath/$fileName');

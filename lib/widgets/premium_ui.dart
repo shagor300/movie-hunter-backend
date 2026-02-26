@@ -180,12 +180,12 @@ class GradientText extends StatelessWidget {
   }
 }
 
-/// Styled MovieHub logo text: "Movie" white + "Hub" accent color.
-class MovieHubLogo extends StatelessWidget {
+/// Styled FlixHub logo text: "Flix" white + "Hub" accent color.
+class FlixHubLogo extends StatelessWidget {
   final double fontSize;
   final FontWeight fontWeight;
 
-  const MovieHubLogo({
+  const FlixHubLogo({
     super.key,
     this.fontSize = 22,
     this.fontWeight = FontWeight.w700,
@@ -199,7 +199,7 @@ class MovieHubLogo extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           Text(
-            'Movie',
+            'Flix',
             style: TextStyle(
               fontFamily: 'Poppins',
               fontSize: fontSize,

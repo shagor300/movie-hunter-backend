@@ -568,7 +568,7 @@ class SettingsScreen extends StatelessWidget {
               children: [
                 _ActionTile(
                   icon: Icons.movie_filter,
-                  title: 'MovieHub',
+                  title: 'FlixHub',
                   subtitle: 'Version 1.0.0',
                   iconColor: Colors.blueAccent,
                   onTap: () {
@@ -588,7 +588,7 @@ class SettingsScreen extends StatelessWidget {
                             ),
                             const SizedBox(width: 10),
                             Text(
-                              'MovieHub v1.0.0',
+                              'FlixHub v1.0.0',
                               style: GoogleFonts.poppins(
                                 fontWeight: FontWeight.bold,
                                 color: Colors.white,
@@ -710,7 +710,7 @@ class SettingsScreen extends StatelessWidget {
                 const Divider(color: Colors.white10, height: 20),
                 _ActionTile(
                   icon: Icons.info_outline,
-                  title: 'About MovieHub',
+                  title: 'About FlixHub',
                   subtitle: 'Version Info & Legal',
                   iconColor: Colors.white70,
                   onTap: () {
@@ -744,7 +744,7 @@ class SettingsScreen extends StatelessWidget {
                             ),
                             const SizedBox(height: 16),
                             Text(
-                              'MovieHub',
+                              'FlixHub',
                               style: GoogleFonts.poppins(
                                 fontSize: 22,
                                 fontWeight: FontWeight.bold,
@@ -767,7 +767,7 @@ class SettingsScreen extends StatelessWidget {
                             }),
                             const SizedBox(height: 24),
                             Text(
-                              'MovieHub is an ad-free movie streaming platform. Content is fetched from public sources and is not hosted on our servers.',
+                              'FlixHub is an ad-free movie download platform. Content is fetched from public sources and is not hosted on our servers.',
                               textAlign: TextAlign.center,
                               style: GoogleFonts.inter(
                                 fontSize: 13,

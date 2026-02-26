@@ -650,8 +650,8 @@ class DownloadController extends GetxController {
 
   Future<String> _buildSavePath(String fileName) async {
     final dir = Platform.isAndroid
-        ? '/storage/emulated/0/Download/MovieHub'
-        : '${(await getApplicationDocumentsDirectory()).path}/MovieHub';
+        ? '/storage/emulated/0/Download/FlixHub'
+        : '${(await getApplicationDocumentsDirectory()).path}/FlixHub';
 
     await Directory(dir).create(recursive: true);
     return '$dir/$fileName';

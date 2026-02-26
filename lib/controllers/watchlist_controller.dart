@@ -43,7 +43,9 @@ class WatchlistController extends GetxController {
 
   bool isInWatchlist(int? tmdbId) {
     if (tmdbId == null || tmdbId <= 0) return false;
-    return _service.isInWatchlist(tmdbId);
+    final movie = allMovies.firstWhereOrNull((m) => m.tmdbId == tmdbId);
+    if (movie == null) return false;
+    return movie.category == WatchlistCategory.watchlist;
   }
 
   bool isFavorite(int? tmdbId) {
@@ -74,22 +76,28 @@ class WatchlistController extends GetxController {
 
   /// Toggle favorite independently — does NOT require or affect watchlist.
   /// If the movie isn't in the Hive box yet, adds it with favorite=true.
-  /// If it is, just flips the favorite flag without touching the watchlist bookmark.
+  /// If it is, just flips the favorite flag without touching the watchlist category.
   Future<void> toggleFavoriteIndependent(Movie movie) async {
     final tmdbId = movie.tmdbId;
     if (tmdbId == null || tmdbId <= 0) return;
 
-    if (!isInWatchlist(tmdbId)) {
-      // Add silently with favorite=true — this is NOT a watchlist add
+    final existing = _service.getMovie(tmdbId);
+    if (existing == null) {
+      // Not in box at all — add with favorite=true, category stays default
       await _service.addToWatchlist(
         movie,
         category: WatchlistCategory.favorites,
       );
-      // Immediately mark as favorite
-      await _service.toggleFavorite(tmdbId);
+      // Set favorite flag
+      final added = _service.getMovie(tmdbId);
+      if (added != null) {
+        added.favorite = true;
+        await added.save();
+      }
     } else {
       // Already exists — just toggle the favorite flag
-      await _service.toggleFavorite(tmdbId);
+      existing.favorite = !existing.favorite;
+      await existing.save();
     }
     _loadAll();
   }
@@ -99,11 +107,31 @@ class WatchlistController extends GetxController {
     _loadAll();
   }
 
+  /// Toggle watchlist independently — does NOT affect favorite status.
   Future<void> toggleWatchlist(Movie movie) async {
-    if (isInWatchlist(movie.tmdbId)) {
-      await removeFromWatchlist(movie.tmdbId!);
+    final tmdbId = movie.tmdbId;
+    if (tmdbId == null || tmdbId <= 0) return;
+
+    final existing = _service.getMovie(tmdbId);
+    if (existing == null) {
+      // Not in box — add as watchlist
+      await addToWatchlist(movie, category: WatchlistCategory.watchlist);
+    } else if (existing.category == WatchlistCategory.watchlist) {
+      // Already in watchlist — check if it's also favorited
+      if (existing.favorite) {
+        // Keep in box but change category to favorites only
+        existing.category = WatchlistCategory.favorites;
+        await existing.save();
+        _loadAll();
+      } else {
+        // Not favorited either — safe to remove entirely
+        await removeFromWatchlist(tmdbId);
+      }
     } else {
-      await addToWatchlist(movie);
+      // Exists but not in watchlist (e.g. only favorited) — add to watchlist
+      existing.category = WatchlistCategory.watchlist;
+      await existing.save();
+      _loadAll();
     }
   }
 

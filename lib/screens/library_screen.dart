@@ -58,15 +58,20 @@ class _LibraryScreenState extends State<LibraryScreen>
         backgroundColor: AppColors.backgroundDark,
         bottom: TabBar(
           controller: _tabController,
-          isScrollable: true,
           indicatorColor: Theme.of(context).colorScheme.primary,
           indicatorWeight: 3,
+          indicatorSize: TabBarIndicatorSize.label,
           labelColor: Theme.of(context).colorScheme.primary,
           unselectedLabelColor: AppColors.textMuted,
           labelStyle: AppTextStyles.titleMedium.copyWith(
-            fontWeight: FontWeight.w600,
-            fontSize: 14,
+            fontWeight: FontWeight.w700,
+            fontSize: 15,
           ),
+          unselectedLabelStyle: AppTextStyles.titleMedium.copyWith(
+            fontWeight: FontWeight.w500,
+            fontSize: 15,
+          ),
+          dividerColor: Colors.transparent,
           tabs: _tabs,
         ),
       ),

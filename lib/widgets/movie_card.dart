@@ -97,94 +97,98 @@ class _MovieCardState extends State<MovieCard>
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // Poster Section (2:3 Aspect Ratio)
-                AspectRatio(
-                  aspectRatio: AppDimensions.posterAspectRatio,
-                  child: Container(
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(
-                        AppDimensions.radiusLg,
+                Obx(() {
+                  final tc = Get.find<ThemeController>();
+                  final radius = tc.roundedPosters
+                      ? AppDimensions.radiusLg
+                      : 4.0;
+                  return AspectRatio(
+                    aspectRatio: AppDimensions.posterAspectRatio,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(radius),
+                        border: Border.all(color: AppColors.glassBorder),
+                        color: AppColors.surface,
                       ),
-                      border: Border.all(color: AppColors.glassBorder),
-                      color: AppColors.surface,
-                    ),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(
-                        AppDimensions.radiusLg,
-                      ),
-                      child: Stack(
-                        fit: StackFit.expand,
-                        children: [
-                          // Image with Hero
-                          Hero(
-                            tag: 'poster-${widget.movie.title}',
-                            child: widget.movie.fullPosterPath.isNotEmpty
-                                ? CachedNetworkImage(
-                                    imageUrl: widget.movie.fullPosterPath,
-                                    fit: BoxFit.cover,
-                                    memCacheWidth: 300,
-                                    placeholder: (context, url) =>
-                                        Shimmer.fromColors(
-                                          baseColor: AppColors.surface,
-                                          highlightColor:
-                                              AppColors.surfaceLight,
-                                          child: Container(color: Colors.black),
-                                        ),
-                                    errorWidget: (context, url, error) =>
-                                        const Center(
-                                          child: Icon(
-                                            Icons.broken_image_outlined,
-                                            color: AppColors.textMuted,
-                                            size: 40,
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(radius),
+                        child: Stack(
+                          fit: StackFit.expand,
+                          children: [
+                            // Image with Hero
+                            Hero(
+                              tag: 'poster-${widget.movie.title}',
+                              child: widget.movie.fullPosterPath.isNotEmpty
+                                  ? CachedNetworkImage(
+                                      imageUrl: widget.movie.fullPosterPath,
+                                      fit: BoxFit.cover,
+                                      memCacheWidth: 300,
+                                      placeholder: (context, url) =>
+                                          Shimmer.fromColors(
+                                            baseColor: AppColors.surface,
+                                            highlightColor:
+                                                AppColors.surfaceLight,
+                                            child: Container(
+                                              color: Colors.black,
+                                            ),
                                           ),
-                                        ),
-                                  )
-                                : const Center(
-                                    child: Icon(
-                                      Icons.movie_outlined,
-                                      color: AppColors.textMuted,
-                                      size: 40,
+                                      errorWidget: (context, url, error) =>
+                                          const Center(
+                                            child: Icon(
+                                              Icons.broken_image_outlined,
+                                              color: AppColors.textMuted,
+                                              size: 40,
+                                            ),
+                                          ),
+                                    )
+                                  : const Center(
+                                      child: Icon(
+                                        Icons.movie_outlined,
+                                        color: AppColors.textMuted,
+                                        size: 40,
+                                      ),
                                     ),
-                                  ),
-                          ),
+                            ),
 
-                          // Bottom Gradient
-                          Positioned(
-                            bottom: 0,
-                            left: 0,
-                            right: 0,
-                            height: 60,
-                            child: DecoratedBox(
-                              decoration: BoxDecoration(
-                                gradient: LinearGradient(
-                                  begin: Alignment.bottomCenter,
-                                  end: Alignment.topCenter,
-                                  colors: [
-                                    Colors.black.withValues(alpha: 0.8),
-                                    Colors.transparent,
-                                  ],
+                            // Bottom Gradient
+                            Positioned(
+                              bottom: 0,
+                              left: 0,
+                              right: 0,
+                              height: 60,
+                              child: DecoratedBox(
+                                decoration: BoxDecoration(
+                                  gradient: LinearGradient(
+                                    begin: Alignment.bottomCenter,
+                                    end: Alignment.topCenter,
+                                    colors: [
+                                      Colors.black.withValues(alpha: 0.8),
+                                      Colors.transparent,
+                                    ],
+                                  ),
                                 ),
                               ),
                             ),
-                          ),
 
-                          // Top Right Quality Badge
-                          Positioned(
-                            top: 8,
-                            right: 8,
-                            child: _buildQualityBadge(),
-                          ),
+                            // Top Right Quality Badge
+                            Positioned(
+                              top: 8,
+                              right: 8,
+                              child: _buildQualityBadge(),
+                            ),
 
-                          // Bottom Left Rating Badge
-                          Positioned(
-                            bottom: 8,
-                            left: 8,
-                            child: _buildRatingBadge(),
-                          ),
-                        ],
+                            // Bottom Left Rating Badge
+                            Positioned(
+                              bottom: 8,
+                              left: 8,
+                              child: _buildRatingBadge(),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
-                  ),
-                ),
+                  );
+                }),
 
                 const SizedBox(height: AppDimensions.spacingSm),
 

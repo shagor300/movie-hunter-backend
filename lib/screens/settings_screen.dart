@@ -75,75 +75,78 @@ class SettingsScreen extends StatelessWidget {
             _SectionHeader(title: 'Layout', icon: Icons.grid_view_rounded),
             const SizedBox(height: 8),
 
-            _SettingsCard(
-              children: [
-                _ToggleTile(
-                  icon: Icons.grid_on,
-                  title: 'Grid Layout',
-                  subtitle: 'Show movies in a grid',
-                  value: tc.useGridLayout,
-                  accentColor: tc.accentColor,
-                  onChanged: (_) => tc.toggleGridLayout(),
-                ),
-                const Divider(color: Colors.white10, height: 24),
-                _ToggleTile(
-                  icon: Icons.rounded_corner,
-                  title: 'Rounded Posters',
-                  subtitle: 'Apply rounded corners to movie posters',
-                  value: tc.roundedPosters,
-                  accentColor: tc.accentColor,
-                  onChanged: (_) => tc.toggleRoundedPosters(),
-                ),
-                const Divider(color: Colors.white10, height: 24),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    _SettingsLabel('Grid Columns'),
-                    Row(
-                      children: List.generate(3, (i) {
-                        final count = i + 2;
-                        final isSelected = tc.gridColumnCount == count;
-                        return Padding(
-                          padding: const EdgeInsets.only(left: 8),
-                          child: GestureDetector(
-                            onTap: () => tc.setGridColumnCount(count),
-                            child: AnimatedContainer(
-                              duration: const Duration(milliseconds: 200),
-                              width: 38,
-                              height: 38,
-                              decoration: BoxDecoration(
-                                color: isSelected
-                                    ? tc.accentColor.withValues(alpha: 0.2)
-                                    : Colors.white.withValues(alpha: 0.05),
-                                borderRadius: BorderRadius.circular(10),
-                                border: Border.all(
+            Obx(() {
+              final tc = Get.find<ThemeController>();
+              return _SettingsCard(
+                children: [
+                  _ToggleTile(
+                    icon: Icons.grid_on,
+                    title: 'Grid Layout',
+                    subtitle: 'Show movies in a grid',
+                    value: tc.useGridLayout,
+                    accentColor: tc.accentColor,
+                    onChanged: (_) => tc.toggleGridLayout(),
+                  ),
+                  const Divider(color: Colors.white10, height: 24),
+                  _ToggleTile(
+                    icon: Icons.rounded_corner,
+                    title: 'Rounded Posters',
+                    subtitle: 'Apply rounded corners to movie posters',
+                    value: tc.roundedPosters,
+                    accentColor: tc.accentColor,
+                    onChanged: (_) => tc.toggleRoundedPosters(),
+                  ),
+                  const Divider(color: Colors.white10, height: 24),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      _SettingsLabel('Grid Columns'),
+                      Row(
+                        children: List.generate(3, (i) {
+                          final count = i + 2;
+                          final isSelected = tc.gridColumnCount == count;
+                          return Padding(
+                            padding: const EdgeInsets.only(left: 8),
+                            child: GestureDetector(
+                              onTap: () => tc.setGridColumnCount(count),
+                              child: AnimatedContainer(
+                                duration: const Duration(milliseconds: 200),
+                                width: 38,
+                                height: 38,
+                                decoration: BoxDecoration(
                                   color: isSelected
-                                      ? tc.accentColor
-                                      : Colors.white10,
-                                  width: isSelected ? 1.5 : 1,
-                                ),
-                              ),
-                              child: Center(
-                                child: Text(
-                                  '$count',
-                                  style: AppTextStyles.bodyMedium.copyWith(
+                                      ? tc.accentColor.withValues(alpha: 0.2)
+                                      : Colors.white.withValues(alpha: 0.05),
+                                  borderRadius: BorderRadius.circular(10),
+                                  border: Border.all(
                                     color: isSelected
-                                        ? Theme.of(context).colorScheme.primary
-                                        : AppColors.textMuted,
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 14,
+                                        ? tc.accentColor
+                                        : Colors.white10,
+                                    width: isSelected ? 1.5 : 1,
+                                  ),
+                                ),
+                                child: Center(
+                                  child: Text(
+                                    '$count',
+                                    style: AppTextStyles.bodyMedium.copyWith(
+                                      color: isSelected
+                                          ? tc.accentColor
+                                          : AppColors.textMuted,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 14,
+                                    ),
                                   ),
                                 ),
                               ),
                             ),
-                          ),
-                        );
-                      }),
-                    ),
-                  ],
-                ),
-              ],
-            ),
+                          );
+                        }),
+                      ),
+                    ],
+                  ),
+                ],
+              );
+            }),
 
             const SizedBox(height: 24),
 

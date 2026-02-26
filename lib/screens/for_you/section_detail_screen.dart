@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import '../../theme/theme_controller.dart';
 import '../../models/movie.dart';
 import '../../theme/app_colors.dart';
 import '../../theme/app_text_styles.dart';
@@ -65,30 +66,33 @@ class SectionDetailScreen extends StatelessWidget {
                 ),
               ),
             )
-          : GridView.builder(
-              padding: const EdgeInsets.all(12),
-              physics: const BouncingScrollPhysics(),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2,
-                childAspectRatio: 0.58,
-                crossAxisSpacing: 12,
-                mainAxisSpacing: 20,
-              ),
-              itemCount: movies.length,
-              itemBuilder: (context, index) {
-                final movie = movies[index];
-                return MovieCard(
-                  movie: movie,
-                  index: index,
-                  onTap: () => Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => DetailsScreen(movie: movie),
+          : Obx(() {
+              final tc = Get.find<ThemeController>();
+              return GridView.builder(
+                padding: const EdgeInsets.all(12),
+                physics: const BouncingScrollPhysics(),
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: tc.gridColumnCount,
+                  childAspectRatio: 0.58,
+                  crossAxisSpacing: 12,
+                  mainAxisSpacing: 20,
+                ),
+                itemCount: movies.length,
+                itemBuilder: (context, index) {
+                  final movie = movies[index];
+                  return MovieCard(
+                    movie: movie,
+                    index: index,
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => DetailsScreen(movie: movie),
+                      ),
                     ),
-                  ),
-                );
-              },
-            ),
+                  );
+                },
+              );
+            }),
     );
   }
 }

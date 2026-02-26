@@ -1,6 +1,7 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import '../theme/theme_controller.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../services/tmdb_service.dart';
 import '../services/api_service.dart';
@@ -8,7 +9,6 @@ import '../models/movie.dart';
 import '../models/movie_tags.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_text_styles.dart';
-import '../theme/theme_controller.dart';
 import '../widgets/movie_card.dart';
 import '../widgets/custom_search_bar.dart';
 import '../widgets/filter_sheet.dart';
@@ -573,27 +573,30 @@ class SearchScreenState extends State<SearchScreen> {
             // ── Grid ──
             SliverPadding(
               padding: const EdgeInsets.fromLTRB(20, 4, 20, 100),
-              sliver: SliverGrid(
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2,
-                  childAspectRatio: 0.58,
-                  crossAxisSpacing: 16,
-                  mainAxisSpacing: 20,
-                ),
-                delegate: SliverChildBuilderDelegate((context, index) {
-                  final movie = _searchResults[index];
-                  return MovieCard(
-                    movie: movie,
-                    index: index,
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        PremiumPageRoute(page: DetailsScreen(movie: movie)),
-                      );
-                    },
-                  );
-                }, childCount: _searchResults.length),
-              ),
+              sliver: Obx(() {
+                final tc = Get.find<ThemeController>();
+                return SliverGrid(
+                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: tc.gridColumnCount,
+                    childAspectRatio: 0.58,
+                    crossAxisSpacing: 16,
+                    mainAxisSpacing: 20,
+                  ),
+                  delegate: SliverChildBuilderDelegate((context, index) {
+                    final movie = _searchResults[index];
+                    return MovieCard(
+                      movie: movie,
+                      index: index,
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          PremiumPageRoute(page: DetailsScreen(movie: movie)),
+                        );
+                      },
+                    );
+                  }, childCount: _searchResults.length),
+                );
+              }),
             ),
           ],
         ),

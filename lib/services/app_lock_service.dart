@@ -124,12 +124,22 @@ class AppLockService {
 
   Future<bool> authenticateWithBiometric() async {
     try {
-      return await _localAuth.authenticate(
+      // Check if biometrics are actually available first
+      final isAvail = await isBiometricAvailable();
+      if (!isAvail) {
+        debugPrint('⚠️ Biometric not available on this device');
+        return false;
+      }
+
+      debugPrint('🔐 Starting biometric authentication...');
+      final result = await _localAuth.authenticate(
         localizedReason: 'Unlock MovieHub',
         biometricOnly: true,
         sensitiveTransaction: false,
         persistAcrossBackgrounding: true,
       );
+      debugPrint('🔐 Biometric result: $result');
+      return result;
     } catch (e) {
       debugPrint('⚠️ Biometric auth error: $e');
       return false;

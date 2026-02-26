@@ -32,8 +32,10 @@ class _AppLockScreenState extends State<AppLockScreen>
       CurvedAnimation(parent: _shakeController, curve: Curves.elasticIn),
     );
 
-    // Try biometric on launch
-    _tryBiometric();
+    // Try biometric on launch if enabled
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _tryBiometric();
+    });
   }
 
   @override
@@ -43,7 +45,7 @@ class _AppLockScreenState extends State<AppLockScreen>
   }
 
   Future<void> _tryBiometric() async {
-    if (!_lockService.isBiometricEnabled) return;
+    if (!_lockService.requiresBiometric) return;
     final success = await _lockService.authenticateWithBiometric();
     if (success && mounted) widget.onUnlocked();
   }
@@ -91,6 +93,99 @@ class _AppLockScreenState extends State<AppLockScreen>
 
   @override
   Widget build(BuildContext context) {
+    final isBiometricOnly = _lockService.lockType == AppLockType.biometric;
+    final showBioButton = _lockService.requiresBiometric;
+
+    // Biometric-only mode — no PIN pad, just fingerprint
+    if (isBiometricOnly) {
+      return _buildBiometricOnlyScreen();
+    }
+
+    // PIN mode (or both) — show PIN pad with optional bio button
+    return _buildPinScreen(showBioButton);
+  }
+
+  Widget _buildBiometricOnlyScreen() {
+    final primary = Theme.of(context).colorScheme.primary;
+    return Scaffold(
+      backgroundColor: const Color(0xFF0A0A1A),
+      body: SafeArea(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Spacer(flex: 2),
+
+            // Fingerprint icon
+            Container(
+              width: 100,
+              height: 100,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: LinearGradient(
+                  colors: [
+                    primary.withValues(alpha: 0.3),
+                    primary.withValues(alpha: 0.1),
+                  ],
+                ),
+              ),
+              child: Icon(Icons.fingerprint_rounded, color: primary, size: 52),
+            ),
+            const SizedBox(height: 32),
+
+            Text(
+              'Biometric Required',
+              style: GoogleFonts.poppins(
+                color: Colors.white,
+                fontSize: 22,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Touch the fingerprint sensor to unlock',
+              style: GoogleFonts.inter(color: Colors.white38, fontSize: 14),
+            ),
+            const SizedBox(height: 40),
+
+            // Retry button
+            GestureDetector(
+              onTap: _tryBiometric,
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 32,
+                  vertical: 14,
+                ),
+                decoration: BoxDecoration(
+                  color: primary.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(30),
+                  border: Border.all(color: primary.withValues(alpha: 0.3)),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.fingerprint_rounded, color: primary, size: 22),
+                    const SizedBox(width: 10),
+                    Text(
+                      'Tap to Unlock',
+                      style: GoogleFonts.inter(
+                        color: primary,
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
+            const Spacer(flex: 3),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPinScreen(bool showBioButton) {
     return Scaffold(
       backgroundColor: const Color(0xFF0A0A1A),
       body: SafeArea(
@@ -213,11 +308,7 @@ class _AppLockScreenState extends State<AppLockScreen>
                   const SizedBox(height: 16),
                   _buildNumRow(['7', '8', '9']),
                   const SizedBox(height: 16),
-                  _buildNumRow([
-                    _lockService.isBiometricEnabled ? 'bio' : '',
-                    '0',
-                    'delete',
-                  ]),
+                  _buildNumRow([showBioButton ? 'bio' : '', '0', 'delete']),
                 ],
               ),
             ),

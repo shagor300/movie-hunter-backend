@@ -4,6 +4,9 @@ import 'package:local_auth/local_auth.dart';
 import 'package:crypto/crypto.dart';
 import 'dart:convert';
 
+/// Lock type enum for selecting how the app should be locked
+enum AppLockType { pin, biometric, both }
+
 /// Service to manage App Lock (PIN + Biometric)
 class AppLockService {
   static final AppLockService instance = AppLockService._();
@@ -13,6 +16,7 @@ class AppLockService {
   static const _keyEnabled = 'enabled';
   static const _keyPinHash = 'pin_hash';
   static const _keyBiometricEnabled = 'biometric_enabled';
+  static const _keyLockType = 'lock_type'; // 'pin', 'biometric', 'both'
 
   late Box _box;
   final LocalAuthentication _localAuth = LocalAuthentication();
@@ -28,6 +32,23 @@ class AppLockService {
       _box.get(_keyBiometricEnabled, defaultValue: false);
   bool get hasPinSet => _box.get(_keyPinHash) != null;
 
+  AppLockType get lockType {
+    final type = _box.get(_keyLockType, defaultValue: 'pin');
+    switch (type) {
+      case 'biometric':
+        return AppLockType.biometric;
+      case 'both':
+        return AppLockType.both;
+      default:
+        return AppLockType.pin;
+    }
+  }
+
+  bool get requiresPin =>
+      lockType == AppLockType.pin || lockType == AppLockType.both;
+  bool get requiresBiometric =>
+      lockType == AppLockType.biometric || lockType == AppLockType.both;
+
   // ── PIN Management ──
 
   String _hashPin(String pin) {
@@ -37,6 +58,10 @@ class AppLockService {
   Future<void> setPin(String pin) async {
     await _box.put(_keyPinHash, _hashPin(pin));
     await _box.put(_keyEnabled, true);
+    // Default to PIN lock type if enabling for first time
+    if (_box.get(_keyLockType) == null) {
+      await _box.put(_keyLockType, 'pin');
+    }
   }
 
   bool verifyPin(String pin) {
@@ -49,10 +74,30 @@ class AppLockService {
     await _box.put(_keyEnabled, false);
     await _box.delete(_keyPinHash);
     await _box.put(_keyBiometricEnabled, false);
+    await _box.delete(_keyLockType);
   }
 
   Future<void> changePin(String newPin) async {
     await _box.put(_keyPinHash, _hashPin(newPin));
+  }
+
+  // ── Lock Type ──
+
+  Future<void> setLockType(AppLockType type) async {
+    switch (type) {
+      case AppLockType.pin:
+        await _box.put(_keyLockType, 'pin');
+        await _box.put(_keyBiometricEnabled, false);
+        break;
+      case AppLockType.biometric:
+        await _box.put(_keyLockType, 'biometric');
+        await _box.put(_keyBiometricEnabled, true);
+        break;
+      case AppLockType.both:
+        await _box.put(_keyLockType, 'both');
+        await _box.put(_keyBiometricEnabled, true);
+        break;
+    }
   }
 
   // ── Biometric ──
@@ -65,7 +110,12 @@ class AppLockService {
     try {
       final canCheck = await _localAuth.canCheckBiometrics;
       final isSupported = await _localAuth.isDeviceSupported();
-      return canCheck && isSupported;
+      if (canCheck && isSupported) {
+        // Also verify there are enrolled biometrics
+        final availableBiometrics = await _localAuth.getAvailableBiometrics();
+        return availableBiometrics.isNotEmpty;
+      }
+      return false;
     } catch (e) {
       debugPrint('⚠️ Biometric check error: $e');
       return false;
@@ -74,7 +124,12 @@ class AppLockService {
 
   Future<bool> authenticateWithBiometric() async {
     try {
-      return await _localAuth.authenticate(localizedReason: 'Unlock MovieHub');
+      return await _localAuth.authenticate(
+        localizedReason: 'Unlock MovieHub',
+        biometricOnly: true,
+        sensitiveTransaction: false,
+        persistAcrossBackgrounding: true,
+      );
     } catch (e) {
       debugPrint('⚠️ Biometric auth error: $e');
       return false;

@@ -424,18 +424,28 @@ class SettingsScreen extends StatelessWidget {
                     final lockService = AppLockService.instance;
                     return _ToggleTile(
                       icon: Icons.lock_outline,
-                      title: 'App Lock (PIN)',
-                      subtitle: 'Require PIN to open the app',
+                      title: 'App Lock',
+                      subtitle: 'Require authentication to open the app',
                       value: lockService.isLockEnabled,
                       accentColor: tc.accentColor,
                       onChanged: (val) {
                         if (val) {
                           _showPinSetupDialog(context, setState);
                         } else {
-                          _showPinVerifyDialog(context, setState, () {
-                            lockService.disableLock();
-                            setState(() {});
-                          });
+                          // If biometric-only, no PIN to verify — just confirm
+                          if (lockService.lockType == AppLockType.biometric) {
+                            lockService.authenticateWithBiometric().then((ok) {
+                              if (ok) {
+                                lockService.disableLock();
+                                setState(() {});
+                              }
+                            });
+                          } else {
+                            _showPinVerifyDialog(context, setState, () {
+                              lockService.disableLock();
+                              setState(() {});
+                            });
+                          }
                         }
                       },
                     );
@@ -447,29 +457,96 @@ class SettingsScreen extends StatelessWidget {
                     if (!lockService.isLockEnabled) {
                       return const SizedBox.shrink();
                     }
-                    return Column(
-                      children: [
-                        const Divider(color: Colors.white10, height: 20),
-                        FutureBuilder<bool>(
-                          future: lockService.isBiometricAvailable(),
-                          builder: (context, snapshot) {
-                            if (snapshot.data == true) {
-                              return _ToggleTile(
-                                icon: Icons.fingerprint,
-                                title: 'Biometric Unlock',
-                                subtitle: 'Use fingerprint or face unlock',
-                                value: lockService.isBiometricEnabled,
-                                accentColor: tc.accentColor,
-                                onChanged: (val) {
-                                  lockService.setBiometric(val);
+                    return FutureBuilder<bool>(
+                      future: lockService.isBiometricAvailable(),
+                      builder: (context, snapshot) {
+                        final bioAvailable = snapshot.data == true;
+                        final currentType = lockService.lockType;
+
+                        return Column(
+                          children: [
+                            const Divider(color: Colors.white10, height: 20),
+                            Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 4,
+                              ),
+                              child: Row(
+                                children: [
+                                  Icon(
+                                    Icons.security_rounded,
+                                    size: 16,
+                                    color: tc.accentColor,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    'LOCK METHOD',
+                                    style: GoogleFonts.inter(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w700,
+                                      letterSpacing: 1.0,
+                                      color: Colors.white38,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            // PIN option
+                            _buildLockTypeOption(
+                              context: context,
+                              icon: Icons.dialpad_rounded,
+                              title: 'PIN Only',
+                              subtitle: '4-digit PIN code',
+                              isSelected: currentType == AppLockType.pin,
+                              accent: tc.accentColor,
+                              onTap: () {
+                                if (!lockService.hasPinSet) {
+                                  _showPinSetupDialog(context, setState);
+                                } else {
+                                  lockService.setLockType(AppLockType.pin);
+                                  setState(() {});
+                                }
+                              },
+                            ),
+                            // Biometric option
+                            if (bioAvailable)
+                              _buildLockTypeOption(
+                                context: context,
+                                icon: Icons.fingerprint_rounded,
+                                title: 'Biometric Only',
+                                subtitle: 'Fingerprint or face unlock',
+                                isSelected:
+                                    currentType == AppLockType.biometric,
+                                accent: tc.accentColor,
+                                onTap: () {
+                                  lockService.setLockType(
+                                    AppLockType.biometric,
+                                  );
                                   setState(() {});
                                 },
-                              );
-                            }
-                            return const SizedBox.shrink();
-                          },
-                        ),
-                      ],
+                              ),
+                            // Both option
+                            if (bioAvailable)
+                              _buildLockTypeOption(
+                                context: context,
+                                icon: Icons.shield_rounded,
+                                title: 'PIN + Biometric',
+                                subtitle: 'Use either to unlock',
+                                isSelected: currentType == AppLockType.both,
+                                accent: tc.accentColor,
+                                onTap: () {
+                                  if (!lockService.hasPinSet) {
+                                    _showPinSetupDialog(context, setState);
+                                  } else {
+                                    lockService.setLockType(AppLockType.both);
+                                    setState(() {});
+                                  }
+                                },
+                              ),
+                          ],
+                        );
+                      },
                     );
                   },
                 ),
@@ -729,6 +806,82 @@ class SettingsScreen extends StatelessWidget {
           ],
         );
       }),
+    );
+  }
+
+  // ═══════════════════════════════════════════════════════════════
+  // Lock Type Option Widget
+  // ═══════════════════════════════════════════════════════════════
+
+  Widget _buildLockTypeOption({
+    required BuildContext context,
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required bool isSelected,
+    required Color accent,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 3),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? accent.withValues(alpha: 0.1)
+              : Colors.transparent,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isSelected ? accent.withValues(alpha: 0.3) : Colors.white10,
+          ),
+        ),
+        child: Row(
+          children: [
+            Icon(icon, color: isSelected ? accent : Colors.white38, size: 22),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: GoogleFonts.inter(
+                      color: isSelected ? Colors.white : Colors.white70,
+                      fontSize: 14,
+                      fontWeight: isSelected
+                          ? FontWeight.w600
+                          : FontWeight.w500,
+                    ),
+                  ),
+                  Text(
+                    subtitle,
+                    style: GoogleFonts.inter(
+                      color: Colors.white38,
+                      fontSize: 11,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Container(
+              width: 22,
+              height: 22,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: isSelected ? accent : Colors.transparent,
+                border: Border.all(
+                  color: isSelected ? accent : Colors.white24,
+                  width: 2,
+                ),
+              ),
+              child: isSelected
+                  ? const Icon(Icons.check, size: 14, color: Colors.white)
+                  : null,
+            ),
+          ],
+        ),
+      ),
     );
   }
 

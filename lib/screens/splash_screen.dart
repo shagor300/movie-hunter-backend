@@ -357,7 +357,7 @@ class _SplashScreenState extends State<SplashScreen>
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         Text(
-          'Movie',
+          'Flix',
           style: TextStyle(
             fontFamily: 'Poppins',
             fontSize: 36,

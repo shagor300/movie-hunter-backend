@@ -325,7 +325,7 @@ class _RecommendationsScreenState extends State<RecommendationsScreen>
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Text(
-              'Movie',
+              'Flix',
               style: AppTextStyles.headingLarge.copyWith(fontSize: 22),
             ),
             Text(
@@ -365,7 +365,7 @@ class _RecommendationsScreenState extends State<RecommendationsScreen>
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Text(
-            'Movie',
+            'Flix',
             style: AppTextStyles.headingLarge.copyWith(fontSize: 22),
           ),
           Text(

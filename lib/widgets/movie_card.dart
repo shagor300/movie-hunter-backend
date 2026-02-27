@@ -33,23 +33,15 @@ class _MovieCardState extends State<MovieCard>
   late final AnimationController _entranceController;
   late final Animation<double> _fadeAnimation;
   late final Animation<Offset> _slideAnimation;
-
-  // Track cards that already animated so they don't replay on navigation return
-  static final Set<int> _animatedCards = {};
+  bool _hasAnimated = false;
 
   @override
   void initState() {
     super.initState();
 
-    final alreadyAnimated =
-        widget.movie.tmdbId != null &&
-        _animatedCards.contains(widget.movie.tmdbId);
-
     _entranceController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 350),
-      // If already animated before, start at completed state
-      value: alreadyAnimated ? 1.0 : 0.0,
     );
 
     _fadeAnimation = CurvedAnimation(
@@ -64,11 +56,23 @@ class _MovieCardState extends State<MovieCard>
             curve: Curves.easeOutCubic,
           ),
         );
+  }
 
-    if (!alreadyAnimated) {
-      _entranceController.forward();
-      if (widget.movie.tmdbId != null) {
-        _animatedCards.add(widget.movie.tmdbId!);
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_hasAnimated) {
+      _hasAnimated = true;
+      // Check if the page route transition is already done (returning from nav)
+      final route = ModalRoute.of(context);
+      if (route != null &&
+          route.animation != null &&
+          route.animation!.isCompleted) {
+        // Route already settled — we're returning from a push, skip animation
+        _entranceController.value = 1.0;
+      } else {
+        // Fresh page build — play entrance animation
+        _entranceController.forward();
       }
     }
   }

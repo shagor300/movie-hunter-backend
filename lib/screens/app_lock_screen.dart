@@ -112,6 +112,7 @@ class _AppLockScreenState extends State<AppLockScreen>
       body: SafeArea(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             const Spacer(flex: 2),
 

@@ -1,9 +1,14 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:disk_space_plus/disk_space_plus.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 import '../services/storage_settings_service.dart';
+import '../controllers/download_controller.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_text_styles.dart';
+import '../theme/theme_controller.dart';
 
 class StorageManagementScreen extends StatefulWidget {
   const StorageManagementScreen({super.key});
@@ -16,31 +21,26 @@ class StorageManagementScreen extends StatefulWidget {
 class _StorageManagementScreenState extends State<StorageManagementScreen> {
   final StorageSettingsService _settings = Get.find<StorageSettingsService>();
 
-  // Local state for sliders and switches before saving
-  late bool smartDownloads;
-  late bool deleteCompleted;
-  late bool downloadNextEpisode;
-  late bool customSchedule;
-  late String scheduleFrom;
-  late String scheduleTo;
-  late double downloadSpeedLimit;
+  // Local state mirrors
+  late bool wifiOnly;
+  late int maxSimultaneous;
+  late bool autoRetry;
+  late double speedLimit;
   late double storageLimit;
 
   // Real storage data
   double _totalStorageGb = 0;
   double _freeStorageGb = 0;
+  double _appStorageMb = 0;
+  bool _loadingStorage = true;
 
   @override
   void initState() {
     super.initState();
-    // Initialize local state with current settings
-    smartDownloads = _settings.isSmartDownloadsEnabled.value;
-    deleteCompleted = _settings.deleteCompleted.value;
-    downloadNextEpisode = _settings.downloadNextEpisode.value;
-    customSchedule = _settings.customSchedule.value;
-    scheduleFrom = _settings.scheduleFrom.value;
-    scheduleTo = _settings.scheduleTo.value;
-    downloadSpeedLimit = _settings.downloadSpeedLimit.value;
+    wifiOnly = _settings.wifiOnlyDownload.value;
+    maxSimultaneous = _settings.maxSimultaneousDownloads.value;
+    autoRetry = _settings.autoRetryFailed.value;
+    speedLimit = _settings.downloadSpeedLimit.value;
     storageLimit = _settings.storageLimit.value;
     _loadRealStorage();
   }
@@ -50,46 +50,141 @@ class _StorageManagementScreenState extends State<StorageManagementScreen> {
       final diskSpace = DiskSpacePlus();
       final free = await diskSpace.getFreeDiskSpace ?? 0;
       final total = await diskSpace.getTotalDiskSpace ?? 0;
+
+      // Calculate app download folder size
+      double appMb = 0;
+      try {
+        final downloadDir = Platform.isAndroid
+            ? Directory('/storage/emulated/0/Download/FlixHub')
+            : null;
+        if (downloadDir != null && await downloadDir.exists()) {
+          await for (final entity in downloadDir.list(
+            recursive: true,
+            followLinks: false,
+          )) {
+            if (entity is File) {
+              appMb += await entity.length() / (1024 * 1024);
+            }
+          }
+        }
+      } catch (_) {}
+
       if (mounted) {
         setState(() {
           _freeStorageGb = free / 1024;
           _totalStorageGb = total / 1024;
+          _appStorageMb = appMb;
+          _loadingStorage = false;
         });
       }
     } catch (e) {
       debugPrint('❌ Failed to read storage: $e');
+      if (mounted) setState(() => _loadingStorage = false);
     }
   }
 
   void _saveChanges() {
-    _settings.isSmartDownloadsEnabled.value = smartDownloads;
-    _settings.deleteCompleted.value = deleteCompleted;
-    _settings.downloadNextEpisode.value = downloadNextEpisode;
-    _settings.customSchedule.value = customSchedule;
-    _settings.scheduleFrom.value = scheduleFrom;
-    _settings.scheduleTo.value = scheduleTo;
-    _settings.downloadSpeedLimit.value = downloadSpeedLimit;
+    _settings.wifiOnlyDownload.value = wifiOnly;
+    _settings.maxSimultaneousDownloads.value = maxSimultaneous;
+    _settings.autoRetryFailed.value = autoRetry;
+    _settings.downloadSpeedLimit.value = speedLimit;
     _settings.storageLimit.value = storageLimit;
-
     _settings.saveSettings();
 
     Get.back();
+    final tc = Get.find<ThemeController>();
     Get.snackbar(
-      'Settings Saved',
-      'Storage and download preferences have been updated.',
-      backgroundColor: Colors.green.withValues(alpha: 0.9),
-      colorText: Colors.white,
+      '✅ Settings Saved',
+      'Storage and download preferences updated.',
+      backgroundColor: tc.accentColor.withValues(alpha: 0.9),
+      colorText: Colors.black,
       snackPosition: SnackPosition.BOTTOM,
       margin: const EdgeInsets.all(16),
-      icon: const Icon(Icons.check_circle, color: Colors.white),
+      icon: const Icon(Icons.check_circle, color: Colors.black),
     );
+  }
+
+  Future<void> _clearDownloadedFiles() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: const Color(0xFF1A1A2E),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text(
+          'Delete All Downloads?',
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+        ),
+        content: const Text(
+          'This will permanently delete all downloaded movie files from your device.',
+          style: TextStyle(color: Colors.white60, height: 1.4),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text(
+              'Cancel',
+              style: TextStyle(color: Colors.white54),
+            ),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text(
+              'Delete All',
+              style: TextStyle(
+                color: Colors.redAccent,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      try {
+        final downloadDir = Platform.isAndroid
+            ? Directory('/storage/emulated/0/Download/FlixHub')
+            : null;
+        if (downloadDir != null && await downloadDir.exists()) {
+          await downloadDir.delete(recursive: true);
+          await downloadDir.create(recursive: true);
+        }
+        // Clear Hive download history
+        try {
+          final box = await Hive.openBox('downloads');
+          await box.clear();
+          Get.find<DownloadController>().downloads.clear();
+        } catch (_) {}
+
+        _loadRealStorage();
+        Get.snackbar(
+          '✅ Downloads Cleared',
+          'All downloaded files have been deleted.',
+          backgroundColor: Colors.green.withValues(alpha: 0.9),
+          colorText: Colors.white,
+          snackPosition: SnackPosition.BOTTOM,
+          margin: const EdgeInsets.all(16),
+        );
+      } catch (e) {
+        Get.snackbar(
+          '❌ Error',
+          'Failed to delete downloads: $e',
+          backgroundColor: Colors.red.withValues(alpha: 0.9),
+          colorText: Colors.white,
+          snackPosition: SnackPosition.BOTTOM,
+          margin: const EdgeInsets.all(16),
+        );
+      }
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    final tc = Get.find<ThemeController>();
+    final accent = tc.accentColor;
+
     return Scaffold(
       backgroundColor: AppColors.backgroundDark,
-      // Create a transparent app bar
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -116,252 +211,193 @@ class _StorageManagementScreenState extends State<StorageManagementScreen> {
         physics: const BouncingScrollPhysics(),
         child: Column(
           children: [
-            // Example circular storage graphic here (placeholder since we have the functional StorageDeviceCard in downloads_screen)
-            _buildStorageChart(),
+            // ═══ STORAGE CHART ═══
+            _buildStorageChart(accent),
+            const SizedBox(height: 8),
+
+            // ═══ STORAGE BREAKDOWN ═══
+            _buildStorageBreakdown(accent),
+            const SizedBox(height: 24),
+
+            // ═══ DOWNLOAD SETTINGS ═══
+            _buildSectionHeader(
+              'Download Settings',
+              Icons.download_rounded,
+              accent,
+            ),
+            const SizedBox(height: 8),
+            _buildCard([
+              _buildSwitchTile(
+                title: 'Wi-Fi Only Downloads',
+                subtitle: 'Only download when connected to Wi-Fi',
+                icon: Icons.wifi,
+                value: wifiOnly,
+                accent: accent,
+                onChanged: (val) => setState(() => wifiOnly = val),
+              ),
+              const Divider(color: Colors.white10, height: 24),
+              _buildSwitchTile(
+                title: 'Auto-Retry Failed',
+                subtitle: 'Automatically retry failed downloads',
+                icon: Icons.refresh_rounded,
+                value: autoRetry,
+                accent: accent,
+                onChanged: (val) => setState(() => autoRetry = val),
+              ),
+              const Divider(color: Colors.white10, height: 24),
+              _buildCounterTile(
+                title: 'Simultaneous Downloads',
+                subtitle: 'Maximum parallel downloads',
+                icon: Icons.layers_rounded,
+                value: maxSimultaneous,
+                min: 1,
+                max: 5,
+                accent: accent,
+                onChanged: (val) => setState(() => maxSimultaneous = val),
+              ),
+            ]),
 
             const SizedBox(height: 24),
 
-            // Settings Card
-            Container(
-              decoration: BoxDecoration(
-                color: const Color(0xFF151928), // Dark slate surface
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: Colors.white10),
+            // ═══ LIMITS ═══
+            _buildSectionHeader('Limits', Icons.speed_rounded, accent),
+            const SizedBox(height: 8),
+            _buildCard([
+              _buildSlider(
+                title: 'Download Speed Limit',
+                valueString: speedLimit == 0
+                    ? 'Unlimited'
+                    : '${speedLimit.toStringAsFixed(1)} MB/s',
+                value: speedLimit,
+                min: 0,
+                max: 10,
+                divisions: 20,
+                minLabel: 'Unlimited',
+                maxLabel: '10 MB/s',
+                accent: accent,
+                onChanged: (val) => setState(() => speedLimit = val),
               ),
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Smart Downloads Header
-                  Row(
-                    children: [
-                      Container(
-                        padding: EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: Theme.of(
-                            context,
-                          ).colorScheme.primary.withValues(alpha: 0.15),
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: Icon(
-                          Icons.auto_awesome,
-                          color: Theme.of(context).colorScheme.primary,
-                          size: 20,
-                        ),
+              const SizedBox(height: 24),
+              _buildSlider(
+                title: 'Storage Limit',
+                valueString: '${storageLimit.toInt()} GB',
+                value: storageLimit,
+                min: 1,
+                max: 64,
+                divisions: 63,
+                minLabel: '1 GB',
+                maxLabel: '64 GB',
+                accent: accent,
+                onChanged: (val) => setState(() => storageLimit = val),
+              ),
+            ]),
+
+            const SizedBox(height: 24),
+
+            // ═══ DANGER ZONE ═══
+            _buildSectionHeader(
+              'Manage Storage',
+              Icons.delete_sweep_outlined,
+              Colors.redAccent,
+            ),
+            const SizedBox(height: 8),
+            _buildCard([
+              GestureDetector(
+                onTap: _clearDownloadedFiles,
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.redAccent.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(10),
                       ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Smart Downloads',
-                              style: AppTextStyles.titleMedium.copyWith(
-                                fontSize: 16,
-                              ),
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              'Manage storage automatically',
-                              style: AppTextStyles.bodySmall.copyWith(
-                                color: AppColors.textMuted,
-                              ),
-                            ),
-                          ],
-                        ),
+                      child: const Icon(
+                        Icons.delete_forever_rounded,
+                        color: Colors.redAccent,
+                        size: 20,
                       ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  Text(
-                    'Smart downloads manages your downloaded episodes so you don\'t run out of space.',
-                    style: AppTextStyles.bodySmall.copyWith(
-                      color: AppColors.textMuted,
-                      height: 1.4,
                     ),
-                  ),
-                  const SizedBox(height: 24),
-
-                  _buildSwitchTile(
-                    title: 'Delete Completed',
-                    subtitle: 'Remove episodes after watching',
-                    value: deleteCompleted,
-                    onChanged: (val) => setState(() => deleteCompleted = val),
-                  ),
-
-                  _buildSwitchTile(
-                    title: 'Download Next Episode',
-                    subtitle: 'Auto-start next episode on Wi-Fi',
-                    value: downloadNextEpisode,
-                    onChanged: (val) =>
-                        setState(() => downloadNextEpisode = val),
-                  ),
-
-                  const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 16),
-                    child: Divider(color: Colors.white10, height: 1),
-                  ),
-
-                  // Custom Schedule
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Row(
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Icon(
-                            Icons.schedule,
-                            color: AppColors.textMuted,
-                            size: 18,
+                          Text(
+                            'Delete All Downloaded Files',
+                            style: AppTextStyles.bodyMedium.copyWith(
+                              fontWeight: FontWeight.w600,
+                              color: Colors.redAccent,
+                            ),
                           ),
-                          const SizedBox(width: 8),
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Custom Schedule',
-                                style: AppTextStyles.bodyMedium.copyWith(
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              Text(
-                                'Download during specific hours',
-                                style: AppTextStyles.bodySmall.copyWith(
-                                  color: AppColors.textMuted,
-                                ),
-                              ),
-                            ],
+                          Text(
+                            _appStorageMb > 0
+                                ? 'Free up ${_appStorageMb > 1024 ? '${(_appStorageMb / 1024).toStringAsFixed(1)} GB' : '${_appStorageMb.toStringAsFixed(0)} MB'}'
+                                : 'Remove all movie files',
+                            style: AppTextStyles.bodySmall.copyWith(
+                              color: AppColors.textMuted,
+                            ),
                           ),
                         ],
                       ),
-                      Switch(
-                        value: customSchedule,
-                        onChanged: (val) =>
-                            setState(() => customSchedule = val),
-                        activeThumbColor: Colors.white,
-                        activeTrackColor: Theme.of(context).colorScheme.primary,
-                        inactiveThumbColor: AppColors.textMuted,
-                        inactiveTrackColor: Colors.white10,
-                      ),
-                    ],
-                  ),
-
-                  if (customSchedule) ...[
-                    const SizedBox(height: 16),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: _buildTimeDropdown(
-                            'FROM',
-                            scheduleFrom,
-                            (v) => setState(() => scheduleFrom = v!),
-                          ),
-                        ),
-                        const Padding(
-                          padding: EdgeInsets.symmetric(horizontal: 12),
-                          child: Icon(
-                            Icons.arrow_forward_rounded,
-                            color: AppColors.textMuted,
-                            size: 16,
-                          ),
-                        ),
-                        Expanded(
-                          child: _buildTimeDropdown(
-                            'TO',
-                            scheduleTo,
-                            (v) => setState(() => scheduleTo = v!),
-                          ),
-                        ),
-                      ],
+                    ),
+                    const Icon(
+                      Icons.chevron_right_rounded,
+                      color: Colors.white24,
+                      size: 22,
                     ),
                   ],
-
-                  const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 24),
-                    child: Divider(color: Colors.white10, height: 1),
-                  ),
-
-                  // Download Speed Limit
-                  _buildSlider(
-                    title: 'Download Speed Limit',
-                    valueString: downloadSpeedLimit == 0
-                        ? 'Unlimited'
-                        : '${downloadSpeedLimit.toStringAsFixed(1)} MB/s',
-                    value: downloadSpeedLimit,
-                    min: 0,
-                    max: 10,
-                    divisions: 20,
-                    minLabel: 'Unlimited',
-                    maxLabel: '10 MB/s',
-                    onChanged: (val) =>
-                        setState(() => downloadSpeedLimit = val),
-                  ),
-
-                  const SizedBox(height: 24),
-
-                  // Storage Limit
-                  _buildSlider(
-                    title: 'Storage Limit',
-                    valueString: '${storageLimit.toInt()} GB',
-                    value: storageLimit,
-                    min: 1,
-                    max: 64,
-                    divisions: 63,
-                    minLabel: '1 GB',
-                    maxLabel: 'Max',
-                    onChanged: (val) => setState(() => storageLimit = val),
-                  ),
-
-                  const SizedBox(height: 32),
-
-                  // Action Buttons
-                  Row(
-                    children: [
-                      Expanded(
-                        child: TextButton(
-                          onPressed: () => Get.back(),
-                          style: TextButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(vertical: 14),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              side: const BorderSide(color: Colors.white10),
-                            ),
-                          ),
-                          child: Text(
-                            'Cancel',
-                            style: AppTextStyles.bodyMedium.copyWith(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        flex: 2,
-                        child: ElevatedButton(
-                          onPressed: _saveChanges,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Theme.of(
-                              context,
-                            ).colorScheme.primary,
-                            padding: const EdgeInsets.symmetric(vertical: 14),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                          ),
-                          child: Text(
-                            'Save Changes',
-                            style: AppTextStyles.bodyMedium.copyWith(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
+                ),
               ),
+            ]),
+
+            const SizedBox(height: 32),
+
+            // ═══ ACTION BUTTONS ═══
+            Row(
+              children: [
+                Expanded(
+                  child: TextButton(
+                    onPressed: () => Get.back(),
+                    style: TextButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        side: const BorderSide(color: Colors.white10),
+                      ),
+                    ),
+                    child: Text(
+                      'Cancel',
+                      style: AppTextStyles.bodyMedium.copyWith(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  flex: 2,
+                  child: ElevatedButton(
+                    onPressed: _saveChanges,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: accent,
+                      foregroundColor: Colors.black,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: Text(
+                      'Save Changes',
+                      style: AppTextStyles.bodyMedium.copyWith(
+                        color: Colors.black,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
             const SizedBox(height: 40),
           ],
@@ -370,104 +406,194 @@ class _StorageManagementScreenState extends State<StorageManagementScreen> {
     );
   }
 
-  Widget _buildSwitchTile({
-    required String title,
-    required String subtitle,
-    required bool value,
-    required ValueChanged<bool> onChanged,
-  }) {
+  // ═══════════════════════════════════════
+  // HELPER WIDGETS
+  // ═══════════════════════════════════════
+
+  Widget _buildSectionHeader(String title, IconData icon, Color color) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.only(left: 4),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: AppTextStyles.bodyMedium.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                Text(
-                  subtitle,
-                  style: AppTextStyles.bodySmall.copyWith(
-                    color: AppColors.textMuted,
-                  ),
-                ),
-              ],
+          Icon(icon, color: color, size: 18),
+          const SizedBox(width: 8),
+          Text(
+            title,
+            style: AppTextStyles.titleMedium.copyWith(
+              fontSize: 14,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 0.5,
+              color: Colors.white60,
             ),
-          ),
-          Switch(
-            value: value,
-            onChanged: onChanged,
-            activeThumbColor: Colors.white,
-            activeTrackColor: Theme.of(context).colorScheme.primary,
-            inactiveThumbColor: AppColors.textMuted,
-            inactiveTrackColor: Colors.white10,
           ),
         ],
       ),
     );
   }
 
-  Widget _buildTimeDropdown(
-    String label,
-    String value,
-    ValueChanged<String?> onChanged,
-  ) {
+  Widget _buildCard(List<Widget> children) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.03),
-        borderRadius: BorderRadius.circular(12),
+        color: const Color(0xFF151928),
+        borderRadius: BorderRadius.circular(20),
         border: Border.all(color: Colors.white10),
       ),
+      padding: const EdgeInsets.all(20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            label,
-            style: AppTextStyles.labelSmall.copyWith(
-              color: AppColors.textMuted,
-              letterSpacing: 1.1,
-            ),
+        children: children,
+      ),
+    );
+  }
+
+  Widget _buildSwitchTile({
+    required String title,
+    required String subtitle,
+    required IconData icon,
+    required bool value,
+    required Color accent,
+    required ValueChanged<bool> onChanged,
+  }) {
+    return Row(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: (value ? accent : Colors.white12).withValues(alpha: 0.15),
+            borderRadius: BorderRadius.circular(10),
           ),
-          const SizedBox(height: 4),
-          DropdownButtonHideUnderline(
-            child: DropdownButton<String>(
-              value: value,
-              isDense: true,
-              isExpanded: true,
-              icon: const Icon(
-                Icons.keyboard_arrow_down,
-                color: AppColors.textMuted,
-                size: 18,
+          child: Icon(
+            icon,
+            color: value ? accent : AppColors.textMuted,
+            size: 18,
+          ),
+        ),
+        const SizedBox(width: 14),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: AppTextStyles.bodyMedium.copyWith(
+                  fontWeight: FontWeight.w600,
+                  fontSize: 14,
+                ),
               ),
-              dropdownColor: AppColors.surfaceLight,
-              items:
-                  [
-                        '12:00 AM',
-                        '01:00 AM',
-                        '02:00 AM',
-                        '06:00 AM',
-                        '07:00 AM',
-                        '08:00 AM',
-                        '10:00 PM',
-                      ]
-                      .map(
-                        (t) => DropdownMenuItem(
-                          value: t,
-                          child: Text(t, style: AppTextStyles.bodyMedium),
-                        ),
-                      )
-                      .toList(),
-              onChanged: onChanged,
-            ),
+              Text(
+                subtitle,
+                style: AppTextStyles.bodySmall.copyWith(
+                  color: AppColors.textMuted,
+                ),
+              ),
+            ],
           ),
-        ],
+        ),
+        Switch(
+          value: value,
+          onChanged: (v) {
+            HapticFeedback.lightImpact();
+            onChanged(v);
+          },
+          activeThumbColor: Colors.white,
+          activeTrackColor: accent,
+          inactiveThumbColor: AppColors.textMuted,
+          inactiveTrackColor: Colors.white10,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildCounterTile({
+    required String title,
+    required String subtitle,
+    required IconData icon,
+    required int value,
+    required int min,
+    required int max,
+    required Color accent,
+    required ValueChanged<int> onChanged,
+  }) {
+    return Row(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: accent.withValues(alpha: 0.15),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Icon(icon, color: accent, size: 18),
+        ),
+        const SizedBox(width: 14),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: AppTextStyles.bodyMedium.copyWith(
+                  fontWeight: FontWeight.w600,
+                  fontSize: 14,
+                ),
+              ),
+              Text(
+                subtitle,
+                style: AppTextStyles.bodySmall.copyWith(
+                  color: AppColors.textMuted,
+                ),
+              ),
+            ],
+          ),
+        ),
+        // Counter buttons
+        Container(
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.05),
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: Colors.white10),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _counterBtn(Icons.remove, value > min, () {
+                HapticFeedback.lightImpact();
+                onChanged(value - 1);
+              }),
+              Container(
+                width: 36,
+                alignment: Alignment.center,
+                child: Text(
+                  '$value',
+                  style: AppTextStyles.bodyMedium.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: accent,
+                    fontSize: 16,
+                  ),
+                ),
+              ),
+              _counterBtn(Icons.add, value < max, () {
+                HapticFeedback.lightImpact();
+                onChanged(value + 1);
+              }),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _counterBtn(IconData icon, bool enabled, VoidCallback onTap) {
+    return GestureDetector(
+      onTap: enabled ? onTap : null,
+      child: Container(
+        width: 32,
+        height: 32,
+        alignment: Alignment.center,
+        child: Icon(
+          icon,
+          size: 16,
+          color: enabled ? Colors.white : Colors.white24,
+        ),
       ),
     );
   }
@@ -481,6 +607,7 @@ class _StorageManagementScreenState extends State<StorageManagementScreen> {
     required int divisions,
     required String minLabel,
     required String maxLabel,
+    required Color accent,
     required ValueChanged<double> onChanged,
   }) {
     return Column(
@@ -492,28 +619,33 @@ class _StorageManagementScreenState extends State<StorageManagementScreen> {
             Text(
               title,
               style: AppTextStyles.bodyMedium.copyWith(
-                fontWeight: FontWeight.bold,
+                fontWeight: FontWeight.w600,
               ),
             ),
-            Text(
-              valueString,
-              style: AppTextStyles.bodyMedium.copyWith(
-                color: Theme.of(context).colorScheme.primary,
-                fontWeight: FontWeight.bold,
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              decoration: BoxDecoration(
+                color: accent.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Text(
+                valueString,
+                style: AppTextStyles.bodySmall.copyWith(
+                  color: accent,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ),
           ],
         ),
-        SizedBox(height: 8),
+        const SizedBox(height: 12),
         SliderTheme(
           data: SliderTheme.of(context).copyWith(
-            activeTrackColor: Theme.of(context).colorScheme.primary,
+            activeTrackColor: accent,
             inactiveTrackColor: Colors.white10,
             thumbColor: Colors.white,
             trackHeight: 4,
-            overlayColor: Theme.of(
-              context,
-            ).colorScheme.primary.withValues(alpha: 0.2),
+            overlayColor: accent.withValues(alpha: 0.2),
             thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 8),
           ),
           child: Slider(
@@ -521,7 +653,10 @@ class _StorageManagementScreenState extends State<StorageManagementScreen> {
             min: min,
             max: max,
             divisions: divisions,
-            onChanged: onChanged,
+            onChanged: (v) {
+              HapticFeedback.selectionClick();
+              onChanged(v);
+            },
           ),
         ),
         Row(
@@ -545,7 +680,7 @@ class _StorageManagementScreenState extends State<StorageManagementScreen> {
     );
   }
 
-  Widget _buildStorageChart() {
+  Widget _buildStorageChart(Color accent) {
     final freeStr = _freeStorageGb > 0
         ? _freeStorageGb.toStringAsFixed(1)
         : '...';
@@ -565,8 +700,8 @@ class _StorageManagementScreenState extends State<StorageManagementScreen> {
           shape: BoxShape.circle,
           gradient: SweepGradient(
             colors: [
-              const Color(0xFF4338CA),
-              const Color(0xFF06B6D4),
+              accent,
+              accent.withValues(alpha: 0.6),
               const Color(0xFF8B5CF6),
               const Color(0xFF1E293B),
             ],
@@ -574,9 +709,7 @@ class _StorageManagementScreenState extends State<StorageManagementScreen> {
           ),
           boxShadow: [
             BoxShadow(
-              color: Theme.of(
-                context,
-              ).colorScheme.primary.withValues(alpha: 0.2),
+              color: accent.withValues(alpha: 0.2),
               blurRadius: 40,
               spreadRadius: -10,
             ),
@@ -633,6 +766,104 @@ class _StorageManagementScreenState extends State<StorageManagementScreen> {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildStorageBreakdown(Color accent) {
+    final appGb = _appStorageMb / 1024;
+    final usedGb = _totalStorageGb - _freeStorageGb;
+    final otherGb = (usedGb - appGb).clamp(0.0, double.infinity);
+
+    return _buildCard([
+      Text(
+        'Storage Breakdown',
+        style: AppTextStyles.bodyMedium.copyWith(
+          fontWeight: FontWeight.w700,
+          fontSize: 14,
+        ),
+      ),
+      const SizedBox(height: 16),
+      // Progress bar
+      ClipRRect(
+        borderRadius: BorderRadius.circular(6),
+        child: SizedBox(
+          height: 10,
+          child: Row(
+            children: [
+              if (_totalStorageGb > 0) ...[
+                Expanded(
+                  flex: (appGb / _totalStorageGb * 100).round().clamp(1, 100),
+                  child: Container(color: accent),
+                ),
+                Expanded(
+                  flex: (otherGb / _totalStorageGb * 100).round().clamp(1, 100),
+                  child: Container(color: const Color(0xFF8B5CF6)),
+                ),
+                Expanded(
+                  flex: (_freeStorageGb / _totalStorageGb * 100).round().clamp(
+                    1,
+                    100,
+                  ),
+                  child: Container(color: Colors.white10),
+                ),
+              ] else
+                Expanded(child: Container(color: Colors.white10)),
+            ],
+          ),
+        ),
+      ),
+      const SizedBox(height: 16),
+      // Legend
+      _legendItem(
+        accent,
+        'FlixHub Downloads',
+        _appStorageMb > 1024
+            ? '${appGb.toStringAsFixed(1)} GB'
+            : '${_appStorageMb.toStringAsFixed(0)} MB',
+      ),
+      const SizedBox(height: 8),
+      _legendItem(
+        const Color(0xFF8B5CF6),
+        'Other Apps',
+        '${otherGb.toStringAsFixed(1)} GB',
+      ),
+      const SizedBox(height: 8),
+      _legendItem(
+        Colors.white24,
+        'Free Space',
+        '${_freeStorageGb.toStringAsFixed(1)} GB',
+      ),
+    ]);
+  }
+
+  Widget _legendItem(Color color, String label, String value) {
+    return Row(
+      children: [
+        Container(
+          width: 12,
+          height: 12,
+          decoration: BoxDecoration(
+            color: color,
+            borderRadius: BorderRadius.circular(3),
+          ),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Text(
+            label,
+            style: AppTextStyles.bodySmall.copyWith(
+              color: AppColors.textSecondary,
+            ),
+          ),
+        ),
+        Text(
+          _loadingStorage ? '...' : value,
+          style: AppTextStyles.bodySmall.copyWith(
+            fontWeight: FontWeight.w600,
+            color: Colors.white70,
+          ),
+        ),
+      ],
     );
   }
 }

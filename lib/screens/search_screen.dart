@@ -4,7 +4,6 @@ import 'package:get/get.dart';
 import '../theme/theme_controller.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../services/tmdb_service.dart';
-import '../services/api_service.dart';
 import '../models/movie.dart';
 import '../models/movie_tags.dart';
 import '../theme/app_colors.dart';
@@ -193,14 +192,11 @@ class SearchScreenState extends State<SearchScreen> {
       _showRecent = false;
     });
 
-    final ApiService apiService = ApiService();
-    final rawResults = await apiService.searchMovies(query);
-
-    List<Movie> movies = rawResults.map((m) => Movie.fromJson(m)).toList();
-    movies = _applyFilters(movies);
+    // Search TMDB directly from app — instant results, no backend needed
+    final results = await _tmdbService.searchMovies(query);
 
     setState(() {
-      _searchResults = movies;
+      _searchResults = _applyFilters(results);
       _isLoading = false;
     });
   }

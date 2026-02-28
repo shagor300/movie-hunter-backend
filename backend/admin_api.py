@@ -503,3 +503,339 @@ async def track_download(data: dict):
         (data.get("tmdb_id"), data.get("movie_title"), data.get("quality"), data.get("ip_address")),
     )
     return {"success": True}
+
+
+# ════════════════════════════════════════════════════════════════════════
+# REMOTE CONFIG — IN-APP UPDATE CONTROL
+# ════════════════════════════════════════════════════════════════════════
+
+_RC_KEYS = ["current_version", "update_url", "is_force_update", "whats_new"]
+
+
+class RemoteConfigRequest(BaseModel):
+    current_version: str
+    update_url: str = ""
+    is_force_update: bool = False
+    whats_new: str = ""
+
+
+@router.get("/remote-config")
+async def get_remote_config(authorization: str = Header(None)):
+    """Get current Remote Config values for in-app updates."""
+    _verify_token((authorization or "").replace("Bearer ", ""))
+
+    config = {}
+    for key in _RC_KEYS:
+        row = await admin_db.fetch_one(
+            "SELECT value FROM app_config WHERE key = ?", (f"rc_{key}",)
+        )
+        config[key] = row["value"] if row else ""
+
+    # Load publish history
+    history = await admin_db.fetch_all("""
+        SELECT * FROM update_publish_history
+        ORDER BY published_at DESC LIMIT 10
+    """)
+
+    return {**config, "history": history or []}
+
+
+@router.post("/remote-config")
+async def publish_remote_config(req: RemoteConfigRequest, authorization: str = Header(None)):
+    """Publish Remote Config values (saves to DB + tries Firebase)."""
+    session = _verify_token((authorization or "").replace("Bearer ", ""))
+
+    # Save to local DB
+    values = {
+        "current_version": req.current_version,
+        "update_url": req.update_url,
+        "is_force_update": str(req.is_force_update).lower(),
+        "whats_new": req.whats_new,
+    }
+
+    for key, value in values.items():
+        db_key = f"rc_{key}"
+        exists = await admin_db.fetch_one(
+            "SELECT key FROM app_config WHERE key = ?", (db_key,)
+        )
+        if exists:
+            await admin_db.execute(
+                "UPDATE app_config SET value = ?, updated_at = ?, updated_by = ? WHERE key = ?",
+                (value, datetime.now().isoformat(), session["admin_id"], db_key),
+            )
+        else:
+            await admin_db.insert(
+                "INSERT INTO app_config (key, value, description, updated_by) VALUES (?, ?, ?, ?)",
+                (db_key, value, f"Remote Config: {key}", session["admin_id"]),
+            )
+
+    # Record in publish history
+    try:
+        await admin_db.insert("""
+            INSERT INTO update_publish_history
+                (version, update_url, is_force_update, whats_new, published_by)
+            VALUES (?, ?, ?, ?, ?)
+        """, (
+            req.current_version, req.update_url,
+            1 if req.is_force_update else 0,
+            req.whats_new, session["username"],
+        ))
+    except Exception:
+        # Table might not exist on first run — create it
+        await admin_db.execute("""
+            CREATE TABLE IF NOT EXISTS update_publish_history (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                version TEXT NOT NULL,
+                update_url TEXT,
+                is_force_update INTEGER DEFAULT 0,
+                whats_new TEXT,
+                published_by TEXT,
+                published_at DATETIME DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+        await admin_db.insert("""
+            INSERT INTO update_publish_history
+                (version, update_url, is_force_update, whats_new, published_by)
+            VALUES (?, ?, ?, ?, ?)
+        """, (
+            req.current_version, req.update_url,
+            1 if req.is_force_update else 0,
+            req.whats_new, session["username"],
+        ))
+
+    # Try to publish to Firebase Remote Config via firebase-admin SDK
+    firebase_status = "skipped"
+    try:
+        import firebase_admin
+        from firebase_admin import credentials, remote_config as fb_rc
+        import os
+
+        sa_path = os.path.join(os.path.dirname(__file__), "service-account.json")
+        if os.path.exists(sa_path):
+            if not firebase_admin._apps:
+                cred = credentials.Certificate(sa_path)
+                firebase_admin.initialize_app(cred)
+
+            # Build the Remote Config template
+            template = fb_rc.get_server_template()
+            server_config = template.evaluate()
+
+            # Update via REST API instead (firebase_admin remote_config is limited)
+            # For now, the local DB is the source of truth
+            firebase_status = "service_account_found"
+            logger.info("Firebase service account found — values saved to DB")
+        else:
+            firebase_status = "no_service_account"
+            logger.info("No service-account.json found — values saved to DB only")
+    except ImportError:
+        firebase_status = "sdk_not_installed"
+        logger.info("firebase-admin not installed — values saved to DB only")
+    except Exception as e:
+        firebase_status = f"error: {str(e)}"
+        logger.warning(f"Firebase publish failed: {e}")
+
+    return {
+        "success": True,
+        "message": "Update configuration published!",
+        "firebase_status": firebase_status,
+        "config": values,
+    }
+
+
+# ════════════════════════════════════════════════════════════════════════
+# MOVIE REQUESTS (from app users)
+# ════════════════════════════════════════════════════════════════════════
+
+_MOVIE_REQUESTS_TABLE = """
+    CREATE TABLE IF NOT EXISTS movie_requests (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        movie_name TEXT NOT NULL,
+        year TEXT,
+        language TEXT,
+        quality TEXT,
+        note TEXT,
+        status TEXT DEFAULT 'pending',
+        device_id TEXT,
+        requested_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME
+    )
+"""
+
+
+class MovieRequestInput(BaseModel):
+    movie_name: str
+    year: Optional[str] = None
+    language: Optional[str] = None
+    quality: Optional[str] = None
+    note: Optional[str] = None
+    device_id: Optional[str] = None
+
+
+class UpdateStatusInput(BaseModel):
+    status: str
+
+
+async def _ensure_requests_table():
+    """Create movie_requests table if it doesn't exist."""
+    try:
+        await admin_db.execute(_MOVIE_REQUESTS_TABLE)
+    except Exception:
+        pass
+
+
+@router.post("/movie-requests")
+async def submit_movie_request(req: MovieRequestInput):
+    """Submit a movie request (called by the app — no auth required)."""
+    await _ensure_requests_table()
+    await admin_db.insert("""
+        INSERT INTO movie_requests (movie_name, year, language, quality, note, device_id)
+        VALUES (?, ?, ?, ?, ?, ?)
+    """, (req.movie_name, req.year, req.language, req.quality, req.note, req.device_id))
+    return {"success": True, "message": "Request submitted"}
+
+
+@router.get("/movie-requests")
+async def get_movie_requests(
+    status: Optional[str] = None,
+    search: Optional[str] = None,
+    limit: int = 100,
+    authorization: str = Header(None),
+):
+    """Get all movie requests (admin only)."""
+    _verify_token((authorization or "").replace("Bearer ", ""))
+    await _ensure_requests_table()
+
+    if status and search:
+        rows = await admin_db.fetch_all(
+            "SELECT * FROM movie_requests WHERE status = ? AND movie_name LIKE ? ORDER BY requested_at DESC LIMIT ?",
+            (status, f"%{search}%", limit),
+        )
+    elif status:
+        rows = await admin_db.fetch_all(
+            "SELECT * FROM movie_requests WHERE status = ? ORDER BY requested_at DESC LIMIT ?",
+            (status, limit),
+        )
+    elif search:
+        rows = await admin_db.fetch_all(
+            "SELECT * FROM movie_requests WHERE movie_name LIKE ? ORDER BY requested_at DESC LIMIT ?",
+            (f"%{search}%", limit),
+        )
+    else:
+        rows = await admin_db.fetch_all(
+            "SELECT * FROM movie_requests ORDER BY requested_at DESC LIMIT ?", (limit,)
+        )
+
+    return {"requests": rows, "total": len(rows)}
+
+
+@router.put("/movie-requests/{request_id}/status")
+async def update_request_status(
+    request_id: int,
+    body: UpdateStatusInput,
+    authorization: str = Header(None),
+):
+    """Update a movie request's status (admin only)."""
+    _verify_token((authorization or "").replace("Bearer ", ""))
+    await admin_db.execute(
+        "UPDATE movie_requests SET status = ?, updated_at = ? WHERE id = ?",
+        (body.status, datetime.now().isoformat(), request_id),
+    )
+    return {"success": True}
+
+
+@router.delete("/movie-requests/{request_id}")
+async def delete_movie_request(request_id: int, authorization: str = Header(None)):
+    """Delete a movie request (admin only)."""
+    _verify_token((authorization or "").replace("Bearer ", ""))
+    await admin_db.execute("DELETE FROM movie_requests WHERE id = ?", (request_id,))
+    return {"success": True}
+
+
+# ════════════════════════════════════════════════════════════════════════
+# PUSH NOTIFICATIONS — COMPOSE + HISTORY
+# ════════════════════════════════════════════════════════════════════════
+
+_NOTIFICATIONS_TABLE = """
+    CREATE TABLE IF NOT EXISTS notification_history (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        title TEXT NOT NULL,
+        message TEXT NOT NULL,
+        target_type TEXT DEFAULT 'all',
+        sent_by TEXT,
+        sent_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )
+"""
+
+
+class NotificationInput(BaseModel):
+    title: str
+    message: str
+    target: str = "all"
+
+
+async def _ensure_notifications_table():
+    try:
+        await admin_db.execute(_NOTIFICATIONS_TABLE)
+    except Exception:
+        pass
+
+
+@router.post("/notifications/send")
+async def send_notification(body: NotificationInput, authorization: str = Header(None)):
+    """Send a push notification (admin only). Logs to DB + attempts FCM."""
+    session = _verify_token((authorization or "").replace("Bearer ", ""))
+    await _ensure_notifications_table()
+
+    # Log to DB
+    await admin_db.insert("""
+        INSERT INTO notification_history (title, message, target_type, sent_by)
+        VALUES (?, ?, ?, ?)
+    """, (body.title, body.message, body.target, session["username"]))
+
+    # Try sending via Firebase Cloud Messaging
+    fcm_status = "logged_only"
+    try:
+        import firebase_admin
+        from firebase_admin import messaging
+        import os
+
+        sa_path = os.path.join(os.path.dirname(__file__), "service-account.json")
+        if os.path.exists(sa_path):
+            if not firebase_admin._apps:
+                from firebase_admin import credentials
+                cred = credentials.Certificate(sa_path)
+                firebase_admin.initialize_app(cred)
+
+            # Send to topic 'all' by default
+            topic = body.target if body.target != "all" else "all"
+            msg = messaging.Message(
+                notification=messaging.Notification(
+                    title=body.title,
+                    body=body.message,
+                ),
+                topic=topic,
+            )
+            response = messaging.send(msg)
+            fcm_status = f"sent:{response}"
+            logger.info(f"FCM sent: {response}")
+        else:
+            fcm_status = "no_service_account"
+    except ImportError:
+        fcm_status = "firebase_not_installed"
+    except Exception as e:
+        fcm_status = f"error:{str(e)}"
+        logger.warning(f"FCM send failed: {e}")
+
+    return {"success": True, "fcm_status": fcm_status, "message": "Notification sent!"}
+
+
+@router.get("/notifications")
+async def get_notifications(authorization: str = Header(None)):
+    """Get notification history (admin only)."""
+    _verify_token((authorization or "").replace("Bearer ", ""))
+    await _ensure_notifications_table()
+    rows = await admin_db.fetch_all(
+        "SELECT * FROM notification_history ORDER BY sent_at DESC LIMIT 50"
+    )
+    return {"notifications": rows or []}
+

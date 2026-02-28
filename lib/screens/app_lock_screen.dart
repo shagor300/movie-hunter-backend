@@ -135,6 +135,7 @@ class _AppLockScreenState extends State<AppLockScreen>
 
             Text(
               'Biometric Required',
+              textAlign: TextAlign.center,
               style: GoogleFonts.poppins(
                 color: Colors.white,
                 fontSize: 22,
@@ -144,6 +145,7 @@ class _AppLockScreenState extends State<AppLockScreen>
             const SizedBox(height: 8),
             Text(
               'Touch the fingerprint sensor to unlock',
+              textAlign: TextAlign.center,
               style: GoogleFonts.inter(color: Colors.white38, fontSize: 14),
             ),
             const SizedBox(height: 40),

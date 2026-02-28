@@ -4,9 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../controllers/update_controller.dart';
-import '../services/update_service.dart';
 import '../services/app_lock_service.dart';
-import '../widgets/update_dialog.dart';
 import 'home_screen.dart';
 import 'app_lock_screen.dart';
 import 'onboarding_screen.dart';
@@ -185,21 +183,8 @@ class _SplashScreenState extends State<SplashScreen>
   Future<void> _checkUpdateInBackground() async {
     try {
       final updateController = Get.find<UpdateController>();
+      // checkForUpdate() now handles Remote Config fetch + dialog display
       await updateController.checkForUpdate();
-
-      final info = updateController.updateInfo.value;
-      if (info != null) {
-        final updateService = UpdateService();
-        final currentVersion = await updateService.getCurrentVersionName();
-
-        await Future.delayed(const Duration(seconds: 1));
-
-        if (Get.currentRoute == '/' ||
-            Get.currentRoute == '/HomeScreen' ||
-            true) {
-          UpdateDialog.show(info: info, currentVersion: currentVersion);
-        }
-      }
     } catch (e) {
       debugPrint('Background update check error: $e');
     }

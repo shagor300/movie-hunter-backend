@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:open_filex/open_filex.dart';
 import 'package:disk_space_plus/disk_space_plus.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 import '../controllers/download_controller.dart';
 import '../models/download_item.dart';
@@ -67,23 +68,6 @@ class _DownloadsScreenState extends State<DownloadsScreen> {
           style: AppTextStyles.displayMedium.copyWith(fontSize: 28),
         ),
         actions: [
-          Container(
-            margin: const EdgeInsets.only(right: 16),
-            decoration: BoxDecoration(
-              color: AppColors.surface,
-              shape: BoxShape.circle,
-              border: Border.all(color: Colors.white10),
-            ),
-            child: IconButton(
-              icon: const Icon(
-                Icons.cleaning_services_rounded,
-                size: 20,
-                color: AppColors.textSecondary,
-              ),
-              onPressed: () => _clearCompleted(controller),
-              tooltip: 'Clear completed',
-            ),
-          ),
           Container(
             margin: const EdgeInsets.only(right: 16),
             decoration: BoxDecoration(
@@ -197,18 +181,6 @@ class _DownloadsScreenState extends State<DownloadsScreen> {
         );
       }),
     );
-  }
-
-  void _clearCompleted(DownloadController controller) {
-    final completed = controller.allDownloads
-        .where((d) => d.status == 'completed' || d.status == 'cancelled')
-        .toList();
-
-    for (final item in completed) {
-      if (item.status == 'cancelled') {
-        controller.deleteDownload(item);
-      }
-    }
   }
 }
 
@@ -462,30 +434,32 @@ class _ActiveDownloadCard extends StatelessWidget {
               padding: const EdgeInsets.all(16),
               child: Row(
                 children: [
-                  // Poster (Mocking with a shaded container if no URL, but MovieHub normally doesn't store poster in DownloadItem. We'll use a stylized icon)
+                  // Poster
                   Container(
                     width: 70,
                     height: 100,
+                    clipBehavior: Clip.antiAlias,
                     decoration: BoxDecoration(
                       color: AppColors.background,
                       borderRadius: BorderRadius.circular(8),
                       border: Border.all(color: Colors.white10),
-                      gradient: LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: [
-                          primaryGlow.withValues(alpha: 0.2),
-                          Colors.transparent,
-                        ],
-                      ),
                     ),
-                    child: Center(
-                      child: Icon(
-                        Icons.movie_creation_outlined,
-                        color: primaryGlow,
-                        size: 32,
-                      ),
-                    ),
+                    child: item.posterUrl != null && item.posterUrl!.isNotEmpty
+                        ? CachedNetworkImage(
+                            imageUrl: item.posterUrl!,
+                            fit: BoxFit.cover,
+                            placeholder: (context, url) => Container(
+                              color: AppColors.background,
+                              child: const Center(
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
+                              ),
+                            ),
+                            errorWidget: (context, url, error) =>
+                                _buildPlaceholderIcon(primaryGlow),
+                          )
+                        : _buildPlaceholderIcon(primaryGlow),
                   ),
                   const SizedBox(width: 16),
 
@@ -642,6 +616,22 @@ class _ActiveDownloadCard extends StatelessWidget {
     });
   }
 
+  Widget _buildPlaceholderIcon(Color color) {
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.background,
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [color.withValues(alpha: 0.2), Colors.transparent],
+        ),
+      ),
+      child: Center(
+        child: Icon(Icons.movie_creation_outlined, color: color, size: 32),
+      ),
+    );
+  }
+
   void _optionsSheet(BuildContext context) {
     Get.bottomSheet(
       Container(
@@ -701,18 +691,28 @@ class _CompletedCard extends StatelessWidget {
                 Container(
                   width: 100,
                   height: 65,
+                  clipBehavior: Clip.antiAlias,
                   decoration: BoxDecoration(
                     color: AppColors.backgroundDark,
                     border: Border.all(color: Colors.white10),
                     borderRadius: BorderRadius.circular(8),
-                    image: const DecorationImage(
-                      image: AssetImage(
-                        'assets/images/placeholder.png',
-                      ), // Replace with actual frame if possible
-                      fit: BoxFit.cover,
-                      opacity: 0.5,
-                    ),
                   ),
+                  child: item.posterUrl != null && item.posterUrl!.isNotEmpty
+                      ? ColorFiltered(
+                          colorFilter: ColorFilter.mode(
+                            Colors.black.withValues(alpha: 0.5),
+                            BlendMode.darken,
+                          ),
+                          child: CachedNetworkImage(
+                            imageUrl: item.posterUrl!,
+                            fit: BoxFit.cover,
+                            placeholder: (context, url) =>
+                                Container(color: AppColors.backgroundDark),
+                            errorWidget: (context, url, error) =>
+                                _buildPlaceholderImage(),
+                          ),
+                        )
+                      : _buildPlaceholderImage(),
                 ),
                 Container(
                   padding: const EdgeInsets.all(6),
@@ -799,6 +799,14 @@ class _CompletedCard extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildPlaceholderImage() {
+    return Image.asset(
+      'assets/images/placeholder.png',
+      fit: BoxFit.cover,
+      opacity: const AlwaysStoppedAnimation(0.5),
     );
   }
 

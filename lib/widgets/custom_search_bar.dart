@@ -37,6 +37,15 @@ class _CustomSearchBarState extends State<CustomSearchBar>
   @override
   void initState() {
     super.initState();
+
+    _glowController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 2000),
+    );
+    _glowAnimation = Tween<double>(begin: 0.3, end: 0.7).animate(
+      CurvedAnimation(parent: _glowController, curve: Curves.easeInOut),
+    );
+
     _focusNode.addListener(() {
       setState(() => _isFocused = _focusNode.hasFocus);
       if (_focusNode.hasFocus) {
@@ -46,14 +55,6 @@ class _CustomSearchBarState extends State<CustomSearchBar>
         _glowController.value = 0;
       }
     });
-
-    _glowController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 2000),
-    );
-    _glowAnimation = Tween<double>(begin: 0.3, end: 0.7).animate(
-      CurvedAnimation(parent: _glowController, curve: Curves.easeInOut),
-    );
   }
 
   @override

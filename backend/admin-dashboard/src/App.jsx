@@ -12,6 +12,9 @@ import SearchPage from './pages/SearchPage';
 import SourcesPage from './pages/SourcesPage';
 import ErrorsPage from './pages/ErrorsPage';
 import SettingsPage from './pages/SettingsPage';
+import UpdatePage from './pages/UpdatePage';
+import RequestsPage from './pages/RequestsPage';
+import NotificationsPage from './pages/NotificationsPage';
 
 function useAuth() {
     const [user, setUser] = useState(() => {
@@ -41,6 +44,9 @@ function AuthenticatedApp({ user, logout }) {
                     <Route path="/sources" element={<SourcesPage />} />
                     <Route path="/errors" element={<ErrorsPage />} />
                     <Route path="/settings" element={<SettingsPage />} />
+                    <Route path="/update" element={<UpdatePage />} />
+                    <Route path="/requests" element={<RequestsPage />} />
+                    <Route path="/notifications" element={<NotificationsPage />} />
                     <Route path="*" element={<Navigate to="/" replace />} />
                 </Routes>
             </main>

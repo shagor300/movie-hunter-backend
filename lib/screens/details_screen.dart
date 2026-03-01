@@ -604,7 +604,7 @@ class _DetailsScreenState extends State<DetailsScreen> {
             '🎬 ${m.title}'
             '${m.year != "N/A" ? " (${m.year})" : ""}\n'
             '${m.rating > 0 ? "⭐ ${m.rating.toStringAsFixed(1)}/10\n" : ""}'
-            '\nShared via MovieHub';
+            '\nShared via FlixHub';
 
         await Share.shareXFiles([XFile(file.path)], text: text);
       } else {
@@ -624,7 +624,7 @@ class _DetailsScreenState extends State<DetailsScreen> {
         '🎬 ${m.title}'
         '${m.year != "N/A" ? " (${m.year})" : ""}\n'
         '${m.rating > 0 ? "⭐ ${m.rating.toStringAsFixed(1)}/10\n" : ""}'
-        '\nShared via MovieHub';
+        '\nShared via FlixHub';
     Share.share(text);
   }
 
@@ -1416,6 +1416,7 @@ class _DetailsScreenState extends State<DetailsScreen> {
                     tmdbId: widget.movie.tmdbId,
                     quality: link['quality'],
                     movieTitle: widget.movie.title,
+                    posterUrl: widget.movie.fullPosterPath,
                   );
                 },
               ),

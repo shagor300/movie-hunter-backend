@@ -2,17 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:hive_flutter/hive_flutter.dart';
 import '../controllers/notification_controller.dart';
 import '../theme/theme_controller.dart';
-import '../controllers/watchlist_controller.dart';
 import '../controllers/update_controller.dart';
-import '../theme/theme_config.dart' as config;
 import 'notification_settings_screen.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_text_styles.dart';
 import '../services/app_lock_service.dart';
 import 'settings/appearance_settings.dart';
+import 'settings/app_lock_settings_screen.dart';
+import 'settings/layout_settings_screen.dart';
+import 'settings/data_cache_settings_screen.dart';
 import 'request_movie_screen.dart';
 import 'collections_screen.dart';
 
@@ -77,71 +77,22 @@ class SettingsScreen extends StatelessWidget {
 
             _SettingsCard(
               children: [
-                _ToggleTile(
-                  icon: Icons.grid_on,
-                  title: 'Grid Layout',
-                  subtitle: 'Show movies in a grid',
-                  value: tc.useGridLayout,
-                  accentColor: tc.accentColor,
-                  onChanged: (_) => tc.toggleGridLayout(),
-                ),
-                const Divider(color: Colors.white10, height: 24),
-                _ToggleTile(
-                  icon: Icons.rounded_corner,
-                  title: 'Rounded Posters',
-                  subtitle: 'Apply rounded corners to movie posters',
-                  value: tc.roundedPosters,
-                  accentColor: tc.accentColor,
-                  onChanged: (_) => tc.toggleRoundedPosters(),
-                ),
-                const Divider(color: Colors.white10, height: 24),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    _SettingsLabel('Grid Columns'),
-                    Row(
-                      children: List.generate(3, (i) {
-                        final count = i + 2;
-                        final isSelected = tc.gridColumnCount == count;
-                        return Padding(
-                          padding: const EdgeInsets.only(left: 8),
-                          child: GestureDetector(
-                            onTap: () => tc.setGridColumnCount(count),
-                            child: AnimatedContainer(
-                              duration: const Duration(milliseconds: 200),
-                              width: 38,
-                              height: 38,
-                              decoration: BoxDecoration(
-                                color: isSelected
-                                    ? tc.accentColor.withValues(alpha: 0.2)
-                                    : Colors.white.withValues(alpha: 0.05),
-                                borderRadius: BorderRadius.circular(10),
-                                border: Border.all(
-                                  color: isSelected
-                                      ? tc.accentColor
-                                      : Colors.white10,
-                                  width: isSelected ? 1.5 : 1,
-                                ),
-                              ),
-                              child: Center(
-                                child: Text(
-                                  '$count',
-                                  style: AppTextStyles.bodyMedium.copyWith(
-                                    color: isSelected
-                                        ? Theme.of(context).colorScheme.primary
-                                        : AppColors.textMuted,
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 14,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                        );
-                      }),
+                Obx(() {
+                  final tcInner = Get.find<ThemeController>();
+                  return _ActionTile(
+                    icon: Icons.dashboard_customize_rounded,
+                    title: 'Layout & Display',
+                    subtitle:
+                        '${tcInner.useGridLayout ? 'Grid' : 'List'} • ${tcInner.gridColumnCount} columns • ${tcInner.roundedPosters ? 'Rounded' : 'Sharp'}',
+                    iconColor: tc.accentColor,
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const LayoutSettingsScreen(),
+                      ),
                     ),
-                  ],
-                ),
+                  );
+                }),
               ],
             ),
 
@@ -286,124 +237,15 @@ class SettingsScreen extends StatelessWidget {
             _SettingsCard(
               children: [
                 _ActionTile(
-                  icon: Icons.cached,
-                  title: 'Clear Movie Cache',
-                  subtitle: 'Remove locally cached movie data',
+                  icon: Icons.storage_rounded,
+                  title: 'Data & Cache',
+                  subtitle: 'Clear cache, watchlist, download history',
                   iconColor: Colors.orangeAccent,
-                  onTap: () => _confirmAction(
+                  onTap: () => Navigator.push(
                     context,
-                    title: 'Clear Movie Cache?',
-                    message:
-                        'This will remove all cached movie data. The app will re-fetch from the server on next launch.',
-                    onConfirm: () async {
-                      final box = await Hive.openBox('homepage_movies');
-                      await box.clear();
-                      // Also clear image cache
-                      PaintingBinding.instance.imageCache.clear();
-                      PaintingBinding.instance.imageCache.clearLiveImages();
-                      Get.snackbar(
-                        '✅ Cache Cleared',
-                        'Movie & image cache has been cleared',
-                        snackPosition: SnackPosition.BOTTOM,
-                        backgroundColor: Get.find<ThemeController>().accentColor
-                            .withValues(alpha: 0.85),
-                        colorText: Colors.black,
-                        margin: const EdgeInsets.all(20),
-                        duration: const Duration(seconds: 2),
-                      );
-                    },
-                  ),
-                ),
-                const Divider(color: AppColors.surfaceLight, height: 20),
-                _ActionTile(
-                  icon: Icons.bookmark_remove_outlined,
-                  title: 'Clear Watchlist',
-                  subtitle: 'Remove all movies from your watchlist',
-                  iconColor: AppColors.error,
-                  onTap: () => _confirmAction(
-                    context,
-                    title: 'Clear Watchlist?',
-                    message:
-                        'This will permanently delete all movies from your watchlist.',
-                    onConfirm: () async {
-                      final box = await Hive.openBox('watchlist');
-                      await box.clear();
-                      // Refresh WatchlistController
-                      try {
-                        Get.find<WatchlistController>().allMovies.clear();
-                      } catch (_) {}
-                      Get.snackbar(
-                        '✅ Watchlist Cleared',
-                        'All watchlist items removed',
-                        snackPosition: SnackPosition.BOTTOM,
-                        backgroundColor: Get.find<ThemeController>().accentColor
-                            .withValues(alpha: 0.85),
-                        colorText: Colors.black,
-                        margin: const EdgeInsets.all(20),
-                        duration: const Duration(seconds: 2),
-                      );
-                    },
-                  ),
-                ),
-                const Divider(color: AppColors.surfaceLight, height: 20),
-                _ActionTile(
-                  icon: Icons.delete_sweep_outlined,
-                  title: 'Clear Download History',
-                  subtitle: 'Remove download records (files remain)',
-                  iconColor: const Color(0xFFF59E0B),
-                  onTap: () => _confirmAction(
-                    context,
-                    title: 'Clear Download History?',
-                    message:
-                        'This will clear the download history. Downloaded files will not be deleted.',
-                    onConfirm: () async {
-                      final box = await Hive.openBox('downloads');
-                      await box.clear();
-                      Get.snackbar(
-                        '✅ History Cleared',
-                        'Download history has been cleared',
-                        snackPosition: SnackPosition.BOTTOM,
-                        backgroundColor: Get.find<ThemeController>().accentColor
-                            .withValues(alpha: 0.85),
-                        colorText: Colors.black,
-                        margin: const EdgeInsets.all(20),
-                        duration: const Duration(seconds: 2),
-                      );
-                    },
-                  ),
-                ),
-                const Divider(color: AppColors.surfaceLight, height: 20),
-                _ActionTile(
-                  icon: Icons.restart_alt,
-                  title: 'Reset All Settings',
-                  subtitle: 'Restore all settings to default',
-                  iconColor: AppColors.error,
-                  onTap: () => _confirmAction(
-                    context,
-                    title: 'Reset All Settings?',
-                    message:
-                        'This will restore theme, layout, and all preferences to their default values.',
-                    onConfirm: () {
-                      tc.setThemeMode(
-                        config.AppThemeMode.dark,
-                      ); // theme_config.dart enum
-                      tc.setAccentColorByKey('mint_green');
-                      tc.setFontSize(14.0);
-                      tc.setGridColumnCount(2);
-                      if (!tc.useGridLayout) tc.toggleGridLayout();
-                      if (!tc.roundedPosters) tc.toggleRoundedPosters();
-                      Get.snackbar(
-                        '✅ Settings Reset',
-                        'All settings restored to default',
-                        snackPosition: SnackPosition.BOTTOM,
-                        backgroundColor: Theme.of(
-                          context,
-                        ).colorScheme.primary.withValues(alpha: 0.85),
-                        colorText: Colors.black,
-                        margin: const EdgeInsets.all(20),
-                        duration: const Duration(seconds: 2),
-                      );
-                    },
+                    MaterialPageRoute(
+                      builder: (_) => const DataCacheSettingsScreen(),
+                    ),
                   ),
                 ),
               ],
@@ -419,58 +261,26 @@ class SettingsScreen extends StatelessWidget {
 
             _SettingsCard(
               children: [
-                StatefulBuilder(
-                  builder: (context, setState) {
-                    final lockService = AppLockService.instance;
-                    return _ToggleTile(
-                      icon: Icons.lock_outline,
-                      title: 'App Lock (PIN)',
-                      subtitle: 'Require PIN to open the app',
-                      value: lockService.isLockEnabled,
-                      accentColor: tc.accentColor,
-                      onChanged: (val) {
-                        if (val) {
-                          _showPinSetupDialog(context, setState);
-                        } else {
-                          _showPinVerifyDialog(context, setState, () {
-                            lockService.disableLock();
-                            setState(() {});
-                          });
-                        }
-                      },
+                _ActionTile(
+                  icon: Icons.lock_outline,
+                  title: 'App Lock',
+                  subtitle: AppLockService.instance.isLockEnabled
+                      ? 'Enabled • ${AppLockService.instance.lockType == AppLockType.pin
+                            ? 'PIN'
+                            : AppLockService.instance.lockType == AppLockType.biometric
+                            ? 'Biometric'
+                            : 'PIN + Biometric'}'
+                      : 'Off',
+                  iconColor: tc.accentColor,
+                  onTap: () async {
+                    await Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const AppLockSettingsScreen(),
+                      ),
                     );
-                  },
-                ),
-                StatefulBuilder(
-                  builder: (context, setState) {
-                    final lockService = AppLockService.instance;
-                    if (!lockService.isLockEnabled) {
-                      return const SizedBox.shrink();
-                    }
-                    return Column(
-                      children: [
-                        const Divider(color: Colors.white10, height: 20),
-                        FutureBuilder<bool>(
-                          future: lockService.isBiometricAvailable(),
-                          builder: (context, snapshot) {
-                            if (snapshot.data == true) {
-                              return _ToggleTile(
-                                icon: Icons.fingerprint,
-                                title: 'Biometric Unlock',
-                                subtitle: 'Use fingerprint or face unlock',
-                                value: lockService.isBiometricEnabled,
-                                accentColor: tc.accentColor,
-                                onChanged: (val) {
-                                  lockService.setBiometric(val);
-                                  setState(() {});
-                                },
-                              );
-                            }
-                            return const SizedBox.shrink();
-                          },
-                        ),
-                      ],
-                    );
+                    // Rebuild to update subtitle
+                    (context as Element).markNeedsBuild();
                   },
                 ),
               ],
@@ -488,7 +298,7 @@ class SettingsScreen extends StatelessWidget {
               children: [
                 _ActionTile(
                   icon: Icons.movie_filter,
-                  title: 'MovieHub',
+                  title: 'FlixHub',
                   subtitle: 'Version 1.0.0',
                   iconColor: Colors.blueAccent,
                   onTap: () {
@@ -508,7 +318,7 @@ class SettingsScreen extends StatelessWidget {
                             ),
                             const SizedBox(width: 10),
                             Text(
-                              'MovieHub v1.0.0',
+                              'FlixHub v1.0.0',
                               style: GoogleFonts.poppins(
                                 fontWeight: FontWeight.bold,
                                 color: Colors.white,
@@ -630,7 +440,7 @@ class SettingsScreen extends StatelessWidget {
                 const Divider(color: Colors.white10, height: 20),
                 _ActionTile(
                   icon: Icons.info_outline,
-                  title: 'About MovieHub',
+                  title: 'About FlixHub',
                   subtitle: 'Version Info & Legal',
                   iconColor: Colors.white70,
                   onTap: () {
@@ -664,7 +474,7 @@ class SettingsScreen extends StatelessWidget {
                             ),
                             const SizedBox(height: 16),
                             Text(
-                              'MovieHub',
+                              'FlixHub',
                               style: GoogleFonts.poppins(
                                 fontSize: 22,
                                 fontWeight: FontWeight.bold,
@@ -687,7 +497,7 @@ class SettingsScreen extends StatelessWidget {
                             }),
                             const SizedBox(height: 24),
                             Text(
-                              'MovieHub is an ad-free movie streaming platform. Content is fetched from public sources and is not hosted on our servers.',
+                              'FlixHub is an ad-free movie download platform. Content is fetched from public sources and is not hosted on our servers.',
                               textAlign: TextAlign.center,
                               style: GoogleFonts.inter(
                                 fontSize: 13,
@@ -732,292 +542,6 @@ class SettingsScreen extends StatelessWidget {
     );
   }
 
-  // ═══════════════════════════════════════════════════════════════
-  // Dialogs
-  // ═══════════════════════════════════════════════════════════════
-
-  void _showPinSetupDialog(BuildContext context, StateSetter parentSetState) {
-    final pinController = TextEditingController();
-    String pin1 = '';
-    bool isConfirm = false;
-    bool isError = false;
-    String errorMsg = '';
-
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setState) => AlertDialog(
-          backgroundColor: const Color(0xFF1A1A2E),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-          title: Text(
-            isConfirm ? 'Confirm PIN' : 'Create PIN',
-            style: GoogleFonts.poppins(
-              color: Colors.white,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                isConfirm
-                    ? 'Enter your PIN again to confirm'
-                    : 'Enter a 4-digit PIN',
-                style: GoogleFonts.inter(color: Colors.white70),
-              ),
-              const SizedBox(height: 24),
-              TextField(
-                controller: pinController,
-                autofocus: true,
-                obscureText: true,
-                keyboardType: TextInputType.number,
-                maxLength: 4,
-                textAlign: TextAlign.center,
-                style: GoogleFonts.poppins(
-                  color: Colors.white,
-                  fontSize: 28,
-                  letterSpacing: 12,
-                ),
-                decoration: InputDecoration(
-                  counterText: '',
-                  hintText: '• • • •',
-                  hintStyle: GoogleFonts.poppins(
-                    color: Colors.white24,
-                    fontSize: 28,
-                    letterSpacing: 12,
-                  ),
-                  enabledBorder: UnderlineInputBorder(
-                    borderSide: BorderSide(
-                      color: Colors.white.withValues(alpha: 0.2),
-                    ),
-                  ),
-                  focusedBorder: UnderlineInputBorder(
-                    borderSide: BorderSide(
-                      color: Theme.of(ctx).colorScheme.primary,
-                    ),
-                  ),
-                ),
-                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                onChanged: (value) {
-                  if (value.length == 4) {
-                    if (!isConfirm) {
-                      pin1 = value;
-                      pinController.clear();
-                      setState(() {
-                        isConfirm = true;
-                        isError = false;
-                      });
-                    } else {
-                      if (value == pin1) {
-                        AppLockService.instance.setPin(value).then((_) {
-                          parentSetState(() {});
-                          Navigator.pop(ctx);
-                        });
-                      } else {
-                        pinController.clear();
-                        setState(() {
-                          isConfirm = false;
-                          isError = true;
-                          errorMsg = 'PINs do not match. Try again.';
-                          pin1 = '';
-                        });
-                      }
-                    }
-                  }
-                },
-              ),
-              if (isError) ...[
-                const SizedBox(height: 12),
-                Text(
-                  errorMsg,
-                  style: GoogleFonts.inter(
-                    color: Colors.redAccent,
-                    fontSize: 13,
-                  ),
-                ),
-              ],
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx),
-              child: Text(
-                'Cancel',
-                style: GoogleFonts.inter(color: Colors.white54),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  void _showPinVerifyDialog(
-    BuildContext context,
-    StateSetter parentSetState,
-    VoidCallback onSuccess,
-  ) {
-    final pinController = TextEditingController();
-    bool isError = false;
-
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setState) => AlertDialog(
-          backgroundColor: const Color(0xFF1A1A2E),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-          title: Text(
-            'Enter PIN',
-            style: GoogleFonts.poppins(
-              color: Colors.white,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                'Enter current PIN to disable app lock',
-                style: GoogleFonts.inter(color: Colors.white70),
-              ),
-              const SizedBox(height: 24),
-              TextField(
-                controller: pinController,
-                autofocus: true,
-                obscureText: true,
-                keyboardType: TextInputType.number,
-                maxLength: 4,
-                textAlign: TextAlign.center,
-                style: GoogleFonts.poppins(
-                  color: Colors.white,
-                  fontSize: 28,
-                  letterSpacing: 12,
-                ),
-                decoration: InputDecoration(
-                  counterText: '',
-                  hintText: '• • • •',
-                  hintStyle: GoogleFonts.poppins(
-                    color: Colors.white24,
-                    fontSize: 28,
-                    letterSpacing: 12,
-                  ),
-                  enabledBorder: UnderlineInputBorder(
-                    borderSide: BorderSide(
-                      color: Colors.white.withValues(alpha: 0.2),
-                    ),
-                  ),
-                  focusedBorder: UnderlineInputBorder(
-                    borderSide: BorderSide(
-                      color: Theme.of(ctx).colorScheme.primary,
-                    ),
-                  ),
-                ),
-                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                onChanged: (value) {
-                  if (value.length == 4) {
-                    if (AppLockService.instance.verifyPin(value)) {
-                      Navigator.pop(ctx);
-                      onSuccess();
-                      parentSetState(() {});
-                    } else {
-                      pinController.clear();
-                      setState(() {
-                        isError = true;
-                      });
-                    }
-                  }
-                },
-              ),
-              if (isError) ...[
-                const SizedBox(height: 12),
-                Text(
-                  'Incorrect PIN',
-                  style: GoogleFonts.inter(
-                    color: Colors.redAccent,
-                    fontSize: 13,
-                  ),
-                ),
-              ],
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx),
-              child: Text(
-                'Cancel',
-                style: GoogleFonts.inter(color: Colors.white54),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  // PIN dialogs now use TextField directly — no stub needed
-
-  void _confirmAction(
-    BuildContext context, {
-    required String title,
-    required String message,
-    required VoidCallback onConfirm,
-  }) {
-    showDialog(
-      context: context,
-      builder: (_) => AlertDialog(
-        backgroundColor: Theme.of(context).colorScheme.surface,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Text(
-          title,
-          style: AppTextStyles.headingLarge.copyWith(
-            color: AppColors.textPrimary,
-          ),
-        ),
-        content: Text(
-          message,
-          style: AppTextStyles.bodyMedium.copyWith(
-            color: AppColors.textSecondary,
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text(
-              'Cancel',
-              style: AppTextStyles.bodyMedium.copyWith(
-                color: AppColors.textMuted,
-              ),
-            ),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
-              onConfirm();
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Theme.of(context).colorScheme.primary,
-              foregroundColor: Colors.black,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
-              ),
-            ).copyWith(elevation: WidgetStateProperty.all(0)),
-            child: Text(
-              'Confirm',
-              style: AppTextStyles.bodyMedium.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -1080,73 +604,7 @@ class _SettingsCard extends StatelessWidget {
   }
 }
 
-class _SettingsLabel extends StatelessWidget {
-  final String text;
-  const _SettingsLabel(this.text);
 
-  @override
-  Widget build(BuildContext context) {
-    return Text(
-      text,
-      style: AppTextStyles.bodyMedium.copyWith(
-        fontWeight: FontWeight.w600,
-        fontSize: 15,
-      ),
-    );
-  }
-}
-
-class _ToggleTile extends StatelessWidget {
-  final IconData icon;
-  final String title;
-  final String subtitle;
-  final bool value;
-  final Color accentColor;
-  final ValueChanged<bool> onChanged;
-  const _ToggleTile({
-    required this.icon,
-    required this.title,
-    required this.subtitle,
-    required this.value,
-    required this.accentColor,
-    required this.onChanged,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Icon(icon, color: AppColors.textMuted, size: 20),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                title,
-                style: AppTextStyles.bodyMedium.copyWith(
-                  fontWeight: FontWeight.w600,
-                  fontSize: 14,
-                ),
-              ),
-              Text(
-                subtitle,
-                style: AppTextStyles.bodySmall.copyWith(
-                  color: AppColors.textMuted,
-                ),
-              ),
-            ],
-          ),
-        ),
-        Switch(
-          value: value,
-          onChanged: onChanged,
-          activeTrackColor: Theme.of(context).colorScheme.primary,
-        ),
-      ],
-    );
-  }
-}
 
 class _ActionTile extends StatelessWidget {
   final IconData icon;

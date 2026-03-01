@@ -1,6 +1,7 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import '../../theme/theme_controller.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../controllers/hdhub4u_controller.dart';
@@ -148,10 +149,11 @@ class _HDHub4uTabState extends State<HDHub4uTab> with TickerProviderStateMixin {
           }
 
           // ── Content Grid ───────────────────────────────────────
+          final tc = Get.find<ThemeController>();
           return GridView.builder(
             padding: const EdgeInsets.all(12),
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 2,
+            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: tc.gridColumnCount,
               childAspectRatio: 0.62,
               crossAxisSpacing: 12,
               mainAxisSpacing: 12,
@@ -192,8 +194,8 @@ class _HDHub4uTabState extends State<HDHub4uTab> with TickerProviderStateMixin {
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       border: Border.all(
-                        color: colorScheme.primary.withValues(alpha: 
-                          0.08 + _pulseAnim.value * 0.07,
+                        color: colorScheme.primary.withValues(
+                          alpha: 0.08 + _pulseAnim.value * 0.07,
                         ),
                         width: 1.5,
                       ),
@@ -210,8 +212,8 @@ class _HDHub4uTabState extends State<HDHub4uTab> with TickerProviderStateMixin {
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       border: Border.all(
-                        color: colorScheme.primary.withValues(alpha: 
-                          0.1 + _pulseAnim.value * 0.1,
+                        color: colorScheme.primary.withValues(
+                          alpha: 0.1 + _pulseAnim.value * 0.1,
                         ),
                         width: 1,
                       ),
@@ -241,8 +243,8 @@ class _HDHub4uTabState extends State<HDHub4uTab> with TickerProviderStateMixin {
                       shape: BoxShape.circle,
                       gradient: RadialGradient(
                         colors: [
-                          colorScheme.primary.withValues(alpha: 
-                            0.15 + _pulseAnim.value * 0.1,
+                          colorScheme.primary.withValues(
+                            alpha: 0.15 + _pulseAnim.value * 0.1,
                           ),
                           colorScheme.primary.withValues(alpha: 0.02),
                         ],
@@ -250,8 +252,8 @@ class _HDHub4uTabState extends State<HDHub4uTab> with TickerProviderStateMixin {
                       ),
                       boxShadow: [
                         BoxShadow(
-                          color: colorScheme.primary.withValues(alpha: 
-                            0.15 * _pulseAnim.value,
+                          color: colorScheme.primary.withValues(
+                            alpha: 0.15 * _pulseAnim.value,
                           ),
                           blurRadius: 20,
                           spreadRadius: 2,
@@ -313,8 +315,8 @@ class _HDHub4uTabState extends State<HDHub4uTab> with TickerProviderStateMixin {
                   borderRadius: BorderRadius.circular(4),
                   boxShadow: [
                     BoxShadow(
-                      color: colorScheme.primary.withValues(alpha: 
-                        0.2 * _pulseAnim.value,
+                      color: colorScheme.primary.withValues(
+                        alpha: 0.2 * _pulseAnim.value,
                       ),
                       blurRadius: 8,
                     ),
@@ -323,7 +325,9 @@ class _HDHub4uTabState extends State<HDHub4uTab> with TickerProviderStateMixin {
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(4),
                   child: LinearProgressIndicator(
-                    backgroundColor: colorScheme.onSurface.withValues(alpha: 0.06),
+                    backgroundColor: colorScheme.onSurface.withValues(
+                      alpha: 0.06,
+                    ),
                     color: colorScheme.primary,
                     minHeight: 4,
                   ),
@@ -605,7 +609,9 @@ class _HDHub4uTabState extends State<HDHub4uTab> with TickerProviderStateMixin {
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(14),
           color: colorScheme.onSurface.withValues(alpha: 0.05),
-          border: Border.all(color: colorScheme.onSurface.withValues(alpha: 0.1)),
+          border: Border.all(
+            color: colorScheme.onSurface.withValues(alpha: 0.1),
+          ),
         ),
         clipBehavior: Clip.antiAlias,
         child: Column(
@@ -628,7 +634,9 @@ class _HDHub4uTabState extends State<HDHub4uTab> with TickerProviderStateMixin {
                           height: 24,
                           child: CircularProgressIndicator(
                             strokeWidth: 2,
-                            color: colorScheme.onSurface.withValues(alpha: 0.24),
+                            color: colorScheme.onSurface.withValues(
+                              alpha: 0.24,
+                            ),
                           ),
                         ),
                       ),

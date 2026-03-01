@@ -10,6 +10,7 @@ import '../services/storage_settings_service.dart';
 import '../services/parallel_download_engine.dart';
 import '../services/api_service.dart';
 import '../services/notification_service.dart';
+import 'package:wakelock_plus/wakelock_plus.dart';
 
 class DownloadController extends GetxController {
   final ApiService _apiService = ApiService();
@@ -99,6 +100,7 @@ class DownloadController extends GetxController {
     int? tmdbId,
     String? quality,
     required String movieTitle,
+    String? posterUrl,
   }) async {
     // Check storage limits first
     final double maxStorageGb = _settings.storageLimit.value;
@@ -140,6 +142,7 @@ class DownloadController extends GetxController {
         movieTitle: movieTitle,
         tmdbId: tmdbId,
         quality: quality,
+        posterUrl: posterUrl,
       );
       return;
     }
@@ -199,6 +202,7 @@ class DownloadController extends GetxController {
           movieTitle: movieTitle,
           tmdbId: tmdbId,
           quality: quality,
+          posterUrl: posterUrl,
         );
         return;
       }
@@ -234,6 +238,7 @@ class DownloadController extends GetxController {
     required String movieTitle,
     int? tmdbId,
     String? quality,
+    String? posterUrl,
   }) async {
     if (!await _requestPermission()) return;
 
@@ -252,6 +257,7 @@ class DownloadController extends GetxController {
       status: 'downloading',
       createdAt: DateTime.now(),
       tmdbId: tmdbId ?? 0,
+      posterUrl: posterUrl,
     );
 
     // Save to Hive
@@ -354,6 +360,10 @@ class DownloadController extends GetxController {
         await item.save();
         downloads.refresh();
         _engines.remove(id);
+        if (_engines.isEmpty) {
+          WakelockPlus.disable();
+          NotificationService.instance.stopForegroundService();
+        }
 
         // Cancel progress notification
         try {
@@ -406,6 +416,10 @@ class DownloadController extends GetxController {
             await item.save();
             downloads.refresh();
             _engines.remove(id);
+            if (_engines.isEmpty) {
+              WakelockPlus.disable();
+              NotificationService.instance.stopForegroundService();
+            }
             try {
               await NotificationService.instance.cancelNotification(
                 id.hashCode.abs() % 100000,
@@ -436,6 +450,7 @@ class DownloadController extends GetxController {
     );
 
     _engines[id] = engine;
+    WakelockPlus.enable();
     engine.start();
   }
 
@@ -490,6 +505,10 @@ class DownloadController extends GetxController {
     }
     _engines[id]?.cancel();
     _engines.remove(id);
+    if (_engines.isEmpty) {
+      WakelockPlus.disable();
+      NotificationService.instance.stopForegroundService();
+    }
     final item = downloads[id];
     if (item == null) return;
     item.status = 'cancelled';
@@ -583,6 +602,10 @@ class DownloadController extends GetxController {
     await item.save();
     downloads.refresh();
     _engines.remove(id);
+    if (_engines.isEmpty) {
+      WakelockPlus.disable();
+      NotificationService.instance.stopForegroundService();
+    }
 
     try {
       await NotificationService.instance.cancelNotification(
@@ -627,8 +650,8 @@ class DownloadController extends GetxController {
 
   Future<String> _buildSavePath(String fileName) async {
     final dir = Platform.isAndroid
-        ? '/storage/emulated/0/Download/MovieHub'
-        : '${(await getApplicationDocumentsDirectory()).path}/MovieHub';
+        ? '/storage/emulated/0/Download/FlixHub'
+        : '${(await getApplicationDocumentsDirectory()).path}/FlixHub';
 
     await Directory(dir).create(recursive: true);
     return '$dir/$fileName';

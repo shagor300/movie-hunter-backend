@@ -20,12 +20,54 @@ import 'services/notification_service.dart';
 import 'services/voice_search_service.dart';
 import 'utils/notification_scheduler.dart';
 import 'screens/splash_screen.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
+import 'services/analytics_service.dart';
+import 'services/auth_service.dart';
+import 'services/remote_config_service.dart';
 
 void main() async {
   debugPrint('🚀 MAIN: Starting app');
 
   WidgetsFlutterBinding.ensureInitialized();
   debugPrint('✅ MAIN: Flutter binding initialized');
+
+  // Initialize Firebase
+  try {
+    await Firebase.initializeApp();
+    debugPrint('✅ MAIN: Firebase initialized');
+
+    // Auto guest sign-in (silent, no UI needed)
+    await AuthService.instance.ensureSignedIn();
+
+    // Setup FCM
+    final messaging = FirebaseMessaging.instance;
+
+    // Request notification permission (Android 13+)
+    await messaging.requestPermission(alert: true, badge: true, sound: true);
+
+    // Subscribe to 'all' topic for broadcast notifications
+    await messaging.subscribeToTopic('all');
+    debugPrint('✅ MAIN: Subscribed to FCM topic "all"');
+
+    // Log FCM token for debugging
+    final token = await messaging.getToken();
+    debugPrint('📱 FCM Token: $token');
+
+    // Handle foreground messages
+    FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+      debugPrint('📩 FCM Foreground: ${message.notification?.title}');
+    });
+    // Log app open event
+    AnalyticsService.instance.logCustomEvent('app_open');
+    debugPrint('✅ MAIN: Firebase Analytics ready');
+
+    // Initialize Remote Config for in-app updates
+    await RemoteConfigService.instance.init();
+    debugPrint('✅ MAIN: Remote Config ready');
+  } catch (e) {
+    debugPrint('❌ MAIN: Firebase/FCM init failed: $e');
+  }
 
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
@@ -163,6 +205,7 @@ class MovieHunterApp extends StatelessWidget {
           home: const SplashScreen(),
           defaultTransition: Transition.cupertino,
           transitionDuration: const Duration(milliseconds: 300),
+          navigatorObservers: [AnalyticsService.instance.observer],
         ),
       );
     } catch (e) {

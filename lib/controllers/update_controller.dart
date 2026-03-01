@@ -6,6 +6,8 @@ import 'package:open_filex/open_filex.dart';
 import 'dart:io';
 import '../models/app_update_info.dart';
 import '../services/update_service.dart';
+import '../services/remote_config_service.dart';
+import '../widgets/update_dialog.dart';
 
 class UpdateController extends GetxController {
   final UpdateService _updateService = UpdateService();
@@ -24,18 +26,27 @@ class UpdateController extends GetxController {
     if (isChecking.value) return;
     isChecking.value = true;
     try {
-      // Add overall safety timeout
-      final info = await _updateService.checkForUpdate().timeout(
+      // Try Remote Config first (Admin Panel controlled)
+      AppUpdateInfo? info;
+      try {
+        info = await RemoteConfigService.instance.checkForUpdate().timeout(
+          const Duration(seconds: 8),
+        );
+      } catch (_) {}
+
+      // Fallback to GitHub JSON if Remote Config didn't find an update
+      info ??= await _updateService.checkForUpdate().timeout(
         const Duration(seconds: 8),
         onTimeout: () => null,
       );
 
       if (info != null) {
         updateInfo.value = info;
+        // Show the premium update dialog
+        UpdateDialog.show(info);
       }
     } catch (e) {
       debugPrint('Update check error: $e');
-      // Silently fail — update check shouldn't block app usage
     } finally {
       isChecking.value = false;
     }
@@ -58,7 +69,7 @@ class UpdateController extends GetxController {
       }
 
       final savePath = dir.path;
-      final fileName = 'MovieHub_v${info.latestVersionName}.apk';
+      final fileName = 'FlixHub_v${info.latestVersionName}.apk';
 
       // Remove old APK if exists
       final oldFile = File('$savePath/$fileName');

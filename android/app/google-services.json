@@ -1,0 +1,29 @@
+{
+    "project_info": {
+        "project_number": "1073076518431",
+        "project_id": "flixhub-7433c",
+        "storage_bucket": "flixhub-7433c.firebasestorage.app"
+    },
+    "client": [
+        {
+            "client_info": {
+                "mobilesdk_app_id": "1:1073076518431:android:9ec4ae6604fbacf29c1f2a",
+                "android_client_info": {
+                    "package_name": "com.movie.hub.moviehub"
+                }
+            },
+            "oauth_client": [],
+            "api_key": [
+                {
+                    "current_key": "AIzaSyD3TeCZ-PeBVz9rrslPRpl_UUSoGcRsZcc"
+                }
+            ],
+            "services": {
+                "appinvite_service": {
+                    "other_platform_oauth_client": []
+                }
+            }
+        }
+    ],
+    "configuration_version": "1"
+}

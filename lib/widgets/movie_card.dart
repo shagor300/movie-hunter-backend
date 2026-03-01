@@ -29,44 +29,62 @@ class _MovieCardState extends State<MovieCard>
   // ── Press scale animation ──
   double _scale = 1.0;
 
-  // ── Fade-in entrance animation ──
-  late final AnimationController _fadeController;
+  // ── Smooth entrance animation ──
+  late final AnimationController _entranceController;
   late final Animation<double> _fadeAnimation;
   late final Animation<Offset> _slideAnimation;
+  bool _hasAnimated = false;
 
   @override
   void initState() {
     super.initState();
-    _fadeController = AnimationController(
+
+    _entranceController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 400),
+      duration: const Duration(milliseconds: 350),
     );
+
     _fadeAnimation = CurvedAnimation(
-      parent: _fadeController,
+      parent: _entranceController,
       curve: Curves.easeOut,
     );
-    _slideAnimation =
-        Tween<Offset>(begin: const Offset(0, 0.08), end: Offset.zero).animate(
-          CurvedAnimation(parent: _fadeController, curve: Curves.easeOutCubic),
-        );
 
-    // Stagger entrance by index
-    Future.delayed(
-      Duration(milliseconds: (widget.index * 50).clamp(0, 300)),
-      () {
-        if (mounted) _fadeController.forward();
-      },
-    );
+    _slideAnimation =
+        Tween<Offset>(begin: const Offset(0, 0.05), end: Offset.zero).animate(
+          CurvedAnimation(
+            parent: _entranceController,
+            curve: Curves.easeOutCubic,
+          ),
+        );
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_hasAnimated) {
+      _hasAnimated = true;
+      // Check if the page route transition is already done (returning from nav)
+      final route = ModalRoute.of(context);
+      if (route != null &&
+          route.animation != null &&
+          route.animation!.isCompleted) {
+        // Route already settled — we're returning from a push, skip animation
+        _entranceController.value = 1.0;
+      } else {
+        // Fresh page build — play entrance animation
+        _entranceController.forward();
+      }
+    }
   }
 
   @override
   void dispose() {
-    _fadeController.dispose();
+    _entranceController.dispose();
     super.dispose();
   }
 
   void _onTapDown(TapDownDetails _) {
-    setState(() => _scale = 0.95);
+    setState(() => _scale = 0.96);
   }
 
   void _onTapUp(TapUpDetails _) {
@@ -91,100 +109,104 @@ class _MovieCardState extends State<MovieCard>
           behavior: HitTestBehavior.opaque,
           child: AnimatedScale(
             scale: _scale,
-            duration: const Duration(milliseconds: 150),
+            duration: const Duration(milliseconds: 120),
             curve: Curves.easeOutCubic,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // Poster Section (2:3 Aspect Ratio)
-                AspectRatio(
-                  aspectRatio: AppDimensions.posterAspectRatio,
-                  child: Container(
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(
-                        AppDimensions.radiusLg,
+                Obx(() {
+                  final tc = Get.find<ThemeController>();
+                  final radius = tc.roundedPosters
+                      ? AppDimensions.radiusLg
+                      : 4.0;
+                  return AspectRatio(
+                    aspectRatio: AppDimensions.posterAspectRatio,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(radius),
+                        border: Border.all(color: AppColors.glassBorder),
+                        color: AppColors.surface,
                       ),
-                      border: Border.all(color: AppColors.glassBorder),
-                      color: AppColors.surface,
-                    ),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(
-                        AppDimensions.radiusLg,
-                      ),
-                      child: Stack(
-                        fit: StackFit.expand,
-                        children: [
-                          // Image with Hero
-                          Hero(
-                            tag: 'poster-${widget.movie.title}',
-                            child: widget.movie.fullPosterPath.isNotEmpty
-                                ? CachedNetworkImage(
-                                    imageUrl: widget.movie.fullPosterPath,
-                                    fit: BoxFit.cover,
-                                    memCacheWidth: 300,
-                                    placeholder: (context, url) =>
-                                        Shimmer.fromColors(
-                                          baseColor: AppColors.surface,
-                                          highlightColor:
-                                              AppColors.surfaceLight,
-                                          child: Container(color: Colors.black),
-                                        ),
-                                    errorWidget: (context, url, error) =>
-                                        const Center(
-                                          child: Icon(
-                                            Icons.broken_image_outlined,
-                                            color: AppColors.textMuted,
-                                            size: 40,
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(radius),
+                        child: Stack(
+                          fit: StackFit.expand,
+                          children: [
+                            // Image with Hero
+                            Hero(
+                              tag: 'poster-${widget.movie.title}',
+                              child: widget.movie.fullPosterPath.isNotEmpty
+                                  ? CachedNetworkImage(
+                                      imageUrl: widget.movie.fullPosterPath,
+                                      fit: BoxFit.cover,
+                                      memCacheWidth: 300,
+                                      placeholder: (context, url) =>
+                                          Shimmer.fromColors(
+                                            baseColor: AppColors.surface,
+                                            highlightColor:
+                                                AppColors.surfaceLight,
+                                            child: Container(
+                                              color: Colors.black,
+                                            ),
                                           ),
-                                        ),
-                                  )
-                                : const Center(
-                                    child: Icon(
-                                      Icons.movie_outlined,
-                                      color: AppColors.textMuted,
-                                      size: 40,
+                                      errorWidget: (context, url, error) =>
+                                          const Center(
+                                            child: Icon(
+                                              Icons.broken_image_outlined,
+                                              color: AppColors.textMuted,
+                                              size: 40,
+                                            ),
+                                          ),
+                                    )
+                                  : const Center(
+                                      child: Icon(
+                                        Icons.movie_outlined,
+                                        color: AppColors.textMuted,
+                                        size: 40,
+                                      ),
                                     ),
-                                  ),
-                          ),
+                            ),
 
-                          // Bottom Gradient
-                          Positioned(
-                            bottom: 0,
-                            left: 0,
-                            right: 0,
-                            height: 60,
-                            child: DecoratedBox(
-                              decoration: BoxDecoration(
-                                gradient: LinearGradient(
-                                  begin: Alignment.bottomCenter,
-                                  end: Alignment.topCenter,
-                                  colors: [
-                                    Colors.black.withValues(alpha: 0.8),
-                                    Colors.transparent,
-                                  ],
+                            // Bottom Gradient
+                            Positioned(
+                              bottom: 0,
+                              left: 0,
+                              right: 0,
+                              height: 60,
+                              child: DecoratedBox(
+                                decoration: BoxDecoration(
+                                  gradient: LinearGradient(
+                                    begin: Alignment.bottomCenter,
+                                    end: Alignment.topCenter,
+                                    colors: [
+                                      Colors.black.withValues(alpha: 0.8),
+                                      Colors.transparent,
+                                    ],
+                                  ),
                                 ),
                               ),
                             ),
-                          ),
 
-                          // Top Right Quality Badge
-                          Positioned(
-                            top: 8,
-                            right: 8,
-                            child: _buildQualityBadge(),
-                          ),
+                            // Top Right Quality Badge
+                            Positioned(
+                              top: 8,
+                              right: 8,
+                              child: _buildQualityBadge(),
+                            ),
 
-                          // Bottom Left Rating Badge
-                          Positioned(
-                            bottom: 8,
-                            left: 8,
-                            child: _buildRatingBadge(),
-                          ),
-                        ],
+                            // Bottom Left Rating Badge
+                            Positioned(
+                              bottom: 8,
+                              left: 8,
+                              child: _buildRatingBadge(),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
-                  ),
-                ),
+                  );
+                }),
 
                 const SizedBox(height: AppDimensions.spacingSm),
 

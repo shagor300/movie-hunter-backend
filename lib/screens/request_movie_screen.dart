@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'dart:convert';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:http/http.dart' as http;
 import '../models/movie_request.dart';
+import '../services/api_service.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_text_styles.dart';
 import '../theme/theme_controller.dart';
@@ -131,6 +134,25 @@ class _RequestMovieScreenState extends State<RequestMovieScreen>
       );
 
       await box.put(request.id, request);
+
+      // Sync to backend (fire-and-forget — won't block if offline)
+      try {
+        await http
+            .post(
+              Uri.parse('${ApiService.baseUrl}/admin/movie-requests'),
+              headers: {'Content-Type': 'application/json'},
+              body: jsonEncode({
+                'movie_name': request.movieName,
+                'year': request.year,
+                'language': request.language,
+                'quality': request.quality,
+                'note': request.note,
+              }),
+            )
+            .timeout(const Duration(seconds: 10));
+      } catch (_) {
+        // Silently fail — local Hive is the fallback
+      }
 
       if (mounted) {
         // Clear form

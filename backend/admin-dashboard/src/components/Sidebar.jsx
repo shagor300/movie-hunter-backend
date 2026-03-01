@@ -4,8 +4,11 @@ const navItems = [
     { path: '/', icon: 'dashboard', label: 'Dashboard' },
     { path: '/movies', icon: 'movie_filter', label: 'Movies' },
     { path: '/search', icon: 'analytics', label: 'Analytics' },
+    { path: '/requests', icon: 'movie_edit', label: 'Requests' },
+    { path: '/notifications', icon: 'notifications_active', label: 'Notifications' },
     { path: '/sources', icon: 'dns', label: 'Sources' },
     { path: '/errors', icon: 'terminal', label: 'Error Logs' },
+    { path: '/update', icon: 'system_update', label: 'App Update' },
     { path: '/settings', icon: 'settings', label: 'Settings' },
 ];
 

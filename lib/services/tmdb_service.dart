@@ -11,7 +11,7 @@ class TmdbService {
     if (query.isEmpty) return [];
 
     final url = Uri.parse(
-      '$_baseUrl/search/movie?api_key=$_apiKey&query=${Uri.encodeComponent(query)}&include_adult=false',
+      '$_baseUrl/search/multi?api_key=$_apiKey&query=${Uri.encodeComponent(query)}&include_adult=false',
     );
 
     try {
@@ -19,7 +19,10 @@ class TmdbService {
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         final List results = data['results'] ?? [];
-        return results.map((m) => Movie.fromJson(m)).toList();
+        return results
+            .where((m) => m['media_type'] != 'person')
+            .map((m) => Movie.fromJson(m))
+            .toList();
       } else {
         debugPrint('TMDB Error: ${response.statusCode}');
         return [];
@@ -31,14 +34,17 @@ class TmdbService {
   }
 
   Future<List<Movie>> getTrendingMovies() async {
-    final url = Uri.parse('$_baseUrl/trending/movie/day?api_key=$_apiKey');
+    final url = Uri.parse('$_baseUrl/trending/all/day?api_key=$_apiKey');
 
     try {
       final response = await http.get(url);
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         final List results = data['results'] ?? [];
-        return results.map((m) => Movie.fromJson(m)).toList();
+        return results
+            .where((m) => m['media_type'] != 'person')
+            .map((m) => Movie.fromJson(m))
+            .toList();
       }
       return [];
     } catch (e) {

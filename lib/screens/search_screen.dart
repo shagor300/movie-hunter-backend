@@ -5,13 +5,11 @@ import '../theme/theme_controller.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../services/tmdb_service.dart';
 import '../models/movie.dart';
-import '../models/movie_tags.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_text_styles.dart';
 import '../widgets/movie_card.dart';
 import '../widgets/custom_search_bar.dart';
 import '../widgets/filter_sheet.dart';
-import '../widgets/tag_filter_sheet.dart';
 import '../widgets/empty_state.dart';
 import '../widgets/skeleton_loader.dart';
 import 'details_screen.dart';
@@ -42,20 +40,15 @@ class SearchScreenState extends State<SearchScreen> {
   List<String> _recentSearches = [];
   bool _showRecent = false;
 
-  // Tag filters
-  Set<QualityTag> _qualityTags = {};
-  Set<AudioTag> _audioTags = {};
-  int get _activeTagCount => _qualityTags.length + _audioTags.length;
-
   // Quick filter chips
   final _quickFilters = [
     'All',
+    'Movies',
+    'Series',
     'Action',
     'Comedy',
     'Sci-Fi',
-    '2023',
-    '2024',
-    'Top Rated',
+    'Romance',
   ];
   String _activeQuickFilter = 'All';
 
@@ -142,20 +135,12 @@ class SearchScreenState extends State<SearchScreen> {
             .toList();
       }
     }
-    // Tag-based filtering (matches against movie title)
-    if (_qualityTags.isNotEmpty || _audioTags.isNotEmpty) {
-      filtered = filtered.where((m) {
-        final titleTags = MovieTags.parseQualityTags(m.title);
-        final titleAudioTags = MovieTags.parseAudioTags(m.title);
-        final matchesQuality =
-            _qualityTags.isEmpty ||
-            _qualityTags.any((tag) => titleTags.contains(tag));
-        final matchesAudio =
-            _audioTags.isEmpty ||
-            _audioTags.any((tag) => titleAudioTags.contains(tag));
-        return matchesQuality && matchesAudio;
-      }).toList();
+    if (_activeQuickFilter == 'Movies') {
+      filtered = filtered.where((m) => m.mediaType == 'movie').toList();
+    } else if (_activeQuickFilter == 'Series') {
+      filtered = filtered.where((m) => m.mediaType == 'tv').toList();
     }
+
     return filtered;
   }
 
@@ -239,7 +224,7 @@ class SearchScreenState extends State<SearchScreen> {
   void _onQuickFilter(String filter) {
     setState(() => _activeQuickFilter = filter);
 
-    if (filter == 'All') {
+    if (filter == 'All' || filter == 'Movies' || filter == 'Series') {
       _selectedGenres = [];
       _selectedYear = null;
       _minRating = 0;
@@ -380,66 +365,6 @@ class SearchScreenState extends State<SearchScreen> {
                 // Quick filter chips + tag filter button
                 Row(
                   children: [
-                    // Tag filter button
-                    GestureDetector(
-                      onTap: () => TagFilterSheet.show(
-                        context,
-                        selectedQuality: _qualityTags,
-                        selectedAudio: _audioTags,
-                        onApply: (result) {
-                          setState(() {
-                            _qualityTags = result.quality;
-                            _audioTags = result.audio;
-                          });
-                          if (_searchController.text.isNotEmpty) {
-                            _onSearch(_searchController.text);
-                          } else {
-                            _fetchTrending();
-                          }
-                        },
-                      ),
-                      child: Container(
-                        height: 34,
-                        padding: const EdgeInsets.symmetric(horizontal: 12),
-                        margin: const EdgeInsets.only(right: 8),
-                        decoration: BoxDecoration(
-                          color: _activeTagCount > 0
-                              ? accent.withValues(alpha: 0.2)
-                              : AppColors.surfaceLight,
-                          borderRadius: BorderRadius.circular(9999),
-                          border: Border.all(
-                            color: _activeTagCount > 0
-                                ? accent
-                                : AppColors.glassBorder,
-                          ),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              Icons.label_outlined,
-                              size: 15,
-                              color: _activeTagCount > 0
-                                  ? accent
-                                  : AppColors.textSecondary,
-                            ),
-                            const SizedBox(width: 4),
-                            Text(
-                              _activeTagCount > 0
-                                  ? 'Tags ($_activeTagCount)'
-                                  : 'Tags',
-                              style: AppTextStyles.labelSmall.copyWith(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
-                                color: _activeTagCount > 0
-                                    ? accent
-                                    : AppColors.textSecondary,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
                     // Quick filter genre chips
                     Expanded(
                       child: SizedBox(

@@ -12,6 +12,11 @@ logger = logging.getLogger(__name__)
 class MovieSources:
     """Configuration for all movie sources"""
 
+    # ===== FTP Configuration (highest priority — direct links) =====
+    FTP_HOST = os.getenv('FTP_HOST', 'ftp.ctgfun.com')
+    FTP_ENABLED = os.getenv('FTP_ENABLED', 'true').lower() == 'true'
+    FTP_TIMEOUT = int(os.getenv('FTP_TIMEOUT', '10'))
+
     # ===== HDHub4u Configuration =====
     HDHUB4U_BASE_URL = os.getenv('HDHUB4U_URL', 'https://new3.hdhub4u.fo')
     HDHUB4U_ENABLED = os.getenv('HDHUB4U_ENABLED', 'true').lower() == 'true'
@@ -37,6 +42,15 @@ class MovieSources:
     def get_enabled_sources(cls) -> list:
         """Get list of enabled sources with their configuration."""
         sources = []
+
+        if cls.FTP_ENABLED:
+            sources.append({
+                'name': 'FTP',
+                'base_url': f'ftp://{cls.FTP_HOST}',
+                'type': 'ftp',
+                'priority': 0,
+            })
+
 
         if cls.HDHUB4U_ENABLED:
             sources.append({
@@ -70,6 +84,11 @@ class MovieSources:
         logger.info("=" * 60)
         logger.info("MOVIE SOURCES CONFIGURATION")
         logger.info("=" * 60)
+
+        if cls.FTP_ENABLED:
+            logger.info(f"  FTP:          {cls.FTP_HOST} (timeout {cls.FTP_TIMEOUT}s)")
+        else:
+            logger.info("  FTP:          DISABLED")
 
         if cls.HDHUB4U_ENABLED:
             logger.info(f"  HDHub4u:      {cls.HDHUB4U_BASE_URL}")

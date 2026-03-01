@@ -15,6 +15,7 @@ from hubdrive_resolver import DownloadLinkResolver
 from homepage_state import homepage_state
 from embed_link_extractor import EmbedLinkExtractor
 from multi_source_manager import MultiSourceManager
+from ftp_handler import FTPMovieHandler
 from config.sources import MovieSources
 from bs4 import BeautifulSoup
 from admin_db import admin_db
@@ -39,8 +40,14 @@ download_resolver = DownloadLinkResolver(max_concurrent=2)
 # Embed link extractor (lightweight, no browser needed)
 embed_extractor = EmbedLinkExtractor()
 
-# Multi-source manager (SkyMoviesHD + future sources)
+# Multi-source manager (FTP + SkyMoviesHD + future sources)
 multi_source = MultiSourceManager()
+
+# FTP handler (standalone, also used inside multi_source)
+ftp_handler = FTPMovieHandler(
+    host=MovieSources.FTP_HOST,
+    timeout=MovieSources.FTP_TIMEOUT,
+) if MovieSources.FTP_ENABLED else None
 
 
 _browser_ready = False
@@ -201,6 +208,7 @@ async def health_check():
         "tmdb_enabled": True,
         "scraper_sources": len(DOMAINS),
         "browser_ready": _browser_ready,
+        "ftp_enabled": MovieSources.FTP_ENABLED,
     }
 
 
@@ -472,6 +480,56 @@ async def reset_sync_state(
     """Reset sync state to force a full sync on next call."""
     homepage_state.reset(source)
     return {"status": "ok", "message": f"{source} state reset — next call will be full sync"}
+
+
+@app.get("/browse/ftp")
+async def browse_ftp(
+    directory: str = Query("/English", description="FTP directory to browse"),
+    limit: int = Query(30, ge=1, le=100, description="Max results"),
+):
+    """Browse movies available on the FTP server."""
+    if not ftp_handler:
+        raise HTTPException(status_code=503, detail="FTP source is disabled")
+
+    try:
+        loop = asyncio.get_running_loop()
+        results = await loop.run_in_executor(
+            None, ftp_handler.browse_latest, directory, limit
+        )
+        return {
+            "source": "FTP",
+            "directory": directory,
+            "total": len(results),
+            "movies": results,
+        }
+    except Exception as e:
+        logger.error(f"FTP browse error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/ftp/search")
+async def ftp_search(
+    query: str = Query(..., min_length=2, description="Search query"),
+    limit: int = Query(20, ge=1, le=50, description="Max results"),
+):
+    """Search the FTP server directly (for testing / debugging)."""
+    if not ftp_handler:
+        raise HTTPException(status_code=503, detail="FTP source is disabled")
+
+    try:
+        loop = asyncio.get_running_loop()
+        results = await loop.run_in_executor(
+            None, ftp_handler.search, query, limit
+        )
+        return {
+            "source": "FTP",
+            "query": query,
+            "total": len(results),
+            "results": results,
+        }
+    except Exception as e:
+        logger.error(f"FTP search error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @app.get("/browse/{site}")

@@ -1,24 +1,30 @@
 """
-Multi-Source Manager — orchestrates parallel search across HDHub4u + SkyMoviesHD.
+Multi-Source Manager — orchestrates parallel search across FTP + HDHub4u + SkyMoviesHD.
 Deduplicates by TMDB ID (keeps highest-priority source).
 """
 
 import asyncio
 import logging
+from concurrent.futures import ThreadPoolExecutor
 from typing import List, Dict, Optional
 from urllib.parse import quote
 
 from config.sources import MovieSources
+from ftp_handler import FTPMovieHandler
 from scrapers.skymovieshd_scraper import SkyMoviesHDScraper
 from scrapers.cinefreak_scraper import CinefreakScraper
 
 logger = logging.getLogger(__name__)
+
+# Shared thread pool for blocking FTP calls
+_ftp_executor = ThreadPoolExecutor(max_workers=2, thread_name_prefix="ftp")
 
 
 class MultiSourceManager:
     """Manages search and link extraction across multiple movie sources."""
 
     def __init__(self):
+        self.ftp_handler: Optional[FTPMovieHandler] = None
         self.sky_scraper: Optional[SkyMoviesHDScraper] = None
         self.cinefreak_scraper: Optional[CinefreakScraper] = None
         self._initialized = False
@@ -29,6 +35,14 @@ class MultiSourceManager:
         """Initialize all source scrapers with a shared browser."""
         # Store reference to HDHub4u scraper for combined operations
         self._hdhub4u_scraper = hdhub4u_scraper
+
+        # FTP handler — no browser needed (uses Python's ftplib)
+        if MovieSources.FTP_ENABLED:
+            self.ftp_handler = FTPMovieHandler(
+                host=MovieSources.FTP_HOST,
+                timeout=MovieSources.FTP_TIMEOUT,
+            )
+            logger.info("FTP handler initialized (host=%s)", MovieSources.FTP_HOST)
 
         if MovieSources.SKYMOVIESHD_ENABLED:
             self.sky_scraper = SkyMoviesHDScraper(MovieSources.SKYMOVIESHD_BASE_URL)
@@ -122,7 +136,11 @@ class MultiSourceManager:
     async def extract_links_from_source(self, source_type: str,
                                          movie_url: str) -> Dict:
         """Route link extraction to the correct scraper based on source type."""
-        if source_type == 'skymovieshd' and self.sky_scraper:
+        if source_type == 'ftp' and self.ftp_handler:
+            # FTP uses folder path, not URL — handled separately
+            logger.info("FTP extraction requires folder info, use extract_links_all_sources")
+            return {'links': [], 'embed_links': []}
+        elif source_type == 'skymovieshd' and self.sky_scraper:
             return await self.sky_scraper.extract_links(movie_url)
         elif source_type == 'cinefreak' and self.cinefreak_scraper:
             return await self.cinefreak_scraper.extract_links(movie_url)
@@ -134,7 +152,7 @@ class MultiSourceManager:
                                          tmdb_id: int = 0) -> Dict:
         """
         Try to extract links from ALL enabled sources for a given title.
-        Searches SkyMoviesHD + HDHub4u in parallel and combines results.
+        Searches FTP + SkyMoviesHD + HDHub4u in parallel and combines results.
         Returns combined { 'links': [...], 'embed_links': [...] }
         """
         if not self._initialized:
@@ -143,6 +161,10 @@ class MultiSourceManager:
         all_links = []
         all_embeds = []
         tasks = []
+
+        # --- FTP: search by title (fast, direct links, highest priority) ---
+        if self.ftp_handler:
+            tasks.append(('ftp', self._ftp_search_and_extract(title, year)))
 
         # --- SkyMoviesHD: search → pick first result → extract links ---
         if self.sky_scraper:
@@ -254,6 +276,50 @@ class MultiSourceManager:
             logger.error(f"[HDHub4u] Search+extract error: {e}")
             return {'links': [], 'embed_links': []}
 
+    async def _ftp_search_and_extract(self, title: str, year: str = None) -> Dict:
+        """
+        Search FTP for a title, then get playable links from matching folders.
+
+        FTP operations are blocking (ftplib), so we run them in a thread pool
+        executor to avoid blocking the async event loop.
+        """
+        try:
+            loop = asyncio.get_running_loop()
+            query = f"{title} {year}" if year else title
+
+            # Step 1: Search for matching folders (blocking → thread)
+            matches = await asyncio.wait_for(
+                loop.run_in_executor(_ftp_executor, self.ftp_handler.search, query, 5),
+                timeout=15,
+            )
+
+            if not matches:
+                logger.info("[FTP] No results for: %s", query)
+                return {'links': [], 'embed_links': []}
+
+            # Step 2: Get playable links from the best match
+            best = matches[0]
+            result = await asyncio.wait_for(
+                loop.run_in_executor(
+                    _ftp_executor,
+                    self.ftp_handler.get_playable_links,
+                    best["_internal_folder"],
+                    best["_internal_directory"],
+                ),
+                timeout=15,
+            )
+
+            ftp_links = result.get("links", [])
+            logger.info("[FTP] Found %d direct links for: %s", len(ftp_links), query)
+            return {'links': ftp_links, 'embed_links': []}
+
+        except asyncio.TimeoutError:
+            logger.error("[FTP] Search+extract timed out")
+            return {'links': [], 'embed_links': []}
+        except Exception as e:
+            logger.error("[FTP] Search+extract error: %s", e)
+            return {'links': [], 'embed_links': []}
+
     async def _cinefreak_search_and_extract(self, title: str, year: str = None) -> Dict:
         """Search Cinefreak for a title, then extract links from first result."""
         try:
@@ -292,3 +358,4 @@ class MultiSourceManager:
         except Exception as e:
             logger.error(f"[Cinefreak] Search+extract error: {e}")
             return {'links': [], 'embed_links': []}
+

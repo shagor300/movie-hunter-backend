@@ -387,17 +387,49 @@ async def update_config(req: ConfigUpdateRequest, authorization: str = Header(No
 async def get_sources(authorization: str = Header(None)):
     """Get all sources status."""
     _verify_token((authorization or "").replace("Bearer ", ""))
-    return await admin_db.fetch_all("SELECT * FROM source_status ORDER BY source_name")
+    rows = await admin_db.fetch_all("SELECT * FROM source_status ORDER BY source_name")
+    if rows:
+        return {"sources": rows}
+
+    # Fallback: return live config from MovieSources class
+    from config.sources import MovieSources
+    sources = MovieSources.get_enabled_sources()
+    return {"sources": [
+        {"name": s["name"], "enabled": True, "total_movies": 0, "success_rate": "—", "avg_response": "—"}
+        for s in sources
+    ]}
 
 
-@router.put("/sources/{source_name}/toggle")
-async def toggle_source(source_name: str, enabled: bool, authorization: str = Header(None)):
-    """Enable/disable a source."""
+class SourceToggleInput(BaseModel):
+    enabled: bool
+
+
+@router.put("/sources/{source_name}")
+async def toggle_source(source_name: str, body: SourceToggleInput, authorization: str = Header(None)):
+    """Enable/disable a source — updates DB AND runtime MovieSources."""
     _verify_token((authorization or "").replace("Bearer ", ""))
+
+    # Update DB
     await admin_db.execute(
         "UPDATE source_status SET is_enabled = ? WHERE source_name = ?",
-        (1 if enabled else 0, source_name),
+        (1 if body.enabled else 0, source_name),
     )
+
+    # Also update MovieSources class at runtime so scrapers see the change
+    try:
+        from config.sources import MovieSources
+        name_map = {
+            "HDHub4u": "HDHUB4U_ENABLED",
+            "SkyMoviesHD": "SKYMOVIESHD_ENABLED",
+            "Cinefreak": "CINEFREAK_ENABLED",
+        }
+        attr = name_map.get(source_name)
+        if attr:
+            setattr(MovieSources, attr, body.enabled)
+            logger.info(f"Sources: {source_name} {'enabled' if body.enabled else 'disabled'} at runtime")
+    except Exception as e:
+        logger.warning(f"Failed to update source runtime: {e}")
+
     return {"success": True}
 
 
@@ -838,4 +870,76 @@ async def get_notifications(authorization: str = Header(None)):
         "SELECT * FROM notification_history ORDER BY sent_at DESC LIMIT 50"
     )
     return {"notifications": rows or []}
+
+
+# ════════════════════════════════════════════════════════════════════════
+# PUBLIC APP ENDPOINTS (no auth — called by Flutter app)
+# ════════════════════════════════════════════════════════════════════════
+
+@router.get("/app/update-config")
+async def get_app_update_config():
+    """Public endpoint: Flutter app fetches update config from backend DB.
+    This is the fallback when Firebase Remote Config is unavailable."""
+    keys = ["current_version", "update_url", "is_force_update", "whats_new"]
+    config = {}
+    for key in keys:
+        row = await admin_db.fetch_one(
+            "SELECT value FROM app_config WHERE key = ?", (f"rc_{key}",)
+        )
+        if row:
+            config[key] = row["value"]
+
+    if not config.get("current_version"):
+        return {"update_available": False}
+
+    return {
+        "update_available": True,
+        "current_version": config.get("current_version", ""),
+        "update_url": config.get("update_url", ""),
+        "is_force_update": config.get("is_force_update", "false").lower() == "true",
+        "whats_new": config.get("whats_new", ""),
+    }
+
+
+@router.get("/app/config")
+async def get_app_feature_config():
+    """Public endpoint: Flutter app fetches feature flags / maintenance mode."""
+    flag_keys = [
+        "maintenance_mode", "force_update", "push_notifications",
+        "new_movie_alerts", "error_alerts", "user_comments",
+    ]
+    config = {}
+    for key in flag_keys:
+        row = await admin_db.fetch_one(
+            "SELECT value FROM app_config WHERE key = ?", (key,)
+        )
+        if row:
+            val = row["value"]
+            # Convert string booleans
+            if val in ("true", "1", "True"):
+                config[key] = True
+            elif val in ("false", "0", "False"):
+                config[key] = False
+            else:
+                config[key] = val
+        else:
+            config[key] = False
+
+    return config
+
+
+@router.get("/app/request-status")
+async def get_request_statuses(device_id: Optional[str] = None):
+    """Public endpoint: Flutter app syncs movie request statuses."""
+    await _ensure_requests_table()
+    if device_id:
+        rows = await admin_db.fetch_all(
+            "SELECT id, movie_name, status, updated_at FROM movie_requests WHERE device_id = ? ORDER BY requested_at DESC LIMIT 50",
+            (device_id,),
+        )
+    else:
+        rows = await admin_db.fetch_all(
+            "SELECT id, movie_name, status, updated_at FROM movie_requests ORDER BY requested_at DESC LIMIT 20",
+        )
+    return {"requests": rows or []}
 

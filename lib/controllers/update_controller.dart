@@ -1,10 +1,14 @@
+import 'dart:convert';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:http/http.dart' as http;
 import 'package:path_provider/path_provider.dart';
 import 'package:open_filex/open_filex.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'dart:io';
 import '../models/app_update_info.dart';
+import '../services/api_service.dart';
 import '../services/update_service.dart';
 import '../services/remote_config_service.dart';
 import '../widgets/update_dialog.dart';
@@ -34,7 +38,14 @@ class UpdateController extends GetxController {
         );
       } catch (_) {}
 
-      // Fallback to GitHub JSON if Remote Config didn't find an update
+      // Fallback 1: Backend DB (admin panel stores update config here)
+      if (info == null) {
+        try {
+          info = await _checkBackendUpdateConfig();
+        } catch (_) {}
+      }
+
+      // Fallback 2: GitHub JSON if nothing else worked
       info ??= await _updateService.checkForUpdate().timeout(
         const Duration(seconds: 8),
         onTimeout: () => null,
@@ -50,6 +61,38 @@ class UpdateController extends GetxController {
     } finally {
       isChecking.value = false;
     }
+  }
+
+  /// Check backend DB for update config (admin panel controlled)
+  Future<AppUpdateInfo?> _checkBackendUpdateConfig() async {
+    final url = Uri.parse('${ApiService.baseUrl}/admin/app/update-config');
+    final response = await http.get(url).timeout(const Duration(seconds: 8));
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body) as Map<String, dynamic>;
+      if (data['update_available'] == true) {
+        final remoteVersion = data['current_version'] ?? '';
+        final (_, remoteBuild) = RemoteConfigService.parseVersion(
+          remoteVersion,
+        );
+        final packageInfo = await PackageInfo.fromPlatform();
+        final localBuild = int.tryParse(packageInfo.buildNumber) ?? 0;
+        if (remoteBuild > localBuild) {
+          final whatsNewRaw = (data['whats_new'] ?? '') as String;
+          return AppUpdateInfo(
+            latestVersionCode: remoteBuild,
+            latestVersionName: remoteVersion.split('+').first,
+            updateUrl: data['update_url'] ?? '',
+            isForceUpdate: data['is_force_update'] == true,
+            whatsNew: whatsNewRaw
+                .split(',')
+                .map((e) => e.trim())
+                .where((e) => e.isNotEmpty)
+                .toList(),
+          );
+        }
+      }
+    }
+    return null;
   }
 
   // ── Download APK using Dio ────────────────────────────────────────

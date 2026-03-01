@@ -26,6 +26,7 @@ class Movie {
   final String sourceType; // 'hdhub4u' or 'skymovieshd'
   final List<int> genreIds;
   final String? originalLanguage;
+  final String mediaType; // 'movie' or 'tv'
 
   Movie({
     this.tmdbId,
@@ -42,6 +43,7 @@ class Movie {
     this.sourceType = 'hdhub4u',
     this.genreIds = const [],
     this.originalLanguage,
+    this.mediaType = 'movie',
   });
 
   factory Movie.fromJson(Map<String, dynamic> json) {
@@ -68,7 +70,7 @@ class Movie {
 
     return Movie(
       tmdbId: id != 0 ? id : null,
-      title: json['title'] ?? 'Unknown',
+      title: json['title'] ?? json['name'] ?? 'Unknown',
       plot: json['plot'] ?? json['overview'] ?? '',
       tmdbPoster:
           json['tmdb_poster'] ??
@@ -76,13 +78,16 @@ class Movie {
           (json['poster_path'] != null
               ? 'https://image.tmdb.org/t/p/w500${json['poster_path']}'
               : ''),
-      releaseDate: json['release_date'] ?? 'N/A',
+      releaseDate: json['release_date'] ?? json['first_air_date'] ?? 'N/A',
       rating: (json['rating'] ?? json['vote_average'] ?? 0.0).toDouble(),
       sources: parsedSources,
       hdhub4uUrl: json['hdhub4u_url'],
       hdhub4uTitle: json['hdhub4u_title'],
       skyMoviesHDUrl: json['skymovieshd_url'] ?? json['url'],
-      skyMoviesHDTitle: json['skymovieshd_title'] ?? json['original_title'],
+      skyMoviesHDTitle:
+          json['skymovieshd_title'] ??
+          json['original_title'] ??
+          json['original_name'],
       sourceType: json['source_type'] ?? 'hdhub4u',
       genreIds:
           (json['genre_ids'] as List?)
@@ -90,6 +95,7 @@ class Movie {
               .toList() ??
           [],
       originalLanguage: json['original_language'],
+      mediaType: json['media_type'] == 'tv' ? 'tv' : 'movie',
     );
   }
 

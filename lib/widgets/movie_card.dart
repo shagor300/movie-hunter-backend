@@ -236,16 +236,17 @@ class _MovieCardState extends State<MovieCard>
 
   Widget _buildQualityBadge() {
     final tc = Get.find<ThemeController>();
-    return Obx(
-      () => Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+    final isTv = widget.movie.mediaType == 'tv';
+    final label = isTv ? "SERIES" : "MOVIE";
+
+    return Obx(() {
+      final color = isTv ? Colors.amber : tc.accentColor;
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
         decoration: BoxDecoration(
-          color: tc.accentColor.withValues(alpha: 0.15),
+          color: color.withValues(alpha: 0.15),
           borderRadius: BorderRadius.circular(6),
-          border: Border.all(
-            color: tc.accentColor.withValues(alpha: 0.3),
-            width: 0.5,
-          ),
+          border: Border.all(color: color.withValues(alpha: 0.3), width: 0.5),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withValues(alpha: 0.3),
@@ -255,15 +256,16 @@ class _MovieCardState extends State<MovieCard>
           ],
         ),
         child: Text(
-          "HD",
+          label,
           style: AppTextStyles.labelSmall.copyWith(
             fontSize: 9,
-            fontWeight: FontWeight.w700,
-            color: tc.accentColor,
+            fontWeight: FontWeight.w800,
+            color: color,
+            letterSpacing: 0.5,
           ),
         ),
-      ),
-    );
+      );
+    });
   }
 
   Widget _buildRatingBadge() {

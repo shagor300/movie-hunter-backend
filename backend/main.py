@@ -2,6 +2,7 @@ import os
 import asyncio
 import re
 import logging
+import mimetypes
 from pathlib import Path as FilePath
 from fastapi import FastAPI, HTTPException, Query, Path
 from fastapi.middleware.cors import CORSMiddleware
@@ -96,6 +97,11 @@ async def lifespan(app: FastAPI):
         await scraper_instance.shutdown()
         logger.info("Application shutdown complete")
 
+
+# Fix for Windows FastAPI StaticFiles 404 on JS/CSS files
+mimetypes.add_type('application/javascript', '.js')
+mimetypes.add_type('text/css', '.css')
+mimetypes.add_type('image/svg+xml', '.svg')
 
 app = FastAPI(
     title="MovieHub API v2",

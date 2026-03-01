@@ -1,9 +1,12 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:http/http.dart' as http;
 
 import '../controllers/update_controller.dart';
+import '../services/api_service.dart';
 import '../services/app_lock_service.dart';
 import 'home_screen.dart';
 import 'app_lock_screen.dart';
@@ -187,6 +190,46 @@ class _SplashScreenState extends State<SplashScreen>
       await updateController.checkForUpdate();
     } catch (e) {
       debugPrint('Background update check error: $e');
+    }
+
+    // Check feature flags (maintenance mode) from admin panel
+    try {
+      final url = Uri.parse('${ApiService.baseUrl}/admin/app/config');
+      final response = await http.get(url).timeout(const Duration(seconds: 5));
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body) as Map<String, dynamic>;
+        if (data['maintenance_mode'] == true && mounted) {
+          // Show maintenance dialog
+          Get.dialog(
+            PopScope(
+              canPop: false,
+              child: AlertDialog(
+                backgroundColor: const Color(0xFF1a1a2e),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                title: const Row(
+                  children: [
+                    Icon(Icons.construction, color: Colors.amber, size: 28),
+                    SizedBox(width: 12),
+                    Text(
+                      'Under Maintenance',
+                      style: TextStyle(color: Colors.white, fontSize: 18),
+                    ),
+                  ],
+                ),
+                content: const Text(
+                  'The app is currently under maintenance. Please try again later.',
+                  style: TextStyle(color: Colors.white70, fontSize: 14),
+                ),
+              ),
+            ),
+            barrierDismissible: false,
+          );
+        }
+      }
+    } catch (e) {
+      debugPrint('Feature flags check error: $e');
     }
   }
 

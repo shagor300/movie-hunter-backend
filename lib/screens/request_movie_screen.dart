@@ -44,6 +44,40 @@ class _RequestMovieScreenState extends State<RequestMovieScreen>
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
+    // Sync request statuses from backend when screen opens
+    _syncStatusesFromBackend();
+  }
+
+  /// Fetch request statuses from backend and update local Hive entries
+  Future<void> _syncStatusesFromBackend() async {
+    try {
+      final url = Uri.parse('${ApiService.baseUrl}/admin/app/request-status');
+      final response = await http.get(url).timeout(const Duration(seconds: 8));
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body) as Map<String, dynamic>;
+        final remoteRequests = data['requests'] as List? ?? [];
+        if (remoteRequests.isEmpty) return;
+
+        final box = await _getBox();
+        for (final remote in remoteRequests) {
+          final name = remote['movie_name']?.toString().toLowerCase() ?? '';
+          final status = remote['status']?.toString() ?? 'pending';
+          // Find matching local request by movie name
+          for (final key in box.keys) {
+            final local = box.get(key);
+            if (local != null &&
+                local.movieName.toLowerCase() == name &&
+                local.status != status) {
+              local.status = status;
+              await box.put(key, local);
+            }
+          }
+        }
+        debugPrint('✅ Request statuses synced from backend');
+      }
+    } catch (e) {
+      debugPrint('⚠️ Request status sync failed: $e');
+    }
   }
 
   @override

@@ -51,4 +51,85 @@ class TmdbService {
       return [];
     }
   }
+
+  /// Discover movies by genre, sorted by popularity.
+  /// Returns 20 results per page from TMDB discover API.
+  Future<List<Movie>> discoverByGenre(int genreId, {int page = 1}) async {
+    final url = Uri.parse(
+      '$_baseUrl/discover/movie?api_key=$_apiKey'
+      '&with_genres=$genreId'
+      '&sort_by=popularity.desc'
+      '&include_adult=false'
+      '&page=$page',
+    );
+
+    try {
+      final response = await http.get(url);
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        final List results = data['results'] ?? [];
+        // discover/movie doesn't include media_type, so we add it
+        return results.map((m) {
+          m['media_type'] = 'movie';
+          return Movie.fromJson(m);
+        }).toList();
+      }
+      return [];
+    } catch (e) {
+      debugPrint('TMDB Discover Genre Error: $e');
+      return [];
+    }
+  }
+
+  /// Discover popular movies only (no TV), sorted by popularity.
+  Future<List<Movie>> discoverMovies({int page = 1}) async {
+    final url = Uri.parse(
+      '$_baseUrl/discover/movie?api_key=$_apiKey'
+      '&sort_by=popularity.desc'
+      '&include_adult=false'
+      '&page=$page',
+    );
+
+    try {
+      final response = await http.get(url);
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        final List results = data['results'] ?? [];
+        return results.map((m) {
+          m['media_type'] = 'movie';
+          return Movie.fromJson(m);
+        }).toList();
+      }
+      return [];
+    } catch (e) {
+      debugPrint('TMDB Discover Movies Error: $e');
+      return [];
+    }
+  }
+
+  /// Discover popular TV shows only, sorted by popularity.
+  Future<List<Movie>> discoverTvShows({int page = 1}) async {
+    final url = Uri.parse(
+      '$_baseUrl/discover/tv?api_key=$_apiKey'
+      '&sort_by=popularity.desc'
+      '&include_adult=false'
+      '&page=$page',
+    );
+
+    try {
+      final response = await http.get(url);
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        final List results = data['results'] ?? [];
+        return results.map((m) {
+          m['media_type'] = 'tv';
+          return Movie.fromJson(m);
+        }).toList();
+      }
+      return [];
+    } catch (e) {
+      debugPrint('TMDB Discover TV Error: $e');
+      return [];
+    }
+  }
 }

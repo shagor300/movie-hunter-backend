@@ -56,7 +56,7 @@ class _DataCacheSettingsScreenState extends State<DataCacheSettingsScreen> {
     final accent = tc.accentColor;
 
     return Scaffold(
-      backgroundColor: AppColors.backgroundDark,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,

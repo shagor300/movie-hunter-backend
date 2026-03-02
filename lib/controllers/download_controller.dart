@@ -44,15 +44,34 @@ class DownloadController extends GetxController {
 
   Future<void> _loadSavedDownloads() async {
     final box = await Hive.openBox<DownloadItem>('downloads_v2');
+    final toResume = <DownloadItem>[];
     for (final item in box.values) {
-      // Reset "downloading" to "paused" on restart (app was killed mid-download)
+      // Collect downloads that were interrupted mid-download for auto-resume
       if (item.status == 'downloading') {
-        item.status = 'paused';
+        item.status = 'paused'; // temporarily mark paused
         await item.save();
+        toResume.add(item);
       }
       downloads[item.id] = item;
     }
     debugPrint('✅ DownloadController: loaded ${downloads.length} downloads');
+
+    // Auto-resume interrupted downloads after a short delay
+    if (toResume.isNotEmpty) {
+      Future.delayed(const Duration(seconds: 2), () {
+        for (final item in toResume) {
+          if (downloads.containsKey(item.id) && item.status == 'paused') {
+            debugPrint(
+              '🔄 Auto-resuming interrupted download: ${item.movieTitle}',
+            );
+            item.status = 'downloading';
+            item.save();
+            downloads.refresh();
+            _startEngine(item.id, item.url, item.filePath, {});
+          }
+        }
+      });
+    }
   }
 
   // ═══════════════════════════════════════════════════════════════════
@@ -780,10 +799,12 @@ class DownloadController extends GetxController {
 
   @override
   void onClose() {
-    // Cancel all active downloads when controller is disposed
-    for (final engine in _engines.values) {
-      engine.cancel();
-    }
+    // Do NOT cancel active downloads — the foreground service keeps them alive
+    // even when the app is backgrounded. Cancelling here was killing downloads
+    // whenever the user switched apps.
+    debugPrint(
+      '📱 DownloadController.onClose — ${_engines.length} downloads still running in background',
+    );
     super.onClose();
   }
 }

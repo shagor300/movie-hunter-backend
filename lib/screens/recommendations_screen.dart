@@ -1,4 +1,4 @@
-import 'dart:math';
+import 'dart:async';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -32,7 +32,10 @@ class _RecommendationsScreenState extends State<RecommendationsScreen>
   List<_RecommendationSection> _sections = [];
   bool _isLoading = true;
   bool _hasError = false;
-  Movie? _featuredMovie;
+  List<Movie> _featuredMovies = [];
+  final PageController _heroPageController = PageController();
+  int _currentHeroPage = 0;
+  Timer? _heroTimer;
 
   late final AnimationController _fadeController;
   late final Animation<double> _fadeAnim;
@@ -46,10 +49,37 @@ class _RecommendationsScreenState extends State<RecommendationsScreen>
     );
     _fadeAnim = CurvedAnimation(parent: _fadeController, curve: Curves.easeOut);
     _loadRecommendations();
+    _startHeroTimer();
+  }
+
+  void _startHeroTimer() {
+    _heroTimer?.cancel();
+    _heroTimer = Timer.periodic(const Duration(seconds: 5), (timer) {
+      if (_featuredMovies.isEmpty) return;
+      if (_heroPageController.hasClients) {
+        int nextPage = _currentHeroPage + 1;
+        if (nextPage >= _featuredMovies.length) {
+          nextPage = 0;
+          _heroPageController.animateToPage(
+            nextPage,
+            duration: const Duration(milliseconds: 600),
+            curve: Curves.fastOutSlowIn,
+          );
+        } else {
+          _heroPageController.animateToPage(
+            nextPage,
+            duration: const Duration(milliseconds: 800),
+            curve: Curves.easeOutQuart,
+          );
+        }
+      }
+    });
   }
 
   @override
   void dispose() {
+    _heroTimer?.cancel();
+    _heroPageController.dispose();
     _fadeController.dispose();
     super.dispose();
   }
@@ -66,7 +96,7 @@ class _RecommendationsScreenState extends State<RecommendationsScreen>
     try {
       final trending = await _tmdbService.getTrendingMovies();
       if (trending.isNotEmpty) {
-        _featuredMovie = trending[Random().nextInt(min(trending.length, 5))];
+        _featuredMovies = trending.take(5).toList();
         sections.add(
           _RecommendationSection(
             title: '🔥 Trending Now',
@@ -316,11 +346,13 @@ class _RecommendationsScreenState extends State<RecommendationsScreen>
   // ── Hero Banner with SliverAppBar ──
 
   Widget _buildHeroSliver() {
-    if (_featuredMovie == null) {
+    if (_featuredMovies.isEmpty) {
       return SliverAppBar(
         floating: true,
         snap: true,
-        backgroundColor: AppColors.backgroundDark,
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+        leading: const SizedBox(),
+        leadingWidth: 0,
         title: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
@@ -354,13 +386,13 @@ class _RecommendationsScreenState extends State<RecommendationsScreen>
       );
     }
 
-    final movie = _featuredMovie!;
-
     return SliverAppBar(
       expandedHeight: 420,
       floating: false,
       pinned: true,
-      backgroundColor: AppColors.backgroundDark,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      leading: const SizedBox(),
+      leadingWidth: 0,
       title: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
@@ -392,195 +424,247 @@ class _RecommendationsScreenState extends State<RecommendationsScreen>
         ),
       ],
       flexibleSpace: FlexibleSpaceBar(
-        background: GestureDetector(
-          onTap: () => Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => DetailsScreen(movie: movie)),
-          ),
-          child: Stack(
-            fit: StackFit.expand,
-            children: [
-              // Backdrop image
-              if (movie.tmdbPoster.isNotEmpty)
-                CachedNetworkImage(
-                  imageUrl: movie.fullPosterPath.replaceFirst(
-                    '/w500/',
-                    '/w780/',
-                  ),
-                  fit: BoxFit.cover,
-                  memCacheWidth: 780,
-                  placeholder: (_, _) =>
-                      Container(color: AppColors.backgroundDark),
-                  errorWidget: (_, _, _) =>
-                      Container(color: AppColors.backgroundDark),
-                ),
-
-              // Cinematic gradient overlay
-              Container(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [
-                      AppColors.backgroundDark.withValues(alpha: 0.3),
-                      Colors.transparent,
-                      AppColors.backgroundDark.withValues(alpha: 0.8),
-                      AppColors.backgroundDark,
-                    ],
-                    stops: const [0.0, 0.3, 0.7, 1.0],
-                  ),
-                ),
+        background: PageView.builder(
+          controller: _heroPageController,
+          onPageChanged: (index) {
+            setState(() {
+              _currentHeroPage = index;
+            });
+          },
+          itemCount: _featuredMovies.length,
+          itemBuilder: (context, index) {
+            final movie = _featuredMovies[index];
+            return GestureDetector(
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => DetailsScreen(movie: movie)),
               ),
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  // Backdrop image
+                  if (movie.tmdbPoster.isNotEmpty)
+                    CachedNetworkImage(
+                      imageUrl: movie.fullPosterPath.replaceFirst(
+                        '/w500/',
+                        '/w780/',
+                      ),
+                      fit: BoxFit.cover,
+                      memCacheWidth: 780,
+                      placeholder: (_, _) => Container(
+                        color: Theme.of(context).scaffoldBackgroundColor,
+                      ),
+                      errorWidget: (_, _, _) => Container(
+                        color: Theme.of(context).scaffoldBackgroundColor,
+                      ),
+                    ),
 
-              // Movie info overlay
-              Positioned(
-                bottom: 48,
-                left: 20,
-                right: 20,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // "FEATURED" badge
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 5,
-                      ),
-                      decoration: BoxDecoration(
-                        gradient: AppColors.primaryGradient,
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Text(
-                        'FEATURED',
-                        style: AppTextStyles.labelSmall.copyWith(
-                          color: Colors.white,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    // Title
-                    Text(
-                      movie.title,
-                      style: AppTextStyles.displayMedium.copyWith(fontSize: 28),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 8),
-                    // Meta row
-                    Row(
-                      children: [
-                        if (movie.rating > 0) ...[
-                          const Icon(
-                            Icons.star_rounded,
-                            color: AppColors.starRating,
-                            size: 16,
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            movie.rating.toStringAsFixed(1),
-                            style: AppTextStyles.bodyMedium.copyWith(
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                          const SizedBox(width: 16),
+                  // Cinematic gradient overlay
+                  Container(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          Theme.of(
+                            context,
+                          ).scaffoldBackgroundColor.withValues(alpha: 0.3),
+                          Colors.transparent,
+                          Theme.of(
+                            context,
+                          ).scaffoldBackgroundColor.withValues(alpha: 0.8),
+                          Theme.of(context).scaffoldBackgroundColor,
                         ],
-                        if (movie.year.isNotEmpty) ...[
-                          const Icon(
-                            Icons.calendar_today,
-                            color: AppColors.textMuted,
-                            size: 14,
-                          ),
-                          const SizedBox(width: 4),
-                          Text(movie.year, style: AppTextStyles.bodySmall),
-                        ],
-                      ],
+                        stops: const [0.0, 0.3, 0.7, 1.0],
+                      ),
                     ),
-                    const SizedBox(height: 14),
-                    // Action buttons
-                    Row(
+                  ),
+
+                  // Movie info overlay
+                  Positioned(
+                    bottom: 48,
+                    left: 20,
+                    right: 20,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Expanded(
-                          child: Container(
-                            decoration: BoxDecoration(
-                              gradient: AppColors.primaryGradient,
-                              borderRadius: BorderRadius.circular(12),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Theme.of(
-                                    context,
-                                  ).colorScheme.primary.withValues(alpha: 0.3),
-                                  blurRadius: 16,
-                                  offset: const Offset(0, 4),
-                                ),
-                              ],
-                            ),
-                            child: ElevatedButton.icon(
-                              onPressed: () => Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) => DetailsScreen(movie: movie),
-                                ),
+                        // "FEATURED" badge & Dots
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 5,
                               ),
-                              icon: const Icon(
-                                Icons.play_arrow_rounded,
-                                size: 22,
-                              ),
-                              label: Text(
-                                'Watch Now',
-                                style: AppTextStyles.bodyMedium.copyWith(
-                                  fontWeight: FontWeight.w700,
-                                ),
-                              ),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.transparent,
-                                foregroundColor: Colors.white,
-                                shadowColor: Colors.transparent,
-                                padding: const EdgeInsets.symmetric(
-                                  vertical: 14,
-                                ),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        // Info button — glass
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(12),
-                          child: BackdropFilter(
-                            filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                            child: Container(
                               decoration: BoxDecoration(
-                                color: AppColors.glassBackground,
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(
-                                  color: AppColors.glassBorder,
-                                ),
+                                gradient: AppColors.primaryGradient,
+                                borderRadius: BorderRadius.circular(8),
                               ),
-                              child: IconButton(
-                                icon: const Icon(
-                                  Icons.info_outline,
+                              child: Text(
+                                'FEATURED',
+                                style: AppTextStyles.labelSmall.copyWith(
                                   color: Colors.white,
                                 ),
-                                onPressed: () => Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (_) => DetailsScreen(movie: movie),
+                              ),
+                            ),
+                            // Pagination Dots
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: List.generate(
+                                _featuredMovies.length,
+                                (i) => AnimatedContainer(
+                                  duration: const Duration(milliseconds: 300),
+                                  margin: const EdgeInsets.symmetric(
+                                    horizontal: 3,
+                                  ),
+                                  width: i == _currentHeroPage ? 16 : 6,
+                                  height: 6,
+                                  decoration: BoxDecoration(
+                                    color: i == _currentHeroPage
+                                        ? Theme.of(context).colorScheme.primary
+                                        : Colors.white38,
+                                    borderRadius: BorderRadius.circular(3),
                                   ),
                                 ),
                               ),
                             ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        // Title
+                        Text(
+                          movie.title,
+                          style: AppTextStyles.displayMedium.copyWith(
+                            fontSize: 28,
                           ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: 8),
+                        // Meta row
+                        Row(
+                          children: [
+                            if (movie.rating > 0) ...[
+                              const Icon(
+                                Icons.star_rounded,
+                                color: AppColors.starRating,
+                                size: 16,
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                movie.rating.toStringAsFixed(1),
+                                style: AppTextStyles.bodyMedium.copyWith(
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                              const SizedBox(width: 16),
+                            ],
+                            if (movie.year.isNotEmpty) ...[
+                              const Icon(
+                                Icons.calendar_today,
+                                color: AppColors.textMuted,
+                                size: 14,
+                              ),
+                              const SizedBox(width: 4),
+                              Text(movie.year, style: AppTextStyles.bodySmall),
+                            ],
+                          ],
+                        ),
+                        const SizedBox(height: 14),
+                        // Action buttons
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  gradient: AppColors.primaryGradient,
+                                  borderRadius: BorderRadius.circular(12),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .primary
+                                          .withValues(alpha: 0.3),
+                                      blurRadius: 16,
+                                      offset: const Offset(0, 4),
+                                    ),
+                                  ],
+                                ),
+                                child: ElevatedButton.icon(
+                                  onPressed: () => Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) =>
+                                          DetailsScreen(movie: movie),
+                                    ),
+                                  ),
+                                  icon: const Icon(
+                                    Icons.play_arrow_rounded,
+                                    size: 22,
+                                  ),
+                                  label: Text(
+                                    'Watch Now',
+                                    style: AppTextStyles.bodyMedium.copyWith(
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.transparent,
+                                    foregroundColor: Colors.white,
+                                    shadowColor: Colors.transparent,
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 14,
+                                    ),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            // Info button — glass
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(12),
+                              child: BackdropFilter(
+                                filter: ImageFilter.blur(
+                                  sigmaX: 10,
+                                  sigmaY: 10,
+                                ),
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    color: AppColors.glassBackground,
+                                    borderRadius: BorderRadius.circular(12),
+                                    border: Border.all(
+                                      color: AppColors.glassBorder,
+                                    ),
+                                  ),
+                                  child: IconButton(
+                                    icon: const Icon(
+                                      Icons.info_outline,
+                                      color: Colors.white,
+                                    ),
+                                    onPressed: () => Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (_) =>
+                                            DetailsScreen(movie: movie),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       ],
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
-            ],
-          ),
+            );
+          },
         ),
       ),
     );

@@ -1,25 +1,48 @@
 """
-FTP Handler — Lightweight FTP integration for ftp.ctgfun.com.
+FTP Handler — Lightweight HTTP-based integration for ftp.ctgfun.com.
 
-Connects anonymously to browse and search movie folders, then generates
-direct HTTP links for streaming/downloading.  No heavy dependencies —
-uses only Python's built-in `ftplib`.
+Browses and searches movie folders via HTTP directory listings (Apache index
+pages), then generates direct HTTP links for streaming/downloading.
 
-Designed for Render free-tier: quick connect, fast search, minimal RAM.
+Uses httpx + BeautifulSoup instead of ftplib — works even when FTP port 21
+is blocked (e.g. on Render free-tier hosting).
 """
 
-import ftplib
 import hashlib
 import logging
 import re
-from typing import Dict, List, Optional
-from urllib.parse import quote
+from typing import Dict, List, Optional, Tuple
+from urllib.parse import quote, unquote, urljoin
+
+import httpx
+from bs4 import BeautifulSoup
 
 logger = logging.getLogger(__name__)
 
+# Shared HTTP client (connection pooling, timeouts)
+_http_client: Optional[httpx.Client] = None
+
+
+def _get_client(timeout: int = 10) -> httpx.Client:
+    """Lazy-init a shared httpx client."""
+    global _http_client
+    if _http_client is None or _http_client.is_closed:
+        _http_client = httpx.Client(
+            timeout=timeout,
+            follow_redirects=True,
+            headers={
+                "User-Agent": (
+                    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+                    "AppleWebKit/537.36 (KHTML, like Gecko) "
+                    "Chrome/120.0.0.0 Safari/537.36"
+                )
+            },
+        )
+    return _http_client
+
 
 class FTPMovieHandler:
-    """Search and browse movies on an FTP server."""
+    """Search and browse movies on an FTP server via HTTP directory listings."""
 
     def __init__(
         self,
@@ -29,9 +52,8 @@ class FTPMovieHandler:
         timeout: int = 10,
     ):
         self.host = host
-        self.user = user
-        self.password = password
         self.timeout = timeout
+        self.base_url = f"http://{host}"
 
         # Directories to search (order matters — searched first to last)
         self.search_dirs = [
@@ -40,13 +62,16 @@ class FTPMovieHandler:
             "/TV_Series",
         ]
 
+        # Cache parsed directory listings for the duration of a search
+        self._dir_cache: Dict[str, List[Tuple[str, str, str]]] = {}
+
     # ------------------------------------------------------------------
-    # Public API
+    # Public API  (same signatures as the old ftplib version)
     # ------------------------------------------------------------------
 
     def search(self, query: str, limit: int = 20) -> List[Dict]:
         """
-        Search for movies/series in the FTP server.
+        Search for movies/series in the FTP server via HTTP.
 
         Returns a list of dicts with clean metadata (no FTP paths exposed).
         """
@@ -56,35 +81,26 @@ class FTPMovieHandler:
 
         results: List[Dict] = []
 
-        try:
-            ftp = ftplib.FTP(self.host, timeout=self.timeout)
-            ftp.login(self.user, self.password)
+        for directory in self.search_dirs:
+            try:
+                items = self._list_directory(directory)
 
-            for directory in self.search_dirs:
-                try:
-                    ftp.cwd(directory)
-                    items: List[str] = []
-                    ftp.retrlines("NLST", items.append)
+                for name, _date, _size in items:
+                    if self._matches(query, name):
+                        movie = self._parse_folder(name, directory)
+                        if movie:
+                            results.append(movie)
+                        if len(results) >= limit:
+                            break
 
-                    for item in items:
-                        if self._matches(query, item):
-                            movie = self._parse_folder(item, directory)
-                            if movie:
-                                results.append(movie)
-                            if len(results) >= limit:
-                                break
+                if len(results) >= limit:
+                    break
+            except Exception as exc:
+                logger.warning("HTTP directory search error in %s: %s", directory, exc)
+                continue
 
-                    if len(results) >= limit:
-                        break
-                except Exception as exc:
-                    logger.warning("FTP search error in %s: %s", directory, exc)
-                    continue
-
-            ftp.quit()
-
-        except Exception as exc:
-            logger.error("FTP connection error: %s", exc)
-
+        # Clear per-search cache
+        self._dir_cache.clear()
         return results
 
     def get_playable_links(
@@ -93,54 +109,95 @@ class FTPMovieHandler:
         internal_directory: str,
     ) -> Dict:
         """
-        Get video + subtitle links from a specific FTP folder.
+        Get video + subtitle links from a specific FTP folder via HTTP.
 
-        Returns direct HTTP links (``http://host/path/file.mp4``) that can
+        Returns direct HTTP links (``http://host/path/file.ext``) that can
         be streamed or downloaded without any intermediate resolution.
         """
         try:
-            ftp = ftplib.FTP(self.host, timeout=self.timeout)
-            ftp.login(self.user, self.password)
-
             folder_path = f"{internal_directory}/{internal_folder}"
-            ftp.cwd(folder_path)
 
-            file_list: List[str] = []
-            ftp.retrlines("LIST", file_list.append)
+            # Try listing files in the folder directly
+            items = self._list_directory(folder_path)
 
             videos: List[Dict] = []
             subtitles: List[Dict] = []
 
-            for file_info in file_list:
-                parts = file_info.split()
-                if len(parts) < 9:
-                    continue
+            # Check if items are sub-folders (e.g. season folders)
+            # If so, we need to go one level deeper
+            sub_folders = [
+                (name, date, size) for name, date, size in items
+                if name.endswith("/") and name != "../"
+            ]
 
-                filename = " ".join(parts[8:])
-                size = int(parts[4]) if parts[4].isdigit() else 0
+            if sub_folders and not any(
+                self._is_video(name) for name, _d, _s in items
+            ):
+                # Items are all sub-folders — recurse one level into each
+                for sub_name, _date, _size in sub_folders:
+                    sub_path = f"{folder_path}/{sub_name.rstrip('/')}"
+                    try:
+                        sub_items = self._list_directory(sub_path)
+                        for name, _d, size_str in sub_items:
+                            clean_name = name.rstrip("/")
+                            if self._is_video(clean_name):
+                                quality = self._extract_quality(clean_name)
+                                display = self._clean_filename(clean_name)
+                                url = f"{self.base_url}{sub_path}/{quote(clean_name)}"
+                                size = self._parse_size_str(size_str)
+                                episode = self._extract_episode_info(clean_name)
+                                link_name = f"{episode} — {quality}" if episode else f"{display} — {quality}"
 
-                if self._is_video(filename):
-                    quality = self._extract_quality(filename)
-                    clean_name = self._clean_filename(filename)
-                    url = f"http://{self.host}{folder_path}/{quote(filename)}"
+                                videos.append({
+                                    "name": link_name,
+                                    "url": url,
+                                    "quality": quality,
+                                    "size": size,
+                                    "size_label": _format_size(size) if size else size_str,
+                                    "source": "Premium",
+                                    "type": "direct",
+                                    "episode": episode,
+                                })
+                            elif clean_name.lower().endswith(".srt"):
+                                subtitles.append({
+                                    "filename": clean_name,
+                                    "url": f"{self.base_url}{sub_path}/{quote(clean_name)}",
+                                })
+                    except Exception as exc:
+                        logger.debug("Sub-folder listing error %s: %s", sub_path, exc)
+                        continue
+            else:
+                # Items are files — process directly
+                for name, _date, size_str in items:
+                    clean_name = name.rstrip("/")
+                    if clean_name == ".." or clean_name == "../":
+                        continue
 
-                    videos.append({
-                        "text": f"{clean_name} — {quality}",
-                        "url": url,
-                        "quality": quality,
-                        "size": size,
-                        "size_label": _format_size(size),
-                        "source": "Premium",
-                        "type": "direct",
-                    })
+                    if self._is_video(clean_name):
+                        quality = self._extract_quality(clean_name)
+                        display = self._clean_filename(clean_name)
+                        url = f"{self.base_url}{folder_path}/{quote(clean_name)}"
+                        size = self._parse_size_str(size_str)
+                        episode = self._extract_episode_info(clean_name)
+                        link_name = f"{episode} — {quality}" if episode else f"{display} — {quality}"
 
-                elif filename.lower().endswith(".srt"):
-                    subtitles.append({
-                        "filename": filename,
-                        "url": f"http://{self.host}{folder_path}/{quote(filename)}",
-                    })
+                        videos.append({
+                            "name": link_name,
+                            "url": url,
+                            "quality": quality,
+                            "size": size,
+                            "size_label": _format_size(size) if size else size_str,
+                            "source": "Premium",
+                            "type": "direct",
+                            "episode": episode,
+                        })
+                    elif clean_name.lower().endswith(".srt"):
+                        subtitles.append({
+                            "filename": clean_name,
+                            "url": f"{self.base_url}{folder_path}/{quote(clean_name)}",
+                        })
 
-            ftp.quit()
+            self._dir_cache.clear()
 
             return {
                 "success": True,
@@ -149,54 +206,157 @@ class FTPMovieHandler:
             }
 
         except Exception as exc:
-            logger.error("FTP get_playable_links error: %s", exc)
+            logger.error("HTTP get_playable_links error: %s", exc)
             return {"success": False, "links": [], "subtitles": []}
 
     def browse_latest(self, directory: str = "/English", limit: int = 30) -> List[Dict]:
         """
-        Browse the latest entries in a given FTP directory.
+        Browse the latest entries in a given directory via HTTP.
 
-        Returns a list of parsed movie dicts (most recent first, if the
-        server supports MLSD; otherwise alphabetical).
+        Returns a list of parsed movie dicts (most recent first, sorted by
+        the modification date from the directory listing).
         """
         results: List[Dict] = []
 
         try:
-            ftp = ftplib.FTP(self.host, timeout=self.timeout)
-            ftp.login(self.user, self.password)
-            ftp.cwd(directory)
+            items = self._list_directory(directory)
 
-            items: List[str] = []
-            ftp.retrlines("NLST", items.append)
+            # Sort by date descending (most recent first)
+            # Date format from Apache: "DD-Mon-YYYY HH:MM"
+            items_sorted = sorted(items, key=lambda x: x[1], reverse=True)
 
-            # Reverse to approximate "latest first" (most FTP servers list
-            # chronologically or alphabetically).
-            for item in reversed(items):
-                movie = self._parse_folder(item, directory)
+            for name, _date, _size in items_sorted:
+                if name == "../" or name == "..":
+                    continue
+                movie = self._parse_folder(name.rstrip("/"), directory)
                 if movie:
                     results.append(movie)
                 if len(results) >= limit:
                     break
 
-            ftp.quit()
+            self._dir_cache.clear()
 
         except Exception as exc:
-            logger.error("FTP browse error: %s", exc)
+            logger.error("HTTP browse error: %s", exc)
 
         return results
 
     def check_connectivity(self) -> bool:
-        """Quick connectivity check — returns True if the FTP is reachable."""
+        """Quick connectivity check — returns True if the HTTP server is reachable."""
         try:
-            ftp = ftplib.FTP(self.host, timeout=5)
-            ftp.login(self.user, self.password)
-            ftp.quit()
-            return True
+            client = _get_client(timeout=5)
+            resp = client.head(self.base_url, timeout=5)
+            return resp.status_code < 500
         except Exception:
             return False
 
     # ------------------------------------------------------------------
-    # Internal helpers
+    # HTTP directory listing parser
+    # ------------------------------------------------------------------
+
+    def _list_directory(self, directory: str) -> List[Tuple[str, str, str]]:
+        """
+        Fetch and parse an Apache-style HTML directory listing.
+
+        Returns list of (name, date_string, size_string) tuples.
+        Uses a per-search cache to avoid re-fetching.
+        """
+        if directory in self._dir_cache:
+            return self._dir_cache[directory]
+
+        url = f"{self.base_url}{directory}/"
+        # Normalize double slashes
+        url = url.replace("//", "/").replace("http:/", "http://")
+
+        client = _get_client(timeout=self.timeout)
+        resp = client.get(url)
+        resp.raise_for_status()
+
+        items = self._parse_apache_listing(resp.text, url)
+        self._dir_cache[directory] = items
+        return items
+
+    def _parse_apache_listing(
+        self, html: str, base_url: str
+    ) -> List[Tuple[str, str, str]]:
+        """
+        Parse Apache mod_autoindex HTML.
+
+        Handles both <pre>-based and <table>-based index formats.
+        Returns list of (name, date, size) tuples.
+        """
+        items: List[Tuple[str, str, str]] = []
+        soup = BeautifulSoup(html, "html.parser")
+
+        # Strategy 1: <pre> block with <a> tags (most common for Apache FTP)
+        pre = soup.find("pre")
+        if pre:
+            for a_tag in pre.find_all("a"):
+                # IMPORTANT: Use href to get the full name — Apache truncates
+                # long names in display text (shows "..>" at the end).
+                href = a_tag.get("href", "")
+                if not href or href.startswith("?") or href.startswith("#"):
+                    continue
+                # Decode the href to get the real folder/file name
+                name = unquote(href.split("?")[0])
+                # Strip leading path components — keep only the last segment
+                name = name.rstrip("/").rsplit("/", 1)[-1]
+                if not name:
+                    continue
+                # Re-add trailing slash if original href had it (= directory)
+                if href.endswith("/"):
+                    name += "/"
+
+                if name in ("../", "..", ".", "/"):
+                    continue
+
+                # The text after the <a> tag contains date + size
+                # Format: "DD-Mon-YYYY HH:MM    SIZE"
+                next_text = a_tag.next_sibling
+                date_str = ""
+                size_str = ""
+                if next_text and isinstance(next_text, str):
+                    parts = next_text.strip().split()
+                    if len(parts) >= 2:
+                        date_str = f"{parts[0]} {parts[1]}"
+                    if len(parts) >= 3:
+                        size_str = parts[2]
+
+                items.append((name, date_str, size_str))
+            return items
+
+        # Strategy 2: <table>-based (some Apache configs)
+        table = soup.find("table")
+        if table:
+            for row in table.find_all("tr"):
+                cells = row.find_all("td")
+                if len(cells) < 3:
+                    continue
+                a_tag = cells[0].find("a")
+                if not a_tag:
+                    continue
+                name = unquote(a_tag.get_text(strip=True))
+                if not name or name in ("Name", "Parent Directory", "../"):
+                    continue
+                date_str = cells[1].get_text(strip=True)
+                size_str = cells[2].get_text(strip=True)
+                items.append((name, date_str, size_str))
+            return items
+
+        # Strategy 3: Just find all <a> tags as fallback
+        for a_tag in soup.find_all("a", href=True):
+            href = a_tag["href"]
+            name = unquote(a_tag.get_text(strip=True))
+            if not name or name in ("../", "..", "Parent Directory"):
+                continue
+            if href.startswith("?") or href.startswith("#"):
+                continue
+            items.append((name, "", ""))
+
+        return items
+
+    # ------------------------------------------------------------------
+    # Internal helpers  (unchanged from original)
     # ------------------------------------------------------------------
 
     def _matches(self, query: str, folder_name: str) -> bool:
@@ -207,7 +367,7 @@ class FTPMovieHandler:
 
     def _parse_folder(self, folder_name: str, directory: str) -> Optional[Dict]:
         """
-        Parse an FTP folder name into clean metadata.
+        Parse a folder name into clean metadata.
 
         Removes [DDN] tags, extracts title/year/quality/language, and
         generates a stable ID from the path.
@@ -251,7 +411,7 @@ class FTPMovieHandler:
             }
 
         except Exception as exc:
-            logger.debug("FTP parse error for '%s': %s", folder_name, exc)
+            logger.debug("Parse error for '%s': %s", folder_name, exc)
             return None
 
     @staticmethod
@@ -278,12 +438,45 @@ class FTPMovieHandler:
         return "HD"
 
     @staticmethod
+    def _extract_episode_info(text: str) -> str:
+        """Extract season/episode info from text. Returns e.g. 'S01E03' or ''."""
+        if not text:
+            return ""
+        # S01E01 / S1E1 pattern
+        m = re.search(r'S(\d{1,2})\s*E(\d{1,3})', text, re.IGNORECASE)
+        if m:
+            return f"S{int(m.group(1)):02d}E{int(m.group(2)):02d}"
+        # Episode X / Ep X
+        m = re.search(r'\b(?:Episode|Ep)\.?\s*(\d{1,3})\b', text, re.IGNORECASE)
+        if m:
+            return f"E{int(m.group(1)):02d}"
+        # E01 standalone at word boundary
+        m = re.search(r'\bE(\d{1,3})\b', text)
+        if m:
+            return f"E{int(m.group(1)):02d}"
+        return ""
+
+    @staticmethod
     def _clean_filename(filename: str) -> str:
         """Strip extension and common tags for a user-friendly label."""
         name = re.sub(r"\.[^.]+$", "", filename)          # remove extension
         name = re.sub(r"\[DDN\]|\(DDN\)", "", name)       # remove DDN tags
         name = name.replace(".", " ").replace("_", " ")
         return name.strip()
+
+    @staticmethod
+    def _parse_size_str(size_str: str) -> int:
+        """Parse Apache-style size strings like '1.2G', '500M', '250K'."""
+        if not size_str or size_str == "-":
+            return 0
+        try:
+            size_str = size_str.strip().upper()
+            multipliers = {"K": 1024, "M": 1024**2, "G": 1024**3, "T": 1024**4}
+            if size_str[-1] in multipliers:
+                return int(float(size_str[:-1]) * multipliers[size_str[-1]])
+            return int(size_str)
+        except (ValueError, IndexError):
+            return 0
 
 
 # ------------------------------------------------------------------

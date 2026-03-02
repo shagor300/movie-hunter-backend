@@ -38,7 +38,7 @@ class _AppLockSettingsScreenState extends State<AppLockSettingsScreen> {
     final currentType = _lockService.lockType;
 
     return Scaffold(
-      backgroundColor: AppColors.backgroundDark,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,

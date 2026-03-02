@@ -184,7 +184,7 @@ class _StorageManagementScreenState extends State<StorageManagementScreen> {
     final accent = tc.accentColor;
 
     return Scaffold(
-      backgroundColor: AppColors.backgroundDark,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -718,9 +718,9 @@ class _StorageManagementScreenState extends State<StorageManagementScreen> {
         child: Padding(
           padding: const EdgeInsets.all(16.0),
           child: Container(
-            decoration: const BoxDecoration(
+            decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: AppColors.backgroundDark,
+              color: Theme.of(context).scaffoldBackgroundColor,
             ),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,

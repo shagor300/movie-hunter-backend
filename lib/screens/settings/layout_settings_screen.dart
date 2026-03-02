@@ -14,7 +14,7 @@ class LayoutSettingsScreen extends StatelessWidget {
     final tc = Get.find<ThemeController>();
 
     return Scaffold(
-      backgroundColor: AppColors.backgroundDark,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,

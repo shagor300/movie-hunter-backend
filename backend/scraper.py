@@ -418,6 +418,61 @@ class MovieScraper:
                 return label
         return "Download"
 
+    @staticmethod
+    def _extract_episode_info(text: str) -> str:
+        """Extract season/episode info from text. Returns e.g. 'S01E03' or ''."""
+        if not text:
+            return ""
+        # S01E01 / S1E1 pattern
+        m = re.search(r'S(\d{1,2})\s*E(\d{1,3})', text, re.IGNORECASE)
+        if m:
+            return f"S{int(m.group(1)):02d}E{int(m.group(2)):02d}"
+        # Season X Episode Y
+        m = re.search(r'Season\s*(\d+)\s*Episode\s*(\d+)', text, re.IGNORECASE)
+        if m:
+            return f"S{int(m.group(1)):02d}E{int(m.group(2)):02d}"
+        # Episode X / Ep X / EP X (without season)
+        m = re.search(r'\b(?:Episode|Ep)\.?\s*(\d{1,3})\b', text, re.IGNORECASE)
+        if m:
+            return f"E{int(m.group(1)):02d}"
+        # E01 standalone at word boundary
+        m = re.search(r'\bE(\d{1,3})\b', text)
+        if m:
+            return f"E{int(m.group(1)):02d}"
+        return ""
+
+    @staticmethod
+    def _find_context_text(a_tag) -> str:
+        """Walk up the DOM from an <a> tag to collect context text from
+        the nearest headers and parent elements. Used to find episode info."""
+        context_parts = []
+        # Check ancestors up to 4 levels
+        el = a_tag.parent
+        for _ in range(4):
+            if el is None:
+                break
+            tag_name = getattr(el, 'name', '')
+            # Stop at body/html
+            if tag_name in ('body', 'html', '[document]'):
+                break
+            context_parts.append(el.get_text(strip=True)[:200])
+            el = el.parent
+
+        # Also look for the closest preceding header (h2-h6)
+        prev = a_tag
+        for _ in range(20):  # scan up to 20 previous siblings/parents
+            prev = prev.find_previous(['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p', 'strong', 'b'])
+            if prev is None:
+                break
+            header_text = prev.get_text(strip=True)
+            if header_text:
+                context_parts.append(header_text[:200])
+                # Stop after finding a relevant header
+                if re.search(r'S\d+E\d+|Episode|Ep\.?\s*\d', header_text, re.IGNORECASE):
+                    break
+
+        return ' '.join(context_parts)
+
     async def _parse_links_from_html(self, content: str, url: str) -> List[Dict]:
         """Shared logic to extract links from raw HTML content."""
         links = []
@@ -435,24 +490,45 @@ class MovieScraper:
                 parent_text = a.parent.get_text(strip=True) if a.parent else ""
                 combined = f"{text} {parent_text}"
 
+                # Extract episode info from URL, link text, and surrounding context
+                episode = (self._extract_episode_info(href)
+                           or self._extract_episode_info(text)
+                           or self._extract_episode_info(parent_text))
+                if not episode:
+                    context = self._find_context_text(a)
+                    episode = self._extract_episode_info(context)
+
+                quality = self._extract_quality(combined)
+                # Build a descriptive name: "S01E03 — 720p" or "Drive — 720p"
+                if episode:
+                    display_name = f"{episode} — {quality}"
+                elif text and len(text) > 1:
+                    display_name = f"{text[:60]} — {quality}"
+                else:
+                    display_name = f"{self._extract_language(combined)} — {quality}"
+
                 links.append({
-                    "quality": self._extract_quality(combined),
+                    "quality": quality,
                     "url": href,
-                    "name": text[:80] if text else f"{self._extract_language(combined)} - {self._extract_quality(combined)}",
+                    "name": display_name,
                     "type": self._extract_language(combined),
                     "source": url,
+                    "episode": episode,
                 })
 
         # Strategy 2: Check data-link attributes on interactive elements
         for elem in soup.find_all(['button', 'div', 'span', 'p'], attrs={'data-link': True}):
             data_link = elem.get('data-link')
             if data_link and any(p in data_link.lower() for p in DOWNLOAD_PATTERNS):
+                elem_text = elem.get_text(strip=True)
+                episode = self._extract_episode_info(data_link) or self._extract_episode_info(elem_text)
                 links.append({
                     "quality": "HD",
                     "url": data_link,
-                    "name": elem.get_text(strip=True)[:80] or "Download Link",
+                    "name": f"{episode} — HD" if episode else (elem_text[:80] or "Download Link"),
                     "type": "Download",
                     "source": url,
+                    "episode": episode,
                 })
 
         # Strategy 3: Scan download sections/containers
@@ -461,12 +537,17 @@ class MovieScraper:
                 href = a['href']
                 if any(p in href.lower() for p in DOWNLOAD_PATTERNS):
                     text = a.get_text(strip=True)
+                    episode = (self._extract_episode_info(href)
+                               or self._extract_episode_info(text)
+                               or self._extract_episode_info(self._find_context_text(a)))
+                    quality = self._extract_quality(text) if text else "HD"
                     links.append({
-                        "quality": "HD",
+                        "quality": quality,
                         "url": href,
-                        "name": text[:80] if text else "Download",
+                        "name": f"{episode} — {quality}" if episode else (text[:80] if text else "Download"),
                         "type": "Download",
                         "source": url,
+                        "episode": episode,
                     })
 
         # Strategy 4: Find embedded links in regex (from HTML source)
@@ -477,12 +558,14 @@ class MovieScraper:
         existing_urls = {link['url'] for link in links}
         for js_link in js_links:
             if js_link not in existing_urls:
+                episode = self._extract_episode_info(js_link)
                 links.append({
                     "quality": "HD",
                     "url": js_link,
-                    "name": "Download (Found in Source)",
+                    "name": f"{episode} — HD" if episode else "Download (Found in Source)",
                     "type": "Download",
                     "source": url,
+                    "episode": episode,
                 })
 
         # Strategy 5: Extract links from header tags (h1-h6)
@@ -492,12 +575,17 @@ class MovieScraper:
                 text = a.get_text(strip=True)
                 if any(p in href.lower() for p in DOWNLOAD_PATTERNS):
                     header_text = header.get_text(strip=True)
+                    episode = (self._extract_episode_info(href)
+                               or self._extract_episode_info(header_text)
+                               or self._extract_episode_info(text))
+                    quality = self._extract_quality(header_text)
                     links.append({
-                        "quality": self._extract_quality(header_text),
+                        "quality": quality,
                         "url": href,
-                        "name": text[:80] if text else f"Download - {self._extract_quality(header_text)}",
+                        "name": f"{episode} — {quality}" if episode else (text[:80] if text else f"Download — {quality}"),
                         "type": self._extract_language(header_text),
                         "source": url,
+                        "episode": episode,
                     })
 
         # Deduplicate

@@ -200,30 +200,65 @@ class NotificationService {
   // CONVENIENCE METHODS (used by controllers)
   // ═══════════════════════════════════════════════════════════════════
 
-  /// Download completed notification.
+  /// Download completed notification — bypasses controller check so it
+  /// ALWAYS fires even if NotificationController isn't registered yet.
   Future<void> showDownloadComplete(
     String movieName,
     String quality,
     String size,
   ) async {
-    await show(
-      category: 'downloadComplete',
-      channelId: chDownloads,
-      title: '🎬 Download Complete',
-      body: '$movieName ($quality) downloaded\n$size • Ready to watch',
+    if (!_initialized) await init();
+
+    final id = _generateId();
+    final body = '$movieName ($quality) downloaded\n$size • Ready to watch';
+
+    final androidDetails = AndroidNotificationDetails(
+      chDownloads,
+      'Downloads',
+      importance: Importance.high,
+      priority: Priority.high,
+      styleInformation: BigTextStyleInformation(body),
+      icon: 'ic_notification',
+      largeIcon: const DrawableResourceAndroidBitmap('launcher_icon'),
+      color: _accentColor,
+    );
+
+    await _plugin.show(
+      id,
+      '🎬 Download Complete',
+      body,
+      NotificationDetails(android: androidDetails),
       payload: 'download_complete',
     );
+    debugPrint('🔔 Download complete notification shown: $movieName');
   }
 
-  /// Download failed notification.
+  /// Download failed notification — bypasses controller check.
   Future<void> showDownloadFailed(String movieName, String reason) async {
-    await show(
-      category: 'downloadFailed',
-      channelId: chDownloads,
-      title: '❌ Download Failed',
-      body: '$movieName\n$reason',
+    if (!_initialized) await init();
+
+    final id = _generateId();
+    final body = '$movieName\n$reason';
+
+    final androidDetails = AndroidNotificationDetails(
+      chDownloads,
+      'Downloads',
+      importance: Importance.high,
+      priority: Priority.high,
+      styleInformation: BigTextStyleInformation(body),
+      icon: 'ic_notification',
+      largeIcon: const DrawableResourceAndroidBitmap('launcher_icon'),
+      color: _accentColor,
+    );
+
+    await _plugin.show(
+      id,
+      '❌ Download Failed',
+      body,
+      NotificationDetails(android: androidDetails),
       payload: 'download_failed',
     );
+    debugPrint('🔔 Download failed notification shown: $movieName');
   }
 
   /// Show ongoing download progress in the notification shade.

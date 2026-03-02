@@ -119,7 +119,7 @@ class _DetailsScreenState extends State<DetailsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.backgroundDarker,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: Stack(
         children: [
           CustomScrollView(
@@ -261,10 +261,9 @@ class _DetailsScreenState extends State<DetailsScreen> {
                                   end: Alignment.bottomCenter,
                                   colors: [
                                     Colors.transparent,
-                                    AppColors.backgroundDarker.withValues(
-                                      alpha: 0.5,
-                                    ),
-                                    AppColors.backgroundDarker,
+                                    Theme.of(context).scaffoldBackgroundColor
+                                        .withValues(alpha: 0.5),
+                                    Theme.of(context).scaffoldBackgroundColor,
                                   ],
                                 ),
                               ),
@@ -696,7 +695,7 @@ class _DetailsScreenState extends State<DetailsScreen> {
 
     showModalBottomSheet(
       context: context,
-      backgroundColor: AppColors.backgroundDarker,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -1339,6 +1338,10 @@ class _DetailsScreenState extends State<DetailsScreen> {
   }
 
   Widget _buildLinkItem(Map<String, String> link, int index) {
+    final episode = link['episode'] ?? '';
+    final hasEpisode = episode.isNotEmpty;
+    final quality = link['quality'] ?? 'HD';
+
     return TweenAnimationBuilder(
       duration: Duration(milliseconds: 400 + (index * 100)),
       tween: Tween<double>(begin: 0, end: 1),
@@ -1363,27 +1366,53 @@ class _DetailsScreenState extends State<DetailsScreen> {
             horizontal: 16,
             vertical: 8,
           ),
-          leading: Container(
-            padding: EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: Theme.of(
-                context,
-              ).colorScheme.primary.withValues(alpha: 0.1),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(
-              Icons.cloud_download,
-              color: Theme.of(context).colorScheme.primary,
-            ),
-          ),
+          leading: hasEpisode
+              // Episode badge — bold, colored pill showing S01E03
+              ? Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 8,
+                  ),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        Theme.of(context).colorScheme.primary,
+                        AppColors.primaryDark,
+                      ],
+                    ),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Text(
+                    episode,
+                    style: GoogleFonts.jetBrainsMono(
+                      color: Colors.white,
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                )
+              // Default cloud icon for non-episode links
+              : Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.primary.withValues(alpha: 0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    Icons.cloud_download,
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
+                ),
           title: Text(
-            link['name'] ?? "Source ${index + 1}",
+            hasEpisode
+                ? 'Episode ${episode.replaceAll(RegExp(r'S\d+'), '').replaceAll('E', '')}'
+                : (link['name'] ?? "Source ${index + 1}"),
             style: AppTextStyles.titleMedium,
           ),
-          subtitle: Text(
-            "Quality: ${link['quality']}",
-            style: AppTextStyles.bodySmall,
-          ),
+          subtitle: Text("Quality: $quality", style: AppTextStyles.bodySmall),
           trailing: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -1409,12 +1438,16 @@ class _DetailsScreenState extends State<DetailsScreen> {
                   final url = link['url'] ?? '';
                   if (url.isEmpty) return;
 
+                  // Use episode in filename if available
+                  final filename = hasEpisode
+                      ? '${widget.movie.title}_${episode}_$quality.mp4'
+                      : '${widget.movie.title}_$quality.mp4';
+
                   await _downloadController.startDownload(
                     url: url,
-                    filename:
-                        '${widget.movie.title}_${link['quality'] ?? 'HD'}.mp4',
+                    filename: filename,
                     tmdbId: widget.movie.tmdbId,
-                    quality: link['quality'],
+                    quality: quality,
                     movieTitle: widget.movie.title,
                     posterUrl: widget.movie.fullPosterPath,
                   );

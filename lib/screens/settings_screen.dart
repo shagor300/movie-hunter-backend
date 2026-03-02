@@ -305,7 +305,7 @@ class SettingsScreen extends StatelessWidget {
                     showDialog(
                       context: context,
                       builder: (_) => AlertDialog(
-                        backgroundColor: const Color(0xFF1A1A2E),
+                        backgroundColor: Theme.of(context).colorScheme.surface,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(16),
                         ),
@@ -447,7 +447,7 @@ class SettingsScreen extends StatelessWidget {
                     showDialog(
                       context: context,
                       builder: (_) => AlertDialog(
-                        backgroundColor: const Color(0xFF1A1A2E),
+                        backgroundColor: Theme.of(context).colorScheme.surface,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(16),
                         ),
@@ -541,7 +541,6 @@ class SettingsScreen extends StatelessWidget {
       }),
     );
   }
-
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -604,8 +603,6 @@ class _SettingsCard extends StatelessWidget {
   }
 }
 
-
-
 class _ActionTile extends StatelessWidget {
   final IconData icon;
   final String title;
@@ -659,9 +656,11 @@ class _ActionTile extends StatelessWidget {
                 ],
               ),
             ),
-            const Icon(
+            Icon(
               Icons.chevron_right,
-              color: AppColors.surfaceLight,
+              color:
+                  Theme.of(context).textTheme.bodySmall?.color ??
+                  Colors.white24,
               size: 20,
             ),
           ],

@@ -58,7 +58,7 @@ class _DownloadsScreenState extends State<DownloadsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.backgroundDark,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -71,7 +71,7 @@ class _DownloadsScreenState extends State<DownloadsScreen> {
           Container(
             margin: const EdgeInsets.only(right: 16),
             decoration: BoxDecoration(
-              color: AppColors.surface,
+              color: Theme.of(context).colorScheme.surface,
               shape: BoxShape.circle,
               border: Border.all(color: Colors.white10),
             ),
@@ -210,7 +210,7 @@ class _DeviceStorageCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: Colors.white10),
       ),
@@ -636,8 +636,8 @@ class _ActiveDownloadCard extends StatelessWidget {
     Get.bottomSheet(
       Container(
         padding: const EdgeInsets.all(24),
-        decoration: const BoxDecoration(
-          color: AppColors.surface,
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.surface,
           borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
         ),
         child: Column(
@@ -676,7 +676,7 @@ class _CompletedCard extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
       ),
@@ -693,7 +693,7 @@ class _CompletedCard extends StatelessWidget {
                   height: 65,
                   clipBehavior: Clip.antiAlias,
                   decoration: BoxDecoration(
-                    color: AppColors.backgroundDark,
+                    color: Theme.of(context).scaffoldBackgroundColor,
                     border: Border.all(color: Colors.white10),
                     borderRadius: BorderRadius.circular(8),
                   ),
@@ -706,8 +706,9 @@ class _CompletedCard extends StatelessWidget {
                           child: CachedNetworkImage(
                             imageUrl: item.posterUrl!,
                             fit: BoxFit.cover,
-                            placeholder: (context, url) =>
-                                Container(color: AppColors.backgroundDark),
+                            placeholder: (context, url) => Container(
+                              color: Theme.of(context).scaffoldBackgroundColor,
+                            ),
                             errorWidget: (context, url, error) =>
                                 _buildPlaceholderImage(),
                           ),

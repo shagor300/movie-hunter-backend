@@ -151,37 +151,58 @@ class MultiSourceManager:
     async def extract_links_all_sources(self, title: str, year: str = None,
                                          tmdb_id: int = 0) -> Dict:
         """
-        Try to extract links from ALL enabled sources for a given title.
-        Searches FTP + SkyMoviesHD + HDHub4u in parallel and combines results.
-        Returns combined { 'links': [...], 'embed_links': [...] }
+        FTP-first link extraction:
+        1. Try FTP first (fast, ~1-2s)
+        2. If FTP has links → return immediately (skip scrapers)
+        3. If FTP empty → fall back to all scraper sources in parallel
         """
         if not self._initialized:
             return {'links': [], 'embed_links': []}
 
+        # ── Step 1: Try FTP first (highest priority, fastest) ──
+        if self.ftp_handler:
+            logger.info("[FTP-FIRST] Checking FTP for: %s", title)
+            try:
+                ftp_result = await self._ftp_search_and_extract(title, year)
+                ftp_links = ftp_result.get('links', [])
+
+                if ftp_links:
+                    # FTP has content — return immediately, no need for scrapers
+                    logger.info(
+                        "[FTP-FIRST] ✅ Found %d links on FTP, skipping scrapers",
+                        len(ftp_links)
+                    )
+                    # Tag links with source
+                    for link in ftp_links:
+                        if 'source_site' not in link:
+                            link['source_site'] = 'ftp'
+                    return {
+                        'links': ftp_links,
+                        'embed_links': ftp_result.get('embed_links', []),
+                    }
+                else:
+                    logger.info("[FTP-FIRST] FTP empty, falling back to scrapers...")
+            except Exception as e:
+                logger.error("[FTP-FIRST] FTP check failed: %s, falling back to scrapers", e)
+
+        # ── Step 2: FTP had nothing — run scraper sources in parallel ──
         all_links = []
         all_embeds = []
         tasks = []
 
-        # --- FTP: search by title (fast, direct links, highest priority) ---
-        if self.ftp_handler:
-            tasks.append(('ftp', self._ftp_search_and_extract(title, year)))
-
-        # --- SkyMoviesHD: search → pick first result → extract links ---
         if self.sky_scraper:
             tasks.append(('skymovieshd', self._sky_search_and_extract(title, year)))
 
-        # --- Cinefreak: search → pick first result → extract links ---
         if self.cinefreak_scraper:
             tasks.append(('cinefreak', self._cinefreak_search_and_extract(title, year)))
 
-        # --- HDHub4u: use the existing MovieScraper ---
         if self._hdhub4u_scraper and MovieSources.HDHUB4U_ENABLED:
             tasks.append(('hdhub4u', self._hdhub4u_search_and_extract(title, year, tmdb_id)))
 
         if not tasks:
             return {'links': [], 'embed_links': []}
 
-        # Run all extractions in parallel with timeout
+        # Run all scraper extractions in parallel
         coroutines = [t[1] for t in tasks]
         source_names = [t[0] for t in tasks]
 
@@ -194,7 +215,6 @@ class MultiSourceManager:
             if isinstance(result, dict):
                 source_links = result.get('links', [])
                 source_embeds = result.get('embed_links', [])
-                # Tag each link with its source
                 for link in source_links:
                     if 'source_site' not in link:
                         link['source_site'] = source_name
@@ -215,7 +235,7 @@ class MultiSourceManager:
                 unique_links.append(link)
 
         logger.info(
-            f"Multi-source extraction: {len(all_links)} total → "
+            f"Multi-source fallback: {len(all_links)} total → "
             f"{len(unique_links)} unique links + {len(all_embeds)} embeds"
         )
 

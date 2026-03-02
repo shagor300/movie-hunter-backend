@@ -55,7 +55,7 @@ class _LibraryScreenState extends State<LibraryScreen>
           style: AppTextStyles.headingLarge.copyWith(fontSize: 22),
         ),
         centerTitle: true,
-        backgroundColor: AppColors.backgroundDark,
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         bottom: TabBar(
           controller: _tabController,
           indicatorColor: Theme.of(context).colorScheme.primary,

@@ -110,79 +110,95 @@ class _AppLockScreenState extends State<AppLockScreen>
     return Scaffold(
       backgroundColor: const Color(0xFF0A0A1A),
       body: SafeArea(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            const Spacer(flex: 2),
+        child: SizedBox(
+          width: double.infinity,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              const Spacer(flex: 2),
 
-            // Fingerprint icon
-            Container(
-              width: 100,
-              height: 100,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: LinearGradient(
-                  colors: [
-                    primary.withValues(alpha: 0.3),
-                    primary.withValues(alpha: 0.1),
-                  ],
-                ),
-              ),
-              child: Icon(Icons.fingerprint_rounded, color: primary, size: 52),
-            ),
-            const SizedBox(height: 32),
-
-            Text(
-              'Biometric Required',
-              textAlign: TextAlign.center,
-              style: GoogleFonts.poppins(
-                color: Colors.white,
-                fontSize: 22,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Touch the fingerprint sensor to unlock',
-              textAlign: TextAlign.center,
-              style: GoogleFonts.inter(color: Colors.white38, fontSize: 14),
-            ),
-            const SizedBox(height: 40),
-
-            // Retry button
-            GestureDetector(
-              onTap: _tryBiometric,
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 32,
-                  vertical: 14,
-                ),
+              // Fingerprint icon
+              Container(
+                width: 100,
+                height: 100,
                 decoration: BoxDecoration(
-                  color: primary.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(30),
-                  border: Border.all(color: primary.withValues(alpha: 0.3)),
+                  shape: BoxShape.circle,
+                  gradient: LinearGradient(
+                    colors: [
+                      primary.withValues(alpha: 0.3),
+                      primary.withValues(alpha: 0.1),
+                    ],
+                  ),
                 ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.fingerprint_rounded, color: primary, size: 22),
-                    const SizedBox(width: 10),
-                    Text(
-                      'Tap to Unlock',
-                      style: GoogleFonts.inter(
-                        color: primary,
-                        fontSize: 15,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
+                child: Icon(
+                  Icons.fingerprint_rounded,
+                  color: primary,
+                  size: 52,
                 ),
               ),
-            ),
+              const SizedBox(height: 32),
 
-            const Spacer(flex: 3),
-          ],
+              Text(
+                'Biometric Required',
+                textAlign: TextAlign.center,
+                style: GoogleFonts.poppins(
+                  color: Colors.white,
+                  fontSize: 22,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Touch the fingerprint sensor to unlock',
+                textAlign: TextAlign.center,
+                style: GoogleFonts.inter(
+                  color: Colors.white38,
+                  fontSize: 14,
+                ),
+              ),
+              const SizedBox(height: 40),
+
+              // Retry button
+              GestureDetector(
+                onTap: _tryBiometric,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 32,
+                    vertical: 14,
+                  ),
+                  decoration: BoxDecoration(
+                    color: primary.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(30),
+                    border: Border.all(
+                      color: primary.withValues(alpha: 0.3),
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.fingerprint_rounded,
+                        color: primary,
+                        size: 22,
+                      ),
+                      const SizedBox(width: 10),
+                      Text(
+                        'Tap to Unlock',
+                        style: GoogleFonts.inter(
+                          color: primary,
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+
+              const Spacer(flex: 3),
+            ],
+          ),
         ),
       ),
     );

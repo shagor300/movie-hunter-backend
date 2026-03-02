@@ -221,32 +221,46 @@ class SearchScreenState extends State<SearchScreen> {
     );
   }
 
-  void _onQuickFilter(String filter) {
-    setState(() => _activeQuickFilter = filter);
+  /// Genre name → TMDB genre ID mapping for discover API
+  static const Map<String, int> _quickFilterGenreId = {
+    'Action': 28,
+    'Comedy': 35,
+    'Sci-Fi': 878,
+    'Romance': 10749,
+  };
 
-    if (filter == 'All' || filter == 'Movies' || filter == 'Series') {
-      _selectedGenres = [];
-      _selectedYear = null;
-      _minRating = 0;
-    } else if (filter == 'Top Rated') {
-      _selectedGenres = [];
-      _selectedYear = null;
-      _minRating = 7;
-    } else if (filter == '2023' || filter == '2024') {
-      _selectedGenres = [];
-      _selectedYear = filter;
-      _minRating = 0;
+  void _onQuickFilter(String filter) async {
+    setState(() {
+      _activeQuickFilter = filter;
+      _isLoading = true;
+      _showRecent = false;
+    });
+
+    List<Movie> results;
+
+    if (filter == 'All') {
+      // Trending — default
+      results = await _tmdbService.getTrendingMovies();
+    } else if (filter == 'Movies') {
+      // Discover movies only
+      results = await _tmdbService.discoverMovies();
+    } else if (filter == 'Series') {
+      // Discover TV shows only
+      results = await _tmdbService.discoverTvShows();
+    } else if (_quickFilterGenreId.containsKey(filter)) {
+      // Genre-specific discover
+      results = await _tmdbService.discoverByGenre(
+        _quickFilterGenreId[filter]!,
+      );
     } else {
-      _selectedGenres = [filter];
-      _selectedYear = null;
-      _minRating = 0;
+      // Fallback — trending filtered locally
+      results = await _tmdbService.getTrendingMovies();
     }
 
-    if (_searchController.text.isNotEmpty) {
-      _onSearch(_searchController.text);
-    } else {
-      _fetchTrending();
-    }
+    setState(() {
+      _searchResults = results;
+      _isLoading = false;
+    });
   }
 
   @override
@@ -294,7 +308,9 @@ class SearchScreenState extends State<SearchScreen> {
               bottom: 16,
             ),
             decoration: BoxDecoration(
-              color: AppColors.backgroundDark.withValues(alpha: 0.8),
+              color: Theme.of(
+                context,
+              ).scaffoldBackgroundColor.withValues(alpha: 0.8),
               border: const Border(
                 bottom: BorderSide(color: AppColors.glassBorder, width: 1),
               ),
@@ -348,7 +364,9 @@ class SearchScreenState extends State<SearchScreen> {
                         height: 44,
                         width: 44,
                         decoration: BoxDecoration(
-                          color: AppColors.surfaceLight.withValues(alpha: 0.5),
+                          color: Theme.of(
+                            context,
+                          ).cardColor.withValues(alpha: 0.5),
                           shape: BoxShape.circle,
                           border: Border.all(color: AppColors.glassBorder),
                         ),
@@ -387,7 +405,7 @@ class SearchScreenState extends State<SearchScreen> {
                                 decoration: BoxDecoration(
                                   color: isActive
                                       ? accent
-                                      : AppColors.surfaceLight,
+                                      : Theme.of(context).cardColor,
                                   borderRadius: BorderRadius.circular(9999),
                                   border: isActive
                                       ? null
@@ -432,7 +450,7 @@ class SearchScreenState extends State<SearchScreen> {
       child: RefreshIndicator(
         onRefresh: _fetchTrending,
         color: tc.accentColor,
-        backgroundColor: AppColors.backgroundDark,
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         child: CustomScrollView(
           physics: const AlwaysScrollableScrollPhysics(
             parent: BouncingScrollPhysics(),
@@ -612,9 +630,9 @@ class SearchScreenState extends State<SearchScreen> {
                             width: 32,
                             height: 32,
                             decoration: BoxDecoration(
-                              color: AppColors.surfaceLight.withValues(
-                                alpha: 0.6,
-                              ),
+                              color: Theme.of(
+                                context,
+                              ).cardColor.withValues(alpha: 0.6),
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: const Icon(
@@ -643,9 +661,9 @@ class SearchScreenState extends State<SearchScreen> {
                               width: 28,
                               height: 28,
                               decoration: BoxDecoration(
-                                color: AppColors.surfaceLight.withValues(
-                                  alpha: 0.5,
-                                ),
+                                color: Theme.of(
+                                  context,
+                                ).cardColor.withValues(alpha: 0.5),
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               child: const Icon(

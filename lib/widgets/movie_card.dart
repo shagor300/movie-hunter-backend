@@ -221,7 +221,7 @@ class _MovieCardState extends State<MovieCard>
                 // Subtitle
                 const SizedBox(height: 2),
                 Text(
-                  "${widget.movie.year} • ${widget.movie.sources.length} Sources",
+                  widget.movie.year,
                   style: AppTextStyles.bodySmall,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,

@@ -190,9 +190,9 @@ class _StorageManagementScreenState extends State<StorageManagementScreen> {
         elevation: 0,
         surfaceTintColor: Colors.transparent,
         leading: IconButton(
-          icon: const Icon(
+          icon: Icon(
             Icons.arrow_back_ios_new,
-            color: Colors.white,
+            color: Theme.of(context).colorScheme.onSurface,
             size: 20,
           ),
           onPressed: () => Get.back(),
@@ -235,7 +235,7 @@ class _StorageManagementScreenState extends State<StorageManagementScreen> {
                 accent: accent,
                 onChanged: (val) => setState(() => wifiOnly = val),
               ),
-              const Divider(color: Colors.white10, height: 24),
+              Divider(color: Theme.of(context).dividerColor, height: 24),
               _buildSwitchTile(
                 title: 'Auto-Retry Failed',
                 subtitle: 'Automatically retry failed downloads',
@@ -244,7 +244,7 @@ class _StorageManagementScreenState extends State<StorageManagementScreen> {
                 accent: accent,
                 onChanged: (val) => setState(() => autoRetry = val),
               ),
-              const Divider(color: Colors.white10, height: 24),
+              Divider(color: Theme.of(context).dividerColor, height: 24),
               _buildCounterTile(
                 title: 'Simultaneous Downloads',
                 subtitle: 'Maximum parallel downloads',
@@ -341,9 +341,11 @@ class _StorageManagementScreenState extends State<StorageManagementScreen> {
                         ],
                       ),
                     ),
-                    const Icon(
+                    Icon(
                       Icons.chevron_right_rounded,
-                      color: Colors.white24,
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.onSurface.withValues(alpha: 0.24),
                       size: 22,
                     ),
                   ],
@@ -369,7 +371,7 @@ class _StorageManagementScreenState extends State<StorageManagementScreen> {
                     child: Text(
                       'Cancel',
                       style: AppTextStyles.bodyMedium.copyWith(
-                        color: Colors.white,
+                        color: Theme.of(context).colorScheme.onSurface,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
@@ -423,7 +425,11 @@ class _StorageManagementScreenState extends State<StorageManagementScreen> {
               fontSize: 14,
               fontWeight: FontWeight.w700,
               letterSpacing: 0.5,
-              color: Colors.white60,
+              color: color == Colors.white60
+                  ? Theme.of(
+                      context,
+                    ).colorScheme.onSurface.withValues(alpha: 0.6)
+                  : color,
             ),
           ),
         ],
@@ -434,9 +440,9 @@ class _StorageManagementScreenState extends State<StorageManagementScreen> {
   Widget _buildCard(List<Widget> children) {
     return Container(
       decoration: BoxDecoration(
-        color: const Color(0xFF151928),
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.white10),
+        border: Border.all(color: Theme.of(context).dividerColor),
       ),
       padding: const EdgeInsets.all(20),
       child: Column(
@@ -459,7 +465,13 @@ class _StorageManagementScreenState extends State<StorageManagementScreen> {
         Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: (value ? accent : Colors.white12).withValues(alpha: 0.15),
+            color:
+                (value
+                        ? accent
+                        : Theme.of(
+                            context,
+                          ).colorScheme.onSurface.withValues(alpha: 0.12))
+                    .withValues(alpha: 0.15),
             borderRadius: BorderRadius.circular(10),
           ),
           child: Icon(
@@ -497,8 +509,12 @@ class _StorageManagementScreenState extends State<StorageManagementScreen> {
           },
           activeThumbColor: Colors.white,
           activeTrackColor: accent,
-          inactiveThumbColor: AppColors.textMuted,
-          inactiveTrackColor: Colors.white10,
+          inactiveThumbColor: Theme.of(
+            context,
+          ).colorScheme.onSurface.withValues(alpha: 0.4),
+          inactiveTrackColor: Theme.of(
+            context,
+          ).colorScheme.onSurface.withValues(alpha: 0.1),
         ),
       ],
     );
@@ -548,9 +564,15 @@ class _StorageManagementScreenState extends State<StorageManagementScreen> {
         // Counter buttons
         Container(
           decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.05),
+            color: Theme.of(
+              context,
+            ).colorScheme.onSurface.withValues(alpha: 0.05),
             borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: Colors.white10),
+            border: Border.all(
+              color: Theme.of(
+                context,
+              ).colorScheme.onSurface.withValues(alpha: 0.1),
+            ),
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
@@ -592,7 +614,9 @@ class _StorageManagementScreenState extends State<StorageManagementScreen> {
         child: Icon(
           icon,
           size: 16,
-          color: enabled ? Colors.white : Colors.white24,
+          color: enabled
+              ? Theme.of(context).colorScheme.onSurface
+              : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.24),
         ),
       ),
     );
@@ -642,7 +666,9 @@ class _StorageManagementScreenState extends State<StorageManagementScreen> {
         SliderTheme(
           data: SliderTheme.of(context).copyWith(
             activeTrackColor: accent,
-            inactiveTrackColor: Colors.white10,
+            inactiveTrackColor: Theme.of(
+              context,
+            ).colorScheme.onSurface.withValues(alpha: 0.1),
             thumbColor: Colors.white,
             trackHeight: 4,
             overlayColor: accent.withValues(alpha: 0.2),
@@ -804,10 +830,20 @@ class _StorageManagementScreenState extends State<StorageManagementScreen> {
                     1,
                     100,
                   ),
-                  child: Container(color: Colors.white10),
+                  child: Container(
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.onSurface.withValues(alpha: 0.1),
+                  ),
                 ),
               ] else
-                Expanded(child: Container(color: Colors.white10)),
+                Expanded(
+                  child: Container(
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.onSurface.withValues(alpha: 0.1),
+                  ),
+                ),
             ],
           ),
         ),
@@ -829,7 +865,7 @@ class _StorageManagementScreenState extends State<StorageManagementScreen> {
       ),
       const SizedBox(height: 8),
       _legendItem(
-        Colors.white24,
+        Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.24),
         'Free Space',
         '${_freeStorageGb.toStringAsFixed(1)} GB',
       ),
@@ -860,7 +896,9 @@ class _StorageManagementScreenState extends State<StorageManagementScreen> {
           _loadingStorage ? '...' : value,
           style: AppTextStyles.bodySmall.copyWith(
             fontWeight: FontWeight.w600,
-            color: Colors.white70,
+            color: Theme.of(
+              context,
+            ).colorScheme.onSurface.withValues(alpha: 0.7),
           ),
         ),
       ],

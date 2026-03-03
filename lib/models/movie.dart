@@ -73,11 +73,10 @@ class Movie {
       title: json['title'] ?? json['name'] ?? 'Unknown',
       plot: json['plot'] ?? json['overview'] ?? '',
       tmdbPoster:
-          json['tmdb_poster'] ??
-          json['poster_url'] ??
-          (json['poster_path'] != null
-              ? 'https://image.tmdb.org/t/p/w500${json['poster_path']}'
-              : ''),
+          (json['poster_path'] != null &&
+              json['poster_path'].toString().isNotEmpty)
+          ? 'https://image.tmdb.org/t/p/w500${json['poster_path']}'
+          : (json['tmdb_poster'] ?? json['poster_url'] ?? ''),
       releaseDate: json['release_date'] ?? json['first_air_date'] ?? 'N/A',
       rating: (json['rating'] ?? json['vote_average'] ?? 0.0).toDouble(),
       sources: parsedSources,

@@ -44,9 +44,9 @@ class _AppLockSettingsScreenState extends State<AppLockSettingsScreen> {
         elevation: 0,
         surfaceTintColor: Colors.transparent,
         leading: IconButton(
-          icon: const Icon(
+          icon: Icon(
             Icons.arrow_back_ios_new,
-            color: Colors.white,
+            color: Theme.of(context).colorScheme.onSurface,
             size: 20,
           ),
           onPressed: () => Navigator.pop(context),
@@ -77,13 +77,24 @@ class _AppLockSettingsScreenState extends State<AppLockSettingsScreen> {
                     gradient: LinearGradient(
                       colors: isEnabled
                           ? [accent, accent.withValues(alpha: 0.6)]
-                          : [Colors.white12, Colors.white10],
+                          : [
+                              Theme.of(
+                                context,
+                              ).colorScheme.onSurface.withValues(alpha: 0.12),
+                              Theme.of(
+                                context,
+                              ).colorScheme.onSurface.withValues(alpha: 0.1),
+                            ],
                     ),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Icon(
                     isEnabled ? Icons.lock_rounded : Icons.lock_open_rounded,
-                    color: Colors.white,
+                    color: isEnabled
+                        ? Colors.white
+                        : Theme.of(
+                            context,
+                          ).colorScheme.onSurface.withValues(alpha: 0.6),
                     size: 22,
                   ),
                 ),
@@ -123,8 +134,12 @@ class _AppLockSettingsScreenState extends State<AppLockSettingsScreen> {
                   },
                   activeThumbColor: Colors.white,
                   activeTrackColor: accent,
-                  inactiveThumbColor: AppColors.textMuted,
-                  inactiveTrackColor: Colors.white10,
+                  inactiveThumbColor: Theme.of(
+                    context,
+                  ).colorScheme.onSurface.withValues(alpha: 0.4),
+                  inactiveTrackColor: Theme.of(
+                    context,
+                  ).colorScheme.onSurface.withValues(alpha: 0.1),
                 ),
               ],
             ),
@@ -145,7 +160,9 @@ class _AppLockSettingsScreenState extends State<AppLockSettingsScreen> {
                       fontSize: 12,
                       fontWeight: FontWeight.w700,
                       letterSpacing: 1.0,
-                      color: Colors.white38,
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.onSurface.withValues(alpha: 0.38),
                     ),
                   ),
                 ],
@@ -168,7 +185,7 @@ class _AppLockSettingsScreenState extends State<AppLockSettingsScreen> {
                 },
               ),
               if (_bioAvailable) ...[
-                const Divider(color: Colors.white10, height: 24),
+                Divider(color: Theme.of(context).dividerColor, height: 24),
                 _buildLockOption(
                   icon: Icons.fingerprint_rounded,
                   title: 'Biometric Only',
@@ -180,7 +197,7 @@ class _AppLockSettingsScreenState extends State<AppLockSettingsScreen> {
                     setState(() {});
                   },
                 ),
-                const Divider(color: Colors.white10, height: 24),
+                Divider(color: Theme.of(context).dividerColor, height: 24),
                 _buildLockOption(
                   icon: Icons.shield_rounded,
                   title: 'PIN + Biometric',
@@ -214,7 +231,9 @@ class _AppLockSettingsScreenState extends State<AppLockSettingsScreen> {
                         fontSize: 12,
                         fontWeight: FontWeight.w700,
                         letterSpacing: 1.0,
-                        color: Colors.white38,
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.onSurface.withValues(alpha: 0.38),
                       ),
                     ),
                   ],
@@ -257,9 +276,11 @@ class _AppLockSettingsScreenState extends State<AppLockSettingsScreen> {
                           ],
                         ),
                       ),
-                      const Icon(
+                      Icon(
                         Icons.chevron_right_rounded,
-                        color: Colors.white24,
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.onSurface.withValues(alpha: 0.24),
                         size: 22,
                       ),
                     ],
@@ -294,7 +315,11 @@ class _AppLockSettingsScreenState extends State<AppLockSettingsScreen> {
                 : [Colors.white10, Colors.white.withValues(alpha: 0.03)],
           ),
           border: Border.all(
-            color: isEnabled ? accent.withValues(alpha: 0.4) : Colors.white10,
+            color: isEnabled
+                ? accent.withValues(alpha: 0.4)
+                : Theme.of(
+                    context,
+                  ).colorScheme.onSurface.withValues(alpha: 0.1),
             width: 2,
           ),
           boxShadow: isEnabled
@@ -309,7 +334,9 @@ class _AppLockSettingsScreenState extends State<AppLockSettingsScreen> {
         child: Icon(
           isEnabled ? Icons.lock_rounded : Icons.lock_open_rounded,
           size: 40,
-          color: isEnabled ? accent : Colors.white38,
+          color: isEnabled
+              ? accent
+              : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.38),
         ),
       ),
     );
@@ -318,9 +345,9 @@ class _AppLockSettingsScreenState extends State<AppLockSettingsScreen> {
   Widget _buildCard(List<Widget> children) {
     return Container(
       decoration: BoxDecoration(
-        color: const Color(0xFF151928),
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.white10),
+        border: Border.all(color: Theme.of(context).dividerColor),
       ),
       padding: const EdgeInsets.all(20),
       child: Column(
@@ -351,17 +378,25 @@ class _AppLockSettingsScreenState extends State<AppLockSettingsScreen> {
             decoration: BoxDecoration(
               color: isSelected
                   ? accent.withValues(alpha: 0.15)
-                  : Colors.white.withValues(alpha: 0.05),
+                  : Theme.of(
+                      context,
+                    ).colorScheme.onSurface.withValues(alpha: 0.05),
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
                 color: isSelected
                     ? accent.withValues(alpha: 0.3)
-                    : Colors.white10,
+                    : Theme.of(
+                        context,
+                      ).colorScheme.onSurface.withValues(alpha: 0.1),
               ),
             ),
             child: Icon(
               icon,
-              color: isSelected ? accent : Colors.white38,
+              color: isSelected
+                  ? accent
+                  : Theme.of(
+                      context,
+                    ).colorScheme.onSurface.withValues(alpha: 0.38),
               size: 22,
             ),
           ),
@@ -373,14 +408,20 @@ class _AppLockSettingsScreenState extends State<AppLockSettingsScreen> {
                 Text(
                   title,
                   style: AppTextStyles.bodyMedium.copyWith(
-                    color: isSelected ? Colors.white : Colors.white70,
+                    color: isSelected
+                        ? Theme.of(context).colorScheme.onSurface
+                        : Theme.of(
+                            context,
+                          ).colorScheme.onSurface.withValues(alpha: 0.7),
                     fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
                   ),
                 ),
                 Text(
                   subtitle,
                   style: AppTextStyles.bodySmall.copyWith(
-                    color: Colors.white38,
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.onSurface.withValues(alpha: 0.38),
                   ),
                 ),
               ],
@@ -394,7 +435,11 @@ class _AppLockSettingsScreenState extends State<AppLockSettingsScreen> {
               shape: BoxShape.circle,
               color: isSelected ? accent : Colors.transparent,
               border: Border.all(
-                color: isSelected ? accent : Colors.white24,
+                color: isSelected
+                    ? accent
+                    : Theme.of(
+                        context,
+                      ).colorScheme.onSurface.withValues(alpha: 0.24),
                 width: 2,
               ),
             ),
@@ -441,14 +486,14 @@ class _AppLockSettingsScreenState extends State<AppLockSettingsScreen> {
       barrierDismissible: false,
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setDialogState) => AlertDialog(
-          backgroundColor: const Color(0xFF1A1A2E),
+          backgroundColor: Theme.of(context).colorScheme.surface,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
           ),
           title: Text(
             isConfirm ? 'Confirm PIN' : 'Create PIN',
             style: GoogleFonts.poppins(
-              color: Colors.white,
+              color: Theme.of(ctx).colorScheme.onSurface,
               fontWeight: FontWeight.w600,
             ),
           ),
@@ -459,7 +504,11 @@ class _AppLockSettingsScreenState extends State<AppLockSettingsScreen> {
                 isConfirm
                     ? 'Enter your PIN again to confirm'
                     : 'Enter a 4-digit PIN',
-                style: GoogleFonts.inter(color: Colors.white70),
+                style: GoogleFonts.inter(
+                  color: Theme.of(
+                    ctx,
+                  ).colorScheme.onSurface.withValues(alpha: 0.7),
+                ),
               ),
               const SizedBox(height: 24),
               TextField(
@@ -470,7 +519,7 @@ class _AppLockSettingsScreenState extends State<AppLockSettingsScreen> {
                 maxLength: 4,
                 textAlign: TextAlign.center,
                 style: GoogleFonts.poppins(
-                  color: Colors.white,
+                  color: Theme.of(ctx).colorScheme.onSurface,
                   fontSize: 28,
                   letterSpacing: 12,
                 ),
@@ -478,7 +527,9 @@ class _AppLockSettingsScreenState extends State<AppLockSettingsScreen> {
                   counterText: '',
                   hintText: '• • • •',
                   hintStyle: GoogleFonts.poppins(
-                    color: Colors.white24,
+                    color: Theme.of(
+                      ctx,
+                    ).colorScheme.onSurface.withValues(alpha: 0.24),
                     fontSize: 28,
                     letterSpacing: 12,
                   ),
@@ -557,14 +608,14 @@ class _AppLockSettingsScreenState extends State<AppLockSettingsScreen> {
       barrierDismissible: false,
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setDialogState) => AlertDialog(
-          backgroundColor: const Color(0xFF1A1A2E),
+          backgroundColor: Theme.of(context).colorScheme.surface,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
           ),
           title: Text(
             'Enter PIN',
             style: GoogleFonts.poppins(
-              color: Colors.white,
+              color: Theme.of(ctx).colorScheme.onSurface,
               fontWeight: FontWeight.w600,
             ),
           ),
@@ -573,7 +624,11 @@ class _AppLockSettingsScreenState extends State<AppLockSettingsScreen> {
             children: [
               Text(
                 'Enter current PIN to continue',
-                style: GoogleFonts.inter(color: Colors.white70),
+                style: GoogleFonts.inter(
+                  color: Theme.of(
+                    ctx,
+                  ).colorScheme.onSurface.withValues(alpha: 0.7),
+                ),
               ),
               const SizedBox(height: 24),
               TextField(
@@ -584,7 +639,7 @@ class _AppLockSettingsScreenState extends State<AppLockSettingsScreen> {
                 maxLength: 4,
                 textAlign: TextAlign.center,
                 style: GoogleFonts.poppins(
-                  color: Colors.white,
+                  color: Theme.of(ctx).colorScheme.onSurface,
                   fontSize: 28,
                   letterSpacing: 12,
                 ),
@@ -592,7 +647,9 @@ class _AppLockSettingsScreenState extends State<AppLockSettingsScreen> {
                   counterText: '',
                   hintText: '• • • •',
                   hintStyle: GoogleFonts.poppins(
-                    color: Colors.white24,
+                    color: Theme.of(
+                      ctx,
+                    ).colorScheme.onSurface.withValues(alpha: 0.24),
                     fontSize: 28,
                     letterSpacing: 12,
                   ),

@@ -360,10 +360,54 @@ class FTPMovieHandler:
     # ------------------------------------------------------------------
 
     def _matches(self, query: str, folder_name: str) -> bool:
-        """Check if *all* query words appear in the folder name."""
-        folder_clean = re.sub(r"[._\-\[\]\(\)]", " ", folder_name.lower())
-        query_words = [w for w in query.split() if len(w) > 1]
-        return all(word in folder_clean for word in query_words)
+        """
+        Improved matching: strips year from query, supports partial word
+        matching, and uses a 70 % threshold instead of requiring every word.
+
+        Examples that now work:
+        - "A Knight 2026"  →  "A Knight of the Seven Kingdoms"
+        - "Inception 2010" →  "Inception.2010.1080p.BluRay"
+        - "baby john"      →  "Baby John (2024) Hindi"
+        """
+        query_lower = query.lower()
+        folder_lower = folder_name.lower()
+
+        # Clean special characters for comparison
+        folder_clean = re.sub(r"[._\-\[\]\(\)]", " ", folder_lower)
+        folder_clean = re.sub(r"\[ddn\]|\(ddn\)", "", folder_clean)
+        query_clean = re.sub(r"[._\-\[\]\(\)]", " ", query_lower)
+
+        # Remove year from query (the main fix — FTP folders often lack year)
+        query_no_year = re.sub(r"\b(20\d{2}|19\d{2})\b", "", query_clean).strip()
+        query_no_year = re.sub(r"\s+", " ", query_no_year)
+
+        # MATCH 1: Direct substring
+        if query_lower in folder_lower:
+            return True
+
+        # MATCH 2: Query without year matches folder
+        if query_no_year and query_no_year in folder_clean:
+            logger.info("[FTP] ✅ MATCH (no-year): '%s' → '%s'", query, folder_name)
+            return True
+
+        # MATCH 3: Word-based — at least 70 % of query words must appear
+        query_words = [w for w in query_no_year.split() if len(w) > 2]
+        if not query_words:
+            return query_lower in folder_lower
+
+        folder_words = folder_clean.split()
+        hits = sum(
+            1 for qw in query_words
+            if any(qw == fw or qw in fw or fw in qw for fw in folder_words)
+        )
+        pct = hits / len(query_words)
+        if pct >= 0.7:
+            logger.info(
+                "[FTP] ✅ MATCH (%.0f%%): '%s' → '%s'", pct * 100, query, folder_name
+            )
+            return True
+
+        return False
 
     def _parse_folder(self, folder_name: str, directory: str) -> Optional[Dict]:
         """

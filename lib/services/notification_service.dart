@@ -262,48 +262,80 @@ class NotificationService {
   }
 
   /// Show ongoing download progress in the notification shade.
+  /// Uses a regular notification with progress bar (Chrome-style).
   Future<void> showDownloadProgress({
     required int notifId,
     required String movieTitle,
     required int progress,
     required String speed,
     required String eta,
+    String downloadedSize = '',
+    String totalSize = '',
   }) async {
     if (!_initialized) await init();
+
+    // Build subtitle: "86.85 MB / 396.89 MB"  or  "45% · 2.5 MB/s"
+    String body;
+    if (downloadedSize.isNotEmpty && totalSize.isNotEmpty) {
+      body = '$downloadedSize / $totalSize';
+    } else {
+      body = '$progress%';
+    }
+    if (speed.isNotEmpty) body += ' · $speed';
+    if (eta.isNotEmpty) body += ' · $eta remaining';
 
     final androidDetails = AndroidNotificationDetails(
       chDownloads,
       'Downloads',
-      channelDescription: 'Download progress',
-      importance: Importance.defaultImportance,
-      priority: Priority.defaultPriority,
+      channelDescription: 'Download progress and completion',
+      importance: Importance.low,
+      priority: Priority.low,
       ongoing: true,
+      autoCancel: false,
       showProgress: true,
       maxProgress: 100,
       progress: progress,
       onlyAlertOnce: true,
       icon: 'ic_notification',
       color: _accentColor,
+      category: AndroidNotificationCategory.progress,
+      visibility: NotificationVisibility.public,
+      styleInformation: const DefaultStyleInformation(false, false),
     );
 
     if (Platform.isAndroid) {
-      await _plugin
-          .resolvePlatformSpecificImplementation<
-            AndroidFlutterLocalNotificationsPlugin
-          >()
-          ?.startForegroundService(
-            notifId,
-            '⬇️ $movieTitle',
-            '$progress% · $speed · $eta remaining',
-            notificationDetails: androidDetails,
-            payload: 'download_progress',
-          );
+      try {
+        await _plugin
+            .resolvePlatformSpecificImplementation<
+              AndroidFlutterLocalNotificationsPlugin
+            >()
+            ?.startForegroundService(
+              notifId,
+              movieTitle,
+              body,
+              notificationDetails: androidDetails,
+              payload: 'download_progress',
+              // Note: using startForegroundService prevents the UI isolate from being
+              // killed when the user backgrounds the app during a download.
+            );
+      } catch (e) {
+        // Fallback if foreground service fails
+        debugPrint('Failed to start foreground service: $e');
+        await _plugin.show(
+          notifId,
+          movieTitle,
+          body,
+          NotificationDetails(android: androidDetails),
+          payload: 'download_progress',
+        );
+      }
     } else {
       await _plugin.show(
         notifId,
-        '⬇️ $movieTitle',
-        '$progress% · $speed · $eta remaining',
+        movieTitle,
+        body,
         NotificationDetails(android: androidDetails),
+        payload: 'download_progress',
       );
     }
   }

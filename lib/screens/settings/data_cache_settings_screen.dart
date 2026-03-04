@@ -62,9 +62,9 @@ class _DataCacheSettingsScreenState extends State<DataCacheSettingsScreen> {
         elevation: 0,
         surfaceTintColor: Colors.transparent,
         leading: IconButton(
-          icon: const Icon(
+          icon: Icon(
             Icons.arrow_back_ios_new,
-            color: Colors.white,
+            color: Theme.of(context).colorScheme.onSurface,
             size: 20,
           ),
           onPressed: () => Navigator.pop(context),
@@ -96,7 +96,7 @@ class _DataCacheSettingsScreenState extends State<DataCacheSettingsScreen> {
               iconColor: Colors.tealAccent,
               onTap: () => _clearImageCache(accent),
             ),
-            const Divider(color: Colors.white10, height: 24),
+            Divider(color: Theme.of(context).dividerColor, height: 24),
             _buildActionTile(
               icon: Icons.movie_outlined,
               title: 'Clear Movie Data Cache',
@@ -123,7 +123,7 @@ class _DataCacheSettingsScreenState extends State<DataCacheSettingsScreen> {
               iconColor: Colors.redAccent,
               onTap: () => _clearWatchlist(accent),
             ),
-            const Divider(color: Colors.white10, height: 24),
+            Divider(color: Theme.of(context).dividerColor, height: 24),
             _buildActionTile(
               icon: Icons.delete_sweep_outlined,
               title: 'Clear Download History',
@@ -148,7 +148,7 @@ class _DataCacheSettingsScreenState extends State<DataCacheSettingsScreen> {
               iconColor: Colors.redAccent,
               onTap: () => _resetAllSettings(accent),
             ),
-            const Divider(color: Colors.white10, height: 24),
+            Divider(color: Theme.of(context).dividerColor, height: 24),
             _buildActionTile(
               icon: Icons.delete_forever_rounded,
               title: 'Clear All App Data',
@@ -310,26 +310,35 @@ class _DataCacheSettingsScreenState extends State<DataCacheSettingsScreen> {
     return showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: const Color(0xFF1A1A2E),
+        backgroundColor: Theme.of(context).colorScheme.surface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: Text(
           title,
           style: GoogleFonts.poppins(
-            color: Colors.white,
+            color: Theme.of(context).colorScheme.onSurface,
             fontWeight: FontWeight.w600,
             fontSize: 18,
           ),
         ),
         content: Text(
           message,
-          style: GoogleFonts.inter(color: Colors.white60, height: 1.4),
+          style: GoogleFonts.inter(
+            color: Theme.of(
+              context,
+            ).colorScheme.onSurface.withValues(alpha: 0.6),
+            height: 1.4,
+          ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
             child: Text(
               'Cancel',
-              style: GoogleFonts.inter(color: Colors.white54),
+              style: GoogleFonts.inter(
+                color: Theme.of(
+                  context,
+                ).colorScheme.onSurface.withValues(alpha: 0.54),
+              ),
             ),
           ),
           TextButton(
@@ -340,7 +349,9 @@ class _DataCacheSettingsScreenState extends State<DataCacheSettingsScreen> {
             child: Text(
               isDestructive ? 'Delete All' : 'Confirm',
               style: GoogleFonts.inter(
-                color: isDestructive ? Colors.redAccent : Colors.white,
+                color: isDestructive
+                    ? Colors.redAccent
+                    : Theme.of(context).colorScheme.onSurface,
                 fontWeight: FontWeight.bold,
               ),
             ),
@@ -380,7 +391,9 @@ class _DataCacheSettingsScreenState extends State<DataCacheSettingsScreen> {
             Text(
               _loading ? '...' : '$total items',
               style: AppTextStyles.labelSmall.copyWith(
-                color: Colors.white60,
+                color: Theme.of(
+                  context,
+                ).colorScheme.onSurface.withValues(alpha: 0.6),
                 fontWeight: FontWeight.w600,
                 fontSize: 11,
               ),
@@ -411,7 +424,9 @@ class _DataCacheSettingsScreenState extends State<DataCacheSettingsScreen> {
               fontSize: 12,
               fontWeight: FontWeight.w700,
               letterSpacing: 1.0,
-              color: Colors.white38,
+              color: Theme.of(
+                context,
+              ).colorScheme.onSurface.withValues(alpha: 0.38),
             ),
           ),
         ],
@@ -422,9 +437,9 @@ class _DataCacheSettingsScreenState extends State<DataCacheSettingsScreen> {
   Widget _buildCard(List<Widget> children) {
     return Container(
       decoration: BoxDecoration(
-        color: const Color(0xFF151928),
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.white10),
+        border: Border.all(color: Theme.of(context).dividerColor),
       ),
       padding: const EdgeInsets.all(20),
       child: Column(
@@ -474,9 +489,11 @@ class _DataCacheSettingsScreenState extends State<DataCacheSettingsScreen> {
               ],
             ),
           ),
-          const Icon(
+          Icon(
             Icons.chevron_right_rounded,
-            color: Colors.white24,
+            color: Theme.of(
+              context,
+            ).colorScheme.onSurface.withValues(alpha: 0.24),
             size: 22,
           ),
         ],

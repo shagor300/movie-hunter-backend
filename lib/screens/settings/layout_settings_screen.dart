@@ -20,9 +20,9 @@ class LayoutSettingsScreen extends StatelessWidget {
         elevation: 0,
         surfaceTintColor: Colors.transparent,
         leading: IconButton(
-          icon: const Icon(
+          icon: Icon(
             Icons.arrow_back_ios_new,
-            color: Colors.white,
+            color: Theme.of(context).colorScheme.onSurface,
             size: 20,
           ),
           onPressed: () => Navigator.pop(context),
@@ -43,14 +43,15 @@ class LayoutSettingsScreen extends StatelessWidget {
           physics: const BouncingScrollPhysics(),
           children: [
             // ═══ PREVIEW ═══
-            _buildPreview(tc, accent),
+            _buildPreview(context, tc, accent),
             const SizedBox(height: 24),
 
             // ═══ LAYOUT MODE ═══
-            _buildSectionLabel('VIEW MODE', accent),
+            _buildSectionLabel(context, 'VIEW MODE', accent),
             const SizedBox(height: 8),
-            _buildCard([
+            _buildCard(context, [
               _buildSwitchTile(
+                context,
                 icon: Icons.grid_on_rounded,
                 title: 'Grid Layout',
                 subtitle: 'Display movies in a grid',
@@ -63,10 +64,11 @@ class LayoutSettingsScreen extends StatelessWidget {
             const SizedBox(height: 24),
 
             // ═══ POSTER STYLE ═══
-            _buildSectionLabel('POSTER STYLE', accent),
+            _buildSectionLabel(context, 'POSTER STYLE', accent),
             const SizedBox(height: 8),
-            _buildCard([
+            _buildCard(context, [
               _buildSwitchTile(
+                context,
                 icon: Icons.rounded_corner_rounded,
                 title: 'Rounded Posters',
                 subtitle: 'Apply rounded corners to movie posters',
@@ -79,9 +81,9 @@ class LayoutSettingsScreen extends StatelessWidget {
             const SizedBox(height: 24),
 
             // ═══ GRID COLUMNS ═══
-            _buildSectionLabel('GRID COLUMNS', accent),
+            _buildSectionLabel(context, 'GRID COLUMNS', accent),
             const SizedBox(height: 8),
-            _buildCard([
+            _buildCard(context, [
               Text(
                 'Choose how many columns to display in grid view',
                 style: AppTextStyles.bodySmall.copyWith(
@@ -107,12 +109,14 @@ class LayoutSettingsScreen extends StatelessWidget {
                           decoration: BoxDecoration(
                             color: isSelected
                                 ? accent.withValues(alpha: 0.15)
-                                : Colors.white.withValues(alpha: 0.03),
+                                : Theme.of(context).colorScheme.onSurface
+                                      .withValues(alpha: 0.03),
                             borderRadius: BorderRadius.circular(16),
                             border: Border.all(
                               color: isSelected
                                   ? accent.withValues(alpha: 0.6)
-                                  : Colors.white10,
+                                  : Theme.of(context).colorScheme.onSurface
+                                        .withValues(alpha: 0.1),
                               width: isSelected ? 2 : 1,
                             ),
                           ),
@@ -120,7 +124,12 @@ class LayoutSettingsScreen extends StatelessWidget {
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               // Mini grid preview icon
-                              _buildMiniGrid(count, isSelected, accent),
+                              _buildMiniGrid(
+                                context,
+                                count,
+                                isSelected,
+                                accent,
+                              ),
                               const SizedBox(height: 6),
                               Text(
                                 '$count cols',
@@ -145,9 +154,9 @@ class LayoutSettingsScreen extends StatelessWidget {
             const SizedBox(height: 32),
 
             // ═══ FONT SIZE ═══
-            _buildSectionLabel('FONT SIZE', accent),
+            _buildSectionLabel(context, 'FONT SIZE', accent),
             const SizedBox(height: 8),
-            _buildCard([
+            _buildCard(context, [
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -180,7 +189,9 @@ class LayoutSettingsScreen extends StatelessWidget {
               SliderTheme(
                 data: SliderTheme.of(context).copyWith(
                   activeTrackColor: accent,
-                  inactiveTrackColor: Colors.white10,
+                  inactiveTrackColor: Theme.of(
+                    context,
+                  ).colorScheme.onSurface.withValues(alpha: 0.1),
                   thumbColor: Colors.white,
                   trackHeight: 4,
                   overlayColor: accent.withValues(alpha: 0.2),
@@ -238,7 +249,7 @@ class LayoutSettingsScreen extends StatelessWidget {
   // HELPER WIDGETS
   // ═══════════════════════════════════════
 
-  Widget _buildSectionLabel(String text, Color accent) {
+  Widget _buildSectionLabel(BuildContext context, String text, Color accent) {
     return Padding(
       padding: const EdgeInsets.only(left: 4),
       child: Row(
@@ -258,7 +269,9 @@ class LayoutSettingsScreen extends StatelessWidget {
               fontSize: 12,
               fontWeight: FontWeight.w700,
               letterSpacing: 1.0,
-              color: Colors.white38,
+              color: Theme.of(
+                context,
+              ).colorScheme.onSurface.withValues(alpha: 0.38),
             ),
           ),
         ],
@@ -266,12 +279,12 @@ class LayoutSettingsScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildCard(List<Widget> children) {
+  Widget _buildCard(BuildContext context, List<Widget> children) {
     return Container(
       decoration: BoxDecoration(
-        color: const Color(0xFF151928),
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.white10),
+        border: Border.all(color: Theme.of(context).dividerColor),
       ),
       padding: const EdgeInsets.all(20),
       child: Column(
@@ -281,7 +294,8 @@ class LayoutSettingsScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildSwitchTile({
+  Widget _buildSwitchTile(
+    BuildContext context, {
     required IconData icon,
     required String title,
     required String subtitle,
@@ -294,7 +308,13 @@ class LayoutSettingsScreen extends StatelessWidget {
         Container(
           padding: const EdgeInsets.all(10),
           decoration: BoxDecoration(
-            color: (value ? accent : Colors.white12).withValues(alpha: 0.15),
+            color:
+                (value
+                        ? accent
+                        : Theme.of(
+                            context,
+                          ).colorScheme.onSurface.withValues(alpha: 0.12))
+                    .withValues(alpha: 0.15),
             borderRadius: BorderRadius.circular(12),
           ),
           child: Icon(
@@ -331,14 +351,23 @@ class LayoutSettingsScreen extends StatelessWidget {
           },
           activeThumbColor: Colors.white,
           activeTrackColor: accent,
-          inactiveThumbColor: AppColors.textMuted,
-          inactiveTrackColor: Colors.white10,
+          inactiveThumbColor: Theme.of(
+            context,
+          ).colorScheme.onSurface.withValues(alpha: 0.4),
+          inactiveTrackColor: Theme.of(
+            context,
+          ).colorScheme.onSurface.withValues(alpha: 0.1),
         ),
       ],
     );
   }
 
-  Widget _buildMiniGrid(int cols, bool isSelected, Color accent) {
+  Widget _buildMiniGrid(
+    BuildContext context,
+    int cols,
+    bool isSelected,
+    Color accent,
+  ) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: List.generate(
@@ -348,7 +377,11 @@ class LayoutSettingsScreen extends StatelessWidget {
           height: 12,
           margin: const EdgeInsets.symmetric(horizontal: 1.5),
           decoration: BoxDecoration(
-            color: isSelected ? accent.withValues(alpha: 0.6) : Colors.white24,
+            color: isSelected
+                ? accent.withValues(alpha: 0.6)
+                : Theme.of(
+                    context,
+                  ).colorScheme.onSurface.withValues(alpha: 0.24),
             borderRadius: BorderRadius.circular(2),
           ),
         ),
@@ -356,14 +389,14 @@ class LayoutSettingsScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildPreview(ThemeController tc, Color accent) {
+  Widget _buildPreview(BuildContext context, ThemeController tc, Color accent) {
     return Center(
       child: Container(
         width: 120,
         height: 120,
         margin: const EdgeInsets.only(top: 8),
         decoration: BoxDecoration(
-          color: const Color(0xFF151928),
+          color: Theme.of(context).cardColor,
           borderRadius: BorderRadius.circular(24),
           border: Border.all(color: accent.withValues(alpha: 0.3)),
           boxShadow: [
@@ -375,12 +408,16 @@ class LayoutSettingsScreen extends StatelessWidget {
           ],
         ),
         padding: const EdgeInsets.all(12),
-        child: _buildPreviewGrid(tc, accent),
+        child: _buildPreviewGrid(context, tc, accent),
       ),
     );
   }
 
-  Widget _buildPreviewGrid(ThemeController tc, Color accent) {
+  Widget _buildPreviewGrid(
+    BuildContext context,
+    ThemeController tc,
+    Color accent,
+  ) {
     final cols = tc.gridColumnCount;
     final rounded = tc.roundedPosters;
 

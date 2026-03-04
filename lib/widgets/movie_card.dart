@@ -114,15 +114,15 @@ class _MovieCardState extends State<MovieCard>
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Poster Section (2:3 Aspect Ratio)
-                Obx(() {
-                  final tc = Get.find<ThemeController>();
-                  final radius = tc.roundedPosters
-                      ? AppDimensions.radiusLg
-                      : 4.0;
-                  return AspectRatio(
-                    aspectRatio: AppDimensions.posterAspectRatio,
-                    child: Container(
+                // Poster Section (Dynamic height to prevent overflow)
+                Expanded(
+                  child: Obx(() {
+                    final tc = Get.find<ThemeController>();
+                    final radius = tc.roundedPosters
+                        ? AppDimensions.radiusLg
+                        : 4.0;
+                    return Container(
+                      width: double.infinity,
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(radius),
                         border: Border.all(color: AppColors.glassBorder),
@@ -135,7 +135,8 @@ class _MovieCardState extends State<MovieCard>
                           children: [
                             // Image with Hero
                             Hero(
-                              tag: 'poster-${widget.movie.title}',
+                              tag:
+                                  'poster-${widget.movie.title}-${widget.index}', // added index to prevent duplicate tag errors
                               child: widget.movie.fullPosterPath.isNotEmpty
                                   ? CachedNetworkImage(
                                       imageUrl: widget.movie.fullPosterPath,
@@ -204,9 +205,9 @@ class _MovieCardState extends State<MovieCard>
                           ],
                         ),
                       ),
-                    ),
-                  );
-                }),
+                    );
+                  }),
+                ),
 
                 const SizedBox(height: AppDimensions.spacingSm),
 

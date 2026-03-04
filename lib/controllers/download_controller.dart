@@ -351,6 +351,8 @@ class DownloadController extends GetxController {
               progress: total > 0 ? (downloaded / total * 100).round() : 0,
               speed: _fmtSpeed(speed),
               eta: _fmtEta(eta),
+              downloadedSize: _fmtBytes(downloaded),
+              totalSize: total > 0 ? _fmtBytes(total) : '',
             );
           } catch (e) {
             debugPrint('⚠️ Progress notification error: $e');
@@ -698,10 +700,20 @@ class DownloadController extends GetxController {
   }
 
   String _fmtEta(int seconds) {
-    if (seconds <= 0) return '--';
-    if (seconds < 60) return '${seconds}s';
-    if (seconds < 3600) return '${seconds ~/ 60}m ${seconds % 60}s';
-    return '${seconds ~/ 3600}h ${(seconds % 3600) ~/ 60}m';
+    if (seconds <= 0) return '';
+    if (seconds < 60) return '$seconds secs left';
+    if (seconds < 3600) return '${seconds ~/ 60} mins left';
+    return '${seconds ~/ 3600}h ${(seconds % 3600) ~/ 60}m left';
+  }
+
+  String _fmtBytes(int bytes) {
+    if (bytes <= 0) return '0 B';
+    if (bytes < 1024) return '$bytes B';
+    if (bytes < 1024 * 1024) return '${(bytes / 1024).toStringAsFixed(1)} KB';
+    if (bytes < 1024 * 1024 * 1024) {
+      return '${(bytes / (1024 * 1024)).toStringAsFixed(2)} MB';
+    }
+    return '${(bytes / (1024 * 1024 * 1024)).toStringAsFixed(2)} GB';
   }
 
   void _showDownloadFailedDialog({

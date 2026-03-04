@@ -300,16 +300,44 @@ class NotificationService {
       color: _accentColor,
       category: AndroidNotificationCategory.progress,
       visibility: NotificationVisibility.public,
-      styleInformation: DefaultStyleInformation(false, false),
+      styleInformation: const DefaultStyleInformation(false, false),
     );
 
-    await _plugin.show(
-      notifId,
-      movieTitle,
-      body,
-      NotificationDetails(android: androidDetails),
-      payload: 'download_progress',
-    );
+    if (Platform.isAndroid) {
+      try {
+        await _plugin
+            .resolvePlatformSpecificImplementation<
+              AndroidFlutterLocalNotificationsPlugin
+            >()
+            ?.startForegroundService(
+              notifId,
+              movieTitle,
+              body,
+              notificationDetails: androidDetails,
+              payload: 'download_progress',
+              // Note: using startForegroundService prevents the UI isolate from being
+              // killed when the user backgrounds the app during a download.
+            );
+      } catch (e) {
+        // Fallback if foreground service fails
+        debugPrint('Failed to start foreground service: $e');
+        await _plugin.show(
+          notifId,
+          movieTitle,
+          body,
+          NotificationDetails(android: androidDetails),
+          payload: 'download_progress',
+        );
+      }
+    } else {
+      await _plugin.show(
+        notifId,
+        movieTitle,
+        body,
+        NotificationDetails(android: androidDetails),
+        payload: 'download_progress',
+      );
+    }
   }
 
   /// Stop foreground service (when all downloads are done/canceled).

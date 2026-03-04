@@ -236,6 +236,7 @@ class DownloadController extends GetxController {
         tmdbId: tmdbId,
         quality: quality,
         filename: filename,
+        posterUrl: posterUrl,
       );
     } catch (e) {
       if (Get.isDialogOpen ?? false) Get.back();
@@ -247,6 +248,7 @@ class DownloadController extends GetxController {
         tmdbId: tmdbId,
         quality: quality,
         filename: filename,
+        posterUrl: posterUrl,
       );
     }
   }
@@ -723,6 +725,7 @@ class DownloadController extends GetxController {
     int? tmdbId,
     String? quality,
     required String filename,
+    String? posterUrl,
   }) {
     Get.dialog(
       AlertDialog(
@@ -779,6 +782,7 @@ class DownloadController extends GetxController {
                 tmdbId: tmdbId,
                 quality: quality,
                 movieTitle: movieTitle,
+                posterUrl: posterUrl,
               );
             },
             child: const Text(
@@ -800,6 +804,7 @@ class DownloadController extends GetxController {
                 movieTitle: movieTitle,
                 tmdbId: tmdbId,
                 quality: quality,
+                posterUrl: posterUrl,
               );
             },
             child: const Text('Try Direct Download'),

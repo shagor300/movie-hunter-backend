@@ -152,28 +152,30 @@ class MultiSourceManager:
     async def extract_links_all_sources(self, title: str, year: str = None,
                                          tmdb_id: int = 0) -> Dict:
         """
-        FTP-first link extraction:
-        1. Try FTP first (fast, ~1-2s)
-        2. If FTP has links → return immediately (skip scrapers)
-        3. If FTP empty → fall back to all scraper sources in parallel
+        Priority-based link extraction with validation.
+        Runs sources SEQUENTIALLY — stops at the first one that returns links.
+
+        Priority order:
+          P1: FTP  (fastest, ~1-2s)
+          P2: HDHub4u
+          P3: SkyMoviesHD
+          P4: Cinefreak
         """
         if not self._initialized:
             return {'links': [], 'embed_links': []}
 
-        # ── Step 1: Try FTP first (highest priority, fastest) ──
+        # ── P1: FTP (highest priority, fastest) ──
         if self.ftp_handler:
-            logger.info("[FTP-FIRST] Checking FTP for: %s", title)
+            logger.info("[extract_links] [P1] FTP for: %s", title)
             try:
                 ftp_result = await self._ftp_search_and_extract(title, year)
                 ftp_links = ftp_result.get('links', [])
 
                 if ftp_links:
-                    # FTP has content — return immediately, no need for scrapers
                     logger.info(
-                        "[FTP-FIRST] ✅ Found %d links on FTP, skipping scrapers",
-                        len(ftp_links)
+                        "[extract_links] ✅ FTP: %d links | 🛑 STOP",
+                        len(ftp_links),
                     )
-                    # Tag links with source
                     for link in ftp_links:
                         if 'source_site' not in link:
                             link['source_site'] = 'ftp'
@@ -182,65 +184,97 @@ class MultiSourceManager:
                         'embed_links': ftp_result.get('embed_links', []),
                     }
                 else:
-                    logger.info("[FTP-FIRST] FTP empty, falling back to scrapers...")
+                    logger.info("[extract_links] FTP empty → trying scrapers")
             except Exception as e:
-                logger.error("[FTP-FIRST] FTP check failed: %s, falling back to scrapers", e)
+                logger.error("[extract_links] FTP failed: %s → trying scrapers", e)
 
-        # ── Step 2: FTP had nothing — run scraper sources in parallel ──
-        all_links = []
-        all_embeds = []
-        tasks = []
-
-        if self.sky_scraper:
-            tasks.append(('skymovieshd', self._sky_search_and_extract(title, year)))
-
-        if self.cinefreak_scraper:
-            tasks.append(('cinefreak', self._cinefreak_search_and_extract(title, year)))
-
+        # ── P2: HDHub4u ──
         if self._hdhub4u_scraper and MovieSources.HDHUB4U_ENABLED:
-            tasks.append(('hdhub4u', self._hdhub4u_search_and_extract(title, year, tmdb_id)))
+            logger.info("[extract_links] [P2] HDHub4u for: %s", title)
+            try:
+                result = await self._hdhub4u_search_and_extract(title, year, tmdb_id)
+                hd_links = result.get('links', [])
+                if hd_links:
+                    # Validate: make sure results match the query title
+                    validated = self._validate_results(title, hd_links)
+                    if validated:
+                        for link in validated:
+                            if 'source_site' not in link:
+                                link['source_site'] = 'hdhub4u'
+                        logger.info(
+                            "[extract_links] ✅ HDHub4u: %d links | 🛑 STOP",
+                            len(validated),
+                        )
+                        return {
+                            'links': validated,
+                            'embed_links': result.get('embed_links', []),
+                        }
+                    else:
+                        logger.warning(
+                            "[extract_links] HDHub4u: %d links rejected by validation",
+                            len(hd_links),
+                        )
+            except Exception as e:
+                logger.error("[extract_links] HDHub4u failed: %s", e)
 
-        if not tasks:
-            return {'links': [], 'embed_links': []}
+        # ── P3: SkyMoviesHD ──
+        if self.sky_scraper:
+            logger.info("[extract_links] [P3] SkyMoviesHD for: %s", title)
+            try:
+                result = await self._sky_search_and_extract(title, year)
+                sky_links = result.get('links', [])
+                if sky_links:
+                    validated = self._validate_results(title, sky_links)
+                    if validated:
+                        for link in validated:
+                            if 'source_site' not in link:
+                                link['source_site'] = 'skymovieshd'
+                        logger.info(
+                            "[extract_links] ✅ SkyMoviesHD: %d links | 🛑 STOP",
+                            len(validated),
+                        )
+                        return {
+                            'links': validated,
+                            'embed_links': result.get('embed_links', []),
+                        }
+                    else:
+                        logger.warning(
+                            "[extract_links] SkyMoviesHD: %d links rejected by validation",
+                            len(sky_links),
+                        )
+            except Exception as e:
+                logger.error("[extract_links] SkyMoviesHD failed: %s", e)
 
-        # Run all scraper extractions in parallel
-        coroutines = [t[1] for t in tasks]
-        source_names = [t[0] for t in tasks]
+        # ── P4: Cinefreak ──
+        if self.cinefreak_scraper:
+            logger.info("[extract_links] [P4] Cinefreak for: %s", title)
+            try:
+                result = await self._cinefreak_search_and_extract(title, year)
+                cf_links = result.get('links', [])
+                if cf_links:
+                    validated = self._validate_results(title, cf_links)
+                    if validated:
+                        for link in validated:
+                            if 'source_site' not in link:
+                                link['source_site'] = 'cinefreak'
+                        logger.info(
+                            "[extract_links] ✅ Cinefreak: %d links | 🛑 STOP",
+                            len(validated),
+                        )
+                        return {
+                            'links': validated,
+                            'embed_links': result.get('embed_links', []),
+                        }
+                    else:
+                        logger.warning(
+                            "[extract_links] Cinefreak: %d links rejected by validation",
+                            len(cf_links),
+                        )
+            except Exception as e:
+                logger.error("[extract_links] Cinefreak failed: %s", e)
 
-        results = await asyncio.gather(*coroutines, return_exceptions=True)
-
-        for source_name, result in zip(source_names, results):
-            if isinstance(result, Exception):
-                logger.error(f"[{source_name}] extraction failed: {result}")
-                continue
-            if isinstance(result, dict):
-                source_links = result.get('links', [])
-                source_embeds = result.get('embed_links', [])
-                for link in source_links:
-                    if 'source_site' not in link:
-                        link['source_site'] = source_name
-                all_links.extend(source_links)
-                all_embeds.extend(source_embeds)
-                logger.info(
-                    f"[{source_name}] contributed {len(source_links)} links, "
-                    f"{len(source_embeds)} embeds"
-                )
-
-        # Deduplicate links by URL
-        seen_urls = set()
-        unique_links = []
-        for link in all_links:
-            url = link.get('url', '').split('?')[0]
-            if url and url not in seen_urls:
-                seen_urls.add(url)
-                unique_links.append(link)
-
-        logger.info(
-            f"Multi-source fallback: {len(all_links)} total → "
-            f"{len(unique_links)} unique links + {len(all_embeds)} embeds"
-        )
-
-        return {'links': unique_links, 'embed_links': all_embeds}
+        logger.warning("[extract_links] ❌ NO RESULTS for: '%s'", title)
+        return {'links': [], 'embed_links': []}
 
     async def _sky_search_and_extract(self, title: str, year: str = None) -> Dict:
         """Search SkyMoviesHD for a title, then extract links from first result."""

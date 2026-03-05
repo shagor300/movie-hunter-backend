@@ -5,6 +5,7 @@ Deduplicates by TMDB ID (keeps highest-priority source).
 
 import asyncio
 import logging
+import re
 from concurrent.futures import ThreadPoolExecutor
 from typing import List, Dict, Optional
 from urllib.parse import quote
@@ -378,4 +379,43 @@ class MultiSourceManager:
         except Exception as e:
             logger.error(f"[Cinefreak] Search+extract error: {e}")
             return {'links': [], 'embed_links': []}
+
+    @staticmethod
+    def _validate_results(query: str, results: list) -> list:
+        """Filter out scraper results whose title doesn't match the query.
+
+        Prevents issues like searching 'Young Sherlock' but getting 'O Romeo'.
+        Uses word overlap + SequenceMatcher to decide relevance.
+        """
+        if not results:
+            return []
+
+        from difflib import SequenceMatcher
+
+        query_clean = re.sub(r'[._\-\[\]\(\)0-9]', ' ', query.lower()).strip()
+        query_clean = re.sub(r'\s+', ' ', query_clean)
+        query_words = set(w for w in query_clean.split() if len(w) > 2)
+
+        validated = []
+        for result in results:
+            title = result.get('title', '').lower()
+            if not title:
+                continue
+
+            title_clean = re.sub(r'[._\-\[\]\(\)0-9]', ' ', title).strip()
+            title_clean = re.sub(r'\s+', ' ', title_clean)
+            title_words = set(w for w in title_clean.split() if len(w) > 2)
+
+            common = query_words & title_words
+            similarity = SequenceMatcher(None, query_clean, title_clean).ratio()
+
+            if len(common) >= 2 or similarity >= 0.6:
+                validated.append(result)
+            else:
+                logger.warning(
+                    "[MultiSource] ✗ Reject: '%s' ≠ '%s' (sim=%.2f)",
+                    query, result.get('title'), similarity,
+                )
+
+        return validated
 

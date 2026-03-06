@@ -1345,10 +1345,53 @@ class _DetailsScreenState extends State<DetailsScreen> {
     );
   }
 
+  /// Clean up raw FTP filenames for display
+  String _cleanFtpLinkName(String rawName, String quality) {
+    String cleaned = rawName;
+    // Remove file extension
+    cleaned = cleaned.replaceAll(
+      RegExp(r'\.(mp4|mkv|avi|webm|m4v)$', caseSensitive: false),
+      '',
+    );
+    // Remove year in parentheses
+    cleaned = cleaned.replaceAll(RegExp(r'\(\d{4}\)'), '');
+    // Remove resolution patterns
+    cleaned = cleaned.replaceAll(RegExp(r'\d{3,4}p'), '');
+    // Remove codec/format tags
+    cleaned = cleaned.replaceAll(
+      RegExp(
+        r'(WEBRip|BluRay|HDTS|HDRip|DVDRip|x264|x265|ESub|HEVC|AAC|DD5\.1|DTS|WEB-DL|BRRip|CAMRip)',
+        caseSensitive: false,
+      ),
+      '',
+    );
+    // Remove [DDN] or (DDN) tags
+    cleaned = cleaned.replaceAll(RegExp(r'\[.*?\]|\(.*?\)'), '');
+    // Remove language tags that appear after the title
+    cleaned = cleaned.replaceAll(
+      RegExp(
+        r'\b(Hindi|English|Tamil|Telugu|Malayalam|Bengali|Kannada|Multi)\b',
+        caseSensitive: false,
+      ),
+      '',
+    );
+    // Remove dots used as separators
+    cleaned = cleaned.replaceAll('.', ' ');
+    // Remove trailing dashes/underscores and extra spaces
+    cleaned = cleaned.replaceAll(RegExp(r'[_\-—]+'), ' ');
+    cleaned = cleaned.replaceAll(RegExp(r'\s+'), ' ').trim();
+    // Remove trailing dash if any
+    cleaned = cleaned.replaceAll(RegExp(r'\s*-\s*$'), '').trim();
+    if (cleaned.isEmpty) cleaned = rawName;
+    return '$cleaned · $quality';
+  }
+
   Widget _buildLinkItem(Map<String, String> link, int index) {
     final episode = link['episode'] ?? '';
     final hasEpisode = episode.isNotEmpty;
     final quality = link['quality'] ?? 'HD';
+    final url = link['url'] ?? '';
+    final isFtpLink = url.contains('ftp.ctgfun.com');
 
     return TweenAnimationBuilder(
       duration: Duration(milliseconds: 400 + (index * 100)),
@@ -1417,10 +1460,24 @@ class _DetailsScreenState extends State<DetailsScreen> {
           title: Text(
             hasEpisode
                 ? 'Episode ${episode.replaceAll(RegExp(r'S\d+'), '').replaceAll('E', '')}'
+                : isFtpLink
+                ? _cleanFtpLinkName(
+                    link['name'] ?? 'Source ${index + 1}',
+                    quality,
+                  )
                 : (link['name'] ?? "Source ${index + 1}"),
             style: AppTextStyles.titleMedium,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
           ),
-          subtitle: Text("Quality: $quality", style: AppTextStyles.bodySmall),
+          subtitle: isFtpLink
+              ? Text(
+                  'FTP · Tap to play',
+                  style: AppTextStyles.bodySmall.copyWith(
+                    color: Colors.greenAccent.withValues(alpha: 0.7),
+                  ),
+                )
+              : Text("Quality: $quality", style: AppTextStyles.bodySmall),
           trailing: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -1485,10 +1542,14 @@ class _DetailsScreenState extends State<DetailsScreen> {
               ),
             ],
           ),
-          onTap: () async {
-            final url = Uri.parse(link['url'] ?? "");
-            if (await canLaunchUrl(url)) {
-              await launchUrl(url, mode: LaunchMode.externalApplication);
+          onTap: () {
+            if (isFtpLink) {
+              // FTP links: play in-app (NOT browser!)
+              _handlePlayLink(link);
+            } else {
+              // Non-FTP links: open in browser
+              final uri = Uri.parse(link['url'] ?? "");
+              launchUrl(uri, mode: LaunchMode.externalApplication);
             }
           },
         ),

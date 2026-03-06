@@ -430,10 +430,17 @@ class MultiSourceManager:
         query_clean = re.sub(r'\s+', ' ', query_clean)
         query_words = set(w for w in query_clean.split() if len(w) > 2)
 
+        # For very short queries (1-2 words), lower the common-words threshold
+        min_common = 1 if len(query_words) <= 2 else 2
+
         validated = []
         for result in results:
-            title = result.get('title', '').lower()
+            # Check both 'title' and 'name' fields (scrapers use 'name' for links)
+            title = result.get('title', '') or result.get('name', '')
+            title = title.lower() if title else ''
             if not title:
+                # If no title/name at all, pass it through (don't reject blindly)
+                validated.append(result)
                 continue
 
             title_clean = re.sub(r'[._\-\[\]\(\)0-9]', ' ', title).strip()
@@ -443,12 +450,15 @@ class MultiSourceManager:
             common = query_words & title_words
             similarity = SequenceMatcher(None, query_clean, title_clean).ratio()
 
-            if len(common) >= 2 or similarity >= 0.6:
+            # Also check if the query is a substring of the title
+            substring_match = query_clean in title_clean
+
+            if len(common) >= min_common or similarity >= 0.5 or substring_match:
                 validated.append(result)
             else:
                 logger.warning(
-                    "[MultiSource] ✗ Reject: '%s' ≠ '%s' (sim=%.2f)",
-                    query, result.get('title'), similarity,
+                    "[MultiSource] ✗ Reject: '%s' ≠ '%s' (sim=%.2f, common=%d)",
+                    query, result.get('title') or result.get('name'), similarity, len(common),
                 )
 
         return validated

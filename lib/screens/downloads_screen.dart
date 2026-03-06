@@ -447,6 +447,10 @@ class _ActiveDownloadCard extends StatelessWidget {
                     child: item.posterUrl != null && item.posterUrl!.isNotEmpty
                         ? CachedNetworkImage(
                             imageUrl: item.posterUrl!,
+                            httpHeaders: const {
+                              'User-Agent':
+                                  'Mozilla/5.0 (Linux; Android 13; SM-G998B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Mobile Safari/537.36',
+                            },
                             fit: BoxFit.cover,
                             placeholder: (context, url) => Container(
                               color: AppColors.background,
@@ -705,6 +709,10 @@ class _CompletedCard extends StatelessWidget {
                           ),
                           child: CachedNetworkImage(
                             imageUrl: item.posterUrl!,
+                            httpHeaders: const {
+                              'User-Agent':
+                                  'Mozilla/5.0 (Linux; Android 13; SM-G998B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Mobile Safari/537.36',
+                            },
                             fit: BoxFit.cover,
                             placeholder: (context, url) => Container(
                               color: Theme.of(context).scaffoldBackgroundColor,

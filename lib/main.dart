@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'models/download_item.dart';
@@ -25,12 +26,21 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'services/analytics_service.dart';
 import 'services/auth_service.dart';
 import 'services/remote_config_service.dart';
+import 'package:flutter_downloader/flutter_downloader.dart';
 
 void main() async {
   debugPrint('🚀 MAIN: Starting app');
 
   WidgetsFlutterBinding.ensureInitialized();
   debugPrint('✅ MAIN: Flutter binding initialized');
+
+  // Initialize FlutterDownloader
+  try {
+    await FlutterDownloader.initialize(debug: kDebugMode, ignoreSsl: true);
+    debugPrint('✅ MAIN: FlutterDownloader initialized');
+  } catch (e) {
+    debugPrint('❌ MAIN: FlutterDownloader init failed: $e');
+  }
 
   // Initialize Firebase
   try {

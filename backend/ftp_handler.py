@@ -395,10 +395,10 @@ class FTPMovieHandler:
         if not query_words:
             return query_lower in folder_lower
 
-        folder_words = folder_clean.split()
+        folder_words = [w for w in folder_clean.split() if len(w) > 1]
         hits = sum(
             1 for qw in query_words
-            if any(qw == fw or qw in fw or fw in qw for fw in folder_words)
+            if any(qw == fw or qw in fw or (len(fw) > 2 and fw in qw) for fw in folder_words)
         )
         pct = hits / len(query_words)
         if pct >= 0.7:

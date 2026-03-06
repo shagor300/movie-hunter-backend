@@ -251,6 +251,10 @@ class _DetailsScreenState extends State<DetailsScreen> {
                               child: CachedNetworkImage(
                                 imageUrl: widget.movie.fullPosterPath,
                                 fit: BoxFit.cover,
+                                httpHeaders: const {
+                                  'User-Agent':
+                                      'Mozilla/5.0 (Linux; Android 13; SM-G998B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Mobile Safari/537.36',
+                                },
                               ),
                             ),
                             // Gradient Overlay

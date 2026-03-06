@@ -123,6 +123,10 @@ class ShareableMovieCard extends StatelessWidget {
                         child: movie.fullPosterPath.isNotEmpty
                             ? CachedNetworkImage(
                                 imageUrl: movie.fullPosterPath,
+                                httpHeaders: const {
+                                  'User-Agent':
+                                      'Mozilla/5.0 (Linux; Android 13; SM-G998B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Mobile Safari/537.36',
+                                },
                                 fit: BoxFit.cover,
                                 width: double.infinity,
                               )

@@ -105,6 +105,10 @@ class ContinueWatchingSection extends StatelessWidget {
                         position.posterUrl!.isNotEmpty)
                       CachedNetworkImage(
                         imageUrl: position.posterUrl!,
+                        httpHeaders: const {
+                          'User-Agent':
+                              'Mozilla/5.0 (Linux; Android 13; SM-G998B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Mobile Safari/537.36',
+                        },
                         fit: BoxFit.cover,
                         memCacheWidth: 440,
                         placeholder: (_, _) => Shimmer.fromColors(

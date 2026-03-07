@@ -16,6 +16,7 @@ class LinkController extends GetxController {
 
   /// Tracks which movie's links are currently loaded.
   int? _currentTmdbId;
+  bool _cancelled = false;
 
   final List<String> _loadingMessages = [
     "Initializing secure connection...",
@@ -45,6 +46,7 @@ class LinkController extends GetxController {
     }
     _currentTmdbId = tmdbId;
 
+    _cancelled = false;
     isLoading.value = true;
     isSuccess.value = false;
     hasError.value = false;
@@ -82,6 +84,9 @@ class LinkController extends GetxController {
               "Server took too long to respond. Please try again.",
             ),
           );
+
+      // If user cancelled while waiting, discard results
+      if (_cancelled) return;
 
       final downloadLinks = results['downloadLinks'] ?? [];
       final embeds = results['embedLinks'] ?? [];
@@ -133,6 +138,18 @@ class LinkController extends GetxController {
       source: source,
       skyMoviesHDUrl: skyMoviesHDUrl,
     );
+  }
+
+  /// Cancel an in-progress link fetch.
+  void cancelFetch() {
+    _messageTimer?.cancel();
+    _cancelled = true;
+    isLoading.value = false;
+    isSuccess.value = false;
+    hasError.value = false;
+    errorMessage.value = "";
+    currentProgress.value = 0.0;
+    progressText.value = "";
   }
 
   /// Explicitly clear all links and tracking state (call when opening a new movie).

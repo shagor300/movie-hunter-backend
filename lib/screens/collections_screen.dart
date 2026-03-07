@@ -326,6 +326,10 @@ class _CollectionsScreenState extends State<CollectionsScreen> {
                         borderRadius: BorderRadius.circular(8),
                         child: CachedNetworkImage(
                           imageUrl: movie['posterUrl'] ?? '',
+                          httpHeaders: const {
+                            'User-Agent':
+                                'Mozilla/5.0 (Linux; Android 13; SM-G998B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Mobile Safari/537.36',
+                          },
                           fit: BoxFit.cover,
                           placeholder: (_, _) => Container(
                             color: Colors.white.withValues(alpha: 0.05),

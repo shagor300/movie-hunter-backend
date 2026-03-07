@@ -876,6 +876,10 @@ class _DetailsScreenState extends State<DetailsScreen> {
                                 children: [
                                   CachedNetworkImage(
                                     imageUrl: movie.fullPosterPath,
+                                    httpHeaders: const {
+                                      'User-Agent':
+                                          'Mozilla/5.0 (Linux; Android 13; SM-G998B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Mobile Safari/537.36',
+                                    },
                                     fit: BoxFit.cover,
                                     placeholder: (_, _) => Container(
                                       color: Colors.white.withValues(
@@ -1126,6 +1130,32 @@ class _DetailsScreenState extends State<DetailsScreen> {
                   ),
                 ),
               ),
+
+              const SizedBox(height: 32),
+
+              // ── Cancel Button ──
+              TextButton.icon(
+                onPressed: () => _linkController.cancelFetch(),
+                icon: const Icon(Icons.close_rounded, size: 20),
+                label: const Text("Cancel"),
+                style: TextButton.styleFrom(
+                  foregroundColor: Colors.redAccent,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 28,
+                    vertical: 12,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    side: BorderSide(
+                      color: Colors.redAccent.withValues(alpha: 0.4),
+                    ),
+                  ),
+                  textStyle: GoogleFonts.plusJakartaSans(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
             ] else if (_linkController.hasError.value) ...[
               const Icon(
                 Icons.error_outline,
@@ -1208,16 +1238,31 @@ class _DetailsScreenState extends State<DetailsScreen> {
     }
 
     // Check if URL is already a direct video link (e.g. cinecloud .mp4/.mkv)
+    // BUT exclude FTP links — they crash BetterPlayer when played directly
     final lowerUrl = url.toLowerCase();
-    final isDirectVideo =
-        lowerUrl.endsWith('.mp4') ||
-        lowerUrl.endsWith('.mkv') ||
-        lowerUrl.endsWith('.webm') ||
-        lowerUrl.endsWith('.avi');
+    final isFtpLink = url.contains('ftp.ctgfun.com');
+    final isDirectVideo = !isFtpLink &&
+        (lowerUrl.endsWith('.mp4') ||
+         lowerUrl.endsWith('.mkv') ||
+         lowerUrl.endsWith('.webm') ||
+         lowerUrl.endsWith('.avi'));
 
     if (isDirectVideo) {
       // Play directly — no resolution needed
       _openVideoPlayer(url, link['quality'] ?? 'HD');
+      return;
+    }
+
+    // FTP links: play directly but with proper headers
+    if (isFtpLink) {
+      _openVideoPlayer(
+        url,
+        link['quality'] ?? 'HD',
+        headers: const {
+          'User-Agent':
+              'Mozilla/5.0 (Linux; Android 13; SM-G998B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Mobile Safari/537.36',
+        },
+      );
       return;
     }
 
@@ -1341,10 +1386,53 @@ class _DetailsScreenState extends State<DetailsScreen> {
     );
   }
 
+  /// Clean up raw FTP filenames for display
+  String _cleanFtpLinkName(String rawName, String quality) {
+    String cleaned = rawName;
+    // Remove file extension
+    cleaned = cleaned.replaceAll(
+      RegExp(r'\.(mp4|mkv|avi|webm|m4v)$', caseSensitive: false),
+      '',
+    );
+    // Remove year in parentheses
+    cleaned = cleaned.replaceAll(RegExp(r'\(\d{4}\)'), '');
+    // Remove resolution patterns
+    cleaned = cleaned.replaceAll(RegExp(r'\d{3,4}p'), '');
+    // Remove codec/format tags
+    cleaned = cleaned.replaceAll(
+      RegExp(
+        r'(WEBRip|BluRay|HDTS|HDRip|DVDRip|x264|x265|ESub|HEVC|AAC|DD5\.1|DTS|WEB-DL|BRRip|CAMRip)',
+        caseSensitive: false,
+      ),
+      '',
+    );
+    // Remove [DDN] or (DDN) tags
+    cleaned = cleaned.replaceAll(RegExp(r'\[.*?\]|\(.*?\)'), '');
+    // Remove language tags that appear after the title
+    cleaned = cleaned.replaceAll(
+      RegExp(
+        r'\b(Hindi|English|Tamil|Telugu|Malayalam|Bengali|Kannada|Multi)\b',
+        caseSensitive: false,
+      ),
+      '',
+    );
+    // Remove dots used as separators
+    cleaned = cleaned.replaceAll('.', ' ');
+    // Remove trailing dashes/underscores and extra spaces
+    cleaned = cleaned.replaceAll(RegExp(r'[_\-—]+'), ' ');
+    cleaned = cleaned.replaceAll(RegExp(r'\s+'), ' ').trim();
+    // Remove trailing dash if any
+    cleaned = cleaned.replaceAll(RegExp(r'\s*-\s*$'), '').trim();
+    if (cleaned.isEmpty) cleaned = rawName;
+    return '$cleaned · $quality';
+  }
+
   Widget _buildLinkItem(Map<String, String> link, int index) {
     final episode = link['episode'] ?? '';
     final hasEpisode = episode.isNotEmpty;
     final quality = link['quality'] ?? 'HD';
+    final url = link['url'] ?? '';
+    final isFtpLink = url.contains('ftp.ctgfun.com');
 
     return TweenAnimationBuilder(
       duration: Duration(milliseconds: 400 + (index * 100)),
@@ -1413,8 +1501,15 @@ class _DetailsScreenState extends State<DetailsScreen> {
           title: Text(
             hasEpisode
                 ? 'Episode ${episode.replaceAll(RegExp(r'S\d+'), '').replaceAll('E', '')}'
+                : isFtpLink
+                ? _cleanFtpLinkName(
+                    link['name'] ?? 'Source ${index + 1}',
+                    quality,
+                  )
                 : (link['name'] ?? "Source ${index + 1}"),
             style: AppTextStyles.titleMedium,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
           ),
           subtitle: Text("Quality: $quality", style: AppTextStyles.bodySmall),
           trailing: Row(
@@ -1457,34 +1552,39 @@ class _DetailsScreenState extends State<DetailsScreen> {
                   );
                 },
               ),
-              // Copy button
-              IconButton(
-                icon: const Icon(
-                  Icons.copy,
-                  color: AppColors.textMuted,
-                  size: 18,
+              // Copy button (hidden for FTP links)
+              if (!isFtpLink)
+                IconButton(
+                  icon: const Icon(
+                    Icons.copy,
+                    color: AppColors.textMuted,
+                    size: 18,
+                  ),
+                  onPressed: () {
+                    Clipboard.setData(ClipboardData(text: link['url'] ?? ""));
+                    Get.snackbar(
+                      "Link Copied",
+                      "Ready to paste in your browser",
+                      snackPosition: SnackPosition.BOTTOM,
+                      backgroundColor: Theme.of(
+                        context,
+                      ).colorScheme.primary.withValues(alpha: 0.8),
+                      colorText: Colors.white,
+                      margin: const EdgeInsets.all(20),
+                      duration: const Duration(seconds: 2),
+                    );
+                  },
                 ),
-                onPressed: () {
-                  Clipboard.setData(ClipboardData(text: link['url'] ?? ""));
-                  Get.snackbar(
-                    "Link Copied",
-                    "Ready to paste in your browser",
-                    snackPosition: SnackPosition.BOTTOM,
-                    backgroundColor: Theme.of(
-                      context,
-                    ).colorScheme.primary.withValues(alpha: 0.8),
-                    colorText: Colors.white,
-                    margin: const EdgeInsets.all(20),
-                    duration: const Duration(seconds: 2),
-                  );
-                },
-              ),
             ],
           ),
-          onTap: () async {
-            final url = Uri.parse(link['url'] ?? "");
-            if (await canLaunchUrl(url)) {
-              await launchUrl(url, mode: LaunchMode.externalApplication);
+          onTap: () {
+            if (isFtpLink) {
+              // FTP links: play in-app (NOT browser!)
+              _handlePlayLink(link);
+            } else {
+              // Non-FTP links: open in browser
+              final uri = Uri.parse(link['url'] ?? "");
+              launchUrl(uri, mode: LaunchMode.externalApplication);
             }
           },
         ),

@@ -405,10 +405,13 @@ class _ActiveDownloadCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Obx(() {
-      final speed = controller.getSpeedText(item.id);
-      final eta = controller.getETAText(item.id);
-      final progress = item.progress;
-      final isPaused = item.status == 'paused';
+      // Touch the observable map so GetX can track changes
+      final _ = controller.downloads.length;
+      final currentItem = controller.downloads[item.id] ?? item;
+      final speed = controller.getSpeedText(currentItem.id);
+      final eta = controller.getETAText(currentItem.id);
+      final progress = currentItem.progress;
+      final isPaused = currentItem.status == 'paused';
 
       final primaryGlow = isPaused
           ? Colors.orange

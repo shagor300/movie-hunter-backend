@@ -433,6 +433,32 @@ async def toggle_source(source_name: str, body: SourceToggleInput, authorization
     return {"success": True}
 
 
+class AddSourceInput(BaseModel):
+    source_name: str
+    source_url: str
+
+
+@router.post("/sources")
+async def add_source(body: AddSourceInput, authorization: str = Header(None)):
+    """Add a new custom source."""
+    _verify_token((authorization or "").replace("Bearer ", ""))
+    
+    # Try adding the source_url column if it's missing (simple migration)
+    try:
+        await admin_db.execute("ALTER TABLE source_status ADD COLUMN source_url TEXT")
+    except Exception:
+        pass # Column might already exist
+        
+    try:
+        await admin_db.insert(
+            "INSERT INTO source_status (source_name, source_url, is_enabled) VALUES (?, ?, 1)",
+            (body.source_name, body.source_url)
+        )
+        return {"success": True, "message": "Source added successfully"}
+    except Exception as e:
+        raise HTTPException(status_code=400, detail="Source already exists or invalid data")
+
+
 # ════════════════════════════════════════════════════════════════════════
 # ERROR LOGS
 # ════════════════════════════════════════════════════════════════════════

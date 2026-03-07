@@ -4,7 +4,8 @@ import re
 import logging
 import mimetypes
 from pathlib import Path as FilePath
-from fastapi import FastAPI, HTTPException, Query, Path
+from fastapi import FastAPI, HTTPException, Query, Path, Request
+from fastapi.responses import FileResponse, JSONResponse, RedirectResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field, HttpUrl
@@ -121,13 +122,40 @@ app.add_middleware(
 # Register admin panel router
 app.include_router(admin_router)
 
-# Serve admin dashboard (built React app)
+# Serve admin dashboard (built React app) with SPA fallback for BrowserRouter
 _admin_dist = FilePath(__file__).parent / "admin-dashboard" / "dist"
 if _admin_dist.is_dir():
-    app.mount("/admin-panel", StaticFiles(directory=str(_admin_dist), html=True), name="admin-panel")
-    logger.info(f"Admin dashboard mounted at /admin-panel from {_admin_dist}")
+    # Mount static assets (JS/CSS/images) at /admin-panel/assets
+    _assets_dir = _admin_dist / "assets"
+    if _assets_dir.is_dir():
+        app.mount("/admin-panel/assets", StaticFiles(directory=str(_assets_dir)), name="admin-assets")
+
+    # SPA catch-all: any /admin-panel/* that isn't a static file serves index.html
+    @app.get("/admin-panel/{full_path:path}")
+    async def admin_spa_fallback(request: Request, full_path: str = ""):
+        """Serve index.html for all admin panel routes (SPA fallback for BrowserRouter)."""
+        # Check if the requested path is an actual file first
+        file_path = _admin_dist / full_path
+        if full_path and file_path.is_file():
+            return FileResponse(str(file_path))
+        # Otherwise serve index.html for client-side routing
+        return FileResponse(str(_admin_dist / "index.html"))
+
+    @app.get("/admin-panel")
+    async def admin_root():
+        """Redirect /admin-panel to /admin-panel/ for consistency."""
+        return FileResponse(str(_admin_dist / "index.html"))
+
+    logger.info(f"Admin dashboard SPA mounted at /admin-panel from {_admin_dist}")
 else:
     logger.warning(f"Admin dashboard not built yet. Run 'npm run build' in admin-dashboard/")
+
+
+# Redirect /login → /admin-panel/login for compatibility with test bots
+@app.get("/login")
+async def login_redirect():
+    """Redirect bare /login to the admin panel login page."""
+    return RedirectResponse(url="/admin-panel/login", status_code=302)
 
 
 # --- Pydantic Models ---
@@ -207,11 +235,34 @@ async def root():
 
 @app.get("/health", response_model=None)
 async def health_check():
-    """Detailed health check."""
+    """Detailed health check — pings TMDB to verify external dependency."""
+    tmdb_ok = False
+    try:
+        # Quick connectivity test: fetch a known trending endpoint
+        test = await tmdb_helper.get_trending_movies()
+        tmdb_ok = isinstance(test, list)
+    except Exception:
+        tmdb_ok = False
+
+    if not tmdb_ok:
+        return JSONResponse(
+            status_code=503,
+            content={
+                "status": "unhealthy",
+                "message": "TMDB dependency is unreachable",
+                "tmdb_enabled": True,
+                "tmdb_reachable": False,
+                "scraper_sources": len(DOMAINS),
+                "browser_ready": _browser_ready,
+                "ftp_enabled": MovieSources.FTP_ENABLED,
+            },
+        )
+
     return {
         "status": "healthy",
         "message": "All systems operational",
         "tmdb_enabled": True,
+        "tmdb_reachable": True,
         "scraper_sources": len(DOMAINS),
         "browser_ready": _browser_ready,
         "ftp_enabled": MovieSources.FTP_ENABLED,
@@ -320,6 +371,13 @@ async def generate_download_links(
         if tmdb_id <= 0:
             logger.warning(f"Invalid TMDB ID received: {tmdb_id}")
             raise HTTPException(status_code=400, detail="Invalid TMDB ID")
+
+        if not _browser_ready:
+            logger.error("Playwright browser not initialized — cannot generate links")
+            raise HTTPException(
+                status_code=500,
+                detail="Link generation service unavailable: browser not initialized",
+            )
 
         embed_links = []
         links = []

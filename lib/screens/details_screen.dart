@@ -1130,6 +1130,32 @@ class _DetailsScreenState extends State<DetailsScreen> {
                   ),
                 ),
               ),
+
+              const SizedBox(height: 32),
+
+              // ── Cancel Button ──
+              TextButton.icon(
+                onPressed: () => _linkController.cancelFetch(),
+                icon: const Icon(Icons.close_rounded, size: 20),
+                label: const Text("Cancel"),
+                style: TextButton.styleFrom(
+                  foregroundColor: Colors.redAccent,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 28,
+                    vertical: 12,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    side: BorderSide(
+                      color: Colors.redAccent.withValues(alpha: 0.4),
+                    ),
+                  ),
+                  textStyle: GoogleFonts.plusJakartaSans(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
             ] else if (_linkController.hasError.value) ...[
               const Icon(
                 Icons.error_outline,
@@ -1212,16 +1238,31 @@ class _DetailsScreenState extends State<DetailsScreen> {
     }
 
     // Check if URL is already a direct video link (e.g. cinecloud .mp4/.mkv)
+    // BUT exclude FTP links — they crash BetterPlayer when played directly
     final lowerUrl = url.toLowerCase();
-    final isDirectVideo =
-        lowerUrl.endsWith('.mp4') ||
-        lowerUrl.endsWith('.mkv') ||
-        lowerUrl.endsWith('.webm') ||
-        lowerUrl.endsWith('.avi');
+    final isFtpLink = url.contains('ftp.ctgfun.com');
+    final isDirectVideo = !isFtpLink &&
+        (lowerUrl.endsWith('.mp4') ||
+         lowerUrl.endsWith('.mkv') ||
+         lowerUrl.endsWith('.webm') ||
+         lowerUrl.endsWith('.avi'));
 
     if (isDirectVideo) {
       // Play directly — no resolution needed
       _openVideoPlayer(url, link['quality'] ?? 'HD');
+      return;
+    }
+
+    // FTP links: play directly but with proper headers
+    if (isFtpLink) {
+      _openVideoPlayer(
+        url,
+        link['quality'] ?? 'HD',
+        headers: const {
+          'User-Agent':
+              'Mozilla/5.0 (Linux; Android 13; SM-G998B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Mobile Safari/537.36',
+        },
+      );
       return;
     }
 
@@ -1470,14 +1511,7 @@ class _DetailsScreenState extends State<DetailsScreen> {
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
           ),
-          subtitle: isFtpLink
-              ? Text(
-                  'FTP · Tap to play',
-                  style: AppTextStyles.bodySmall.copyWith(
-                    color: Colors.greenAccent.withValues(alpha: 0.7),
-                  ),
-                )
-              : Text("Quality: $quality", style: AppTextStyles.bodySmall),
+          subtitle: Text("Quality: $quality", style: AppTextStyles.bodySmall),
           trailing: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -1518,28 +1552,29 @@ class _DetailsScreenState extends State<DetailsScreen> {
                   );
                 },
               ),
-              // Copy button
-              IconButton(
-                icon: const Icon(
-                  Icons.copy,
-                  color: AppColors.textMuted,
-                  size: 18,
+              // Copy button (hidden for FTP links)
+              if (!isFtpLink)
+                IconButton(
+                  icon: const Icon(
+                    Icons.copy,
+                    color: AppColors.textMuted,
+                    size: 18,
+                  ),
+                  onPressed: () {
+                    Clipboard.setData(ClipboardData(text: link['url'] ?? ""));
+                    Get.snackbar(
+                      "Link Copied",
+                      "Ready to paste in your browser",
+                      snackPosition: SnackPosition.BOTTOM,
+                      backgroundColor: Theme.of(
+                        context,
+                      ).colorScheme.primary.withValues(alpha: 0.8),
+                      colorText: Colors.white,
+                      margin: const EdgeInsets.all(20),
+                      duration: const Duration(seconds: 2),
+                    );
+                  },
                 ),
-                onPressed: () {
-                  Clipboard.setData(ClipboardData(text: link['url'] ?? ""));
-                  Get.snackbar(
-                    "Link Copied",
-                    "Ready to paste in your browser",
-                    snackPosition: SnackPosition.BOTTOM,
-                    backgroundColor: Theme.of(
-                      context,
-                    ).colorScheme.primary.withValues(alpha: 0.8),
-                    colorText: Colors.white,
-                    margin: const EdgeInsets.all(20),
-                    duration: const Duration(seconds: 2),
-                  );
-                },
-              ),
             ],
           ),
           onTap: () {

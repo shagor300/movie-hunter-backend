@@ -25,6 +25,7 @@ import 'video_player_screen.dart';
 import 'trailer_player_screen.dart';
 import 'dart:io';
 import 'package:path_provider/path_provider.dart';
+import 'package:http/http.dart' as http;
 
 class DetailsScreen extends StatefulWidget {
   final Movie movie;
@@ -1222,8 +1223,8 @@ class _DetailsScreenState extends State<DetailsScreen> {
 
   /// Handle play button press: resolve intermediate URL → open VideoPlayerScreen
   Future<void> _handlePlayLink(Map<String, String> link) async {
-    final url = link['url'] ?? '';
-    if (url.isEmpty || !url.startsWith('http')) {
+    final rawUrl = link['url'] ?? '';
+    if (rawUrl.isEmpty || !rawUrl.startsWith('http')) {
       Get.snackbar(
         'Invalid Link',
         'This link cannot be played.',
@@ -1237,15 +1238,20 @@ class _DetailsScreenState extends State<DetailsScreen> {
       return;
     }
 
+    // Properly encode the URL to prevent ExoPlayer/BetterPlayer native crashes
+    // when FTP links contain spaces ( ) or brackets [ ]
+    final url = Uri.encodeFull(rawUrl);
+
     // Check if URL is already a direct video link (e.g. cinecloud .mp4/.mkv)
     // BUT exclude FTP links — they crash BetterPlayer when played directly
     final lowerUrl = url.toLowerCase();
     final isFtpLink = url.contains('ftp.ctgfun.com');
-    final isDirectVideo = !isFtpLink &&
+    final isDirectVideo =
+        !isFtpLink &&
         (lowerUrl.endsWith('.mp4') ||
-         lowerUrl.endsWith('.mkv') ||
-         lowerUrl.endsWith('.webm') ||
-         lowerUrl.endsWith('.avi'));
+            lowerUrl.endsWith('.mkv') ||
+            lowerUrl.endsWith('.webm') ||
+            lowerUrl.endsWith('.avi'));
 
     if (isDirectVideo) {
       // Play directly — no resolution needed
@@ -1253,10 +1259,38 @@ class _DetailsScreenState extends State<DetailsScreen> {
       return;
     }
 
-    // FTP links: play directly but with proper headers
+    // FTP links: extract actual video file from directory
     if (isFtpLink) {
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (ctx) => Center(
+          child: CircularProgressIndicator(
+            color: Theme.of(context).colorScheme.primary,
+          ),
+        ),
+      );
+
+      final videoUrlRaw = await _getFtpVideoUrl(rawUrl);
+
+      if (mounted) Navigator.of(context).pop();
+
+      if (videoUrlRaw.isEmpty) {
+        Get.snackbar(
+          'Video Not Found',
+          'Could not find a playable video file in this folder.',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.redAccent.withValues(alpha: 0.8),
+          colorText: Colors.white,
+          margin: const EdgeInsets.all(20),
+        );
+        return;
+      }
+
+      final videoUrl = Uri.encodeFull(videoUrlRaw);
+
       _openVideoPlayer(
-        url,
+        videoUrl,
         link['quality'] ?? 'HD',
         headers: const {
           'User-Agent':
@@ -1362,6 +1396,41 @@ class _DetailsScreenState extends State<DetailsScreen> {
         margin: const EdgeInsets.all(20),
         duration: const Duration(seconds: 3),
       );
+    }
+  }
+
+  Future<String> _getFtpVideoUrl(String ftpFolderUrl) async {
+    try {
+      debugPrint('[FTP] Fetching folder: $ftpFolderUrl');
+      final response = await http.get(Uri.parse(ftpFolderUrl));
+      if (response.statusCode != 200) {
+        debugPrint('[FTP] Fetch failed: ${response.statusCode}');
+        return '';
+      }
+
+      final videoExtensions = ['.mp4', '.mkv', '.avi', '.m4v', '.webm'];
+      final html = response.body;
+
+      final linkPattern = RegExp(r'<a href="([^"]+)"');
+      final matches = linkPattern.allMatches(html);
+
+      for (final match in matches) {
+        final filename = match.group(1) ?? '';
+        if (videoExtensions.any(
+          (ext) => filename.toLowerCase().endsWith(ext),
+        )) {
+          String baseUrl = ftpFolderUrl.endsWith('/')
+              ? ftpFolderUrl
+              : '$ftpFolderUrl/';
+          final videoUrl = baseUrl + filename;
+          debugPrint('[FTP] Found video: $videoUrl');
+          return videoUrl;
+        }
+      }
+      return '';
+    } catch (e) {
+      debugPrint('[FTP] Error fetching video URL: $e');
+      return '';
     }
   }
 
@@ -1534,8 +1603,30 @@ class _DetailsScreenState extends State<DetailsScreen> {
                 ),
                 tooltip: 'Download',
                 onPressed: () async {
-                  final url = link['url'] ?? '';
-                  if (url.isEmpty) return;
+                  String finalUrl = link['url'] ?? '';
+                  if (finalUrl.isEmpty) return;
+
+                  if (isFtpLink) {
+                    Get.snackbar(
+                      'Preparing Download',
+                      'Fetching video file...',
+                      snackPosition: SnackPosition.BOTTOM,
+                      duration: const Duration(seconds: 1),
+                    );
+                    finalUrl = await _getFtpVideoUrl(finalUrl);
+                    if (finalUrl.isEmpty) {
+                      Get.snackbar(
+                        'Download Error',
+                        'Could not find a video file in this folder.',
+                        snackPosition: SnackPosition.BOTTOM,
+                        backgroundColor: Colors.redAccent.withValues(
+                          alpha: 0.8,
+                        ),
+                        colorText: Colors.white,
+                      );
+                      return;
+                    }
+                  }
 
                   // Use episode in filename if available
                   final filename = hasEpisode
@@ -1543,7 +1634,7 @@ class _DetailsScreenState extends State<DetailsScreen> {
                       : '${widget.movie.title}_$quality.mp4';
 
                   await _downloadController.startDownload(
-                    url: url,
+                    url: finalUrl,
                     filename: filename,
                     tmdbId: widget.movie.tmdbId,
                     quality: quality,

@@ -104,7 +104,11 @@ class ContinueWatchingSection extends StatelessWidget {
                     if (position.posterUrl != null &&
                         position.posterUrl!.isNotEmpty)
                       CachedNetworkImage(
-                        imageUrl: position.posterUrl!,
+                        imageUrl:
+                            (position.posterUrl!.contains('image.tmdb.org') &&
+                                !position.posterUrl!.contains('v=1'))
+                            ? '${position.posterUrl!}${position.posterUrl!.contains('?') ? '&' : '?'}v=1'
+                            : position.posterUrl!,
                         httpHeaders: const {
                           'User-Agent':
                               'Mozilla/5.0 (Linux; Android 13; SM-G998B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Mobile Safari/537.36',

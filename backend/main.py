@@ -22,6 +22,7 @@ from config.sources import MovieSources
 from bs4 import BeautifulSoup
 from admin_db import admin_db
 from admin_api import router as admin_router, ensure_default_admin
+from tmdb_enricher import TMDBEnricher
 
 # Configure logging
 logging.basicConfig(
@@ -50,6 +51,10 @@ ftp_handler = FTPMovieHandler(
     host=MovieSources.FTP_HOST,
     timeout=MovieSources.FTP_TIMEOUT,
 ) if MovieSources.FTP_ENABLED else None
+
+# TMDB Enricher
+TMDB_API_KEY = "7efd8424c17ff5b3e8dc9cebf4a33f73"
+tmdb_enricher = TMDBEnricher(TMDB_API_KEY)
 
 
 _browser_ready = False
@@ -270,23 +275,41 @@ async def health_check():
 
 
 @app.get("/trending")
-async def get_trending():
-    """Get trending movies from TMDB."""
-    try:
-        logger.info("Fetching trending movies")
-        movies = await tmdb_helper.get_trending_movies()
+async def get_trending(limit: int = Query(20, description="Max results to return")):
+    """Get trending movies (now powered by FTP + TMDB)."""
+    if not ftp_handler:
+        return {"results": []}
+    
+    ftp_movies = ftp_handler.get_random_movies(limit=limit)
+    enriched = await tmdb_enricher.enrich_movies(ftp_movies)
+    
+    return {"results": enriched}
 
-        results = []
-        for movie in movies:
-            results.append({
-                **movie,
-                "sources": [{"site": name, "url": f"tmdb_{movie['tmdb_id']}"} for name in DOMAINS],
-            })
+@app.get("/featured")
+async def get_featured():
+    """Get a featured movie (powered by FTP + TMDB)."""
+    if not ftp_handler:
+        return {}
+        
+    ftp_movies = ftp_handler.get_random_movies(limit=5)
+    enriched = await tmdb_enricher.enrich_movies(ftp_movies)
+    
+    for movie in enriched:
+        if movie.get('backdrop_path'):
+            return movie
+            
+    return enriched[0] if enriched else {}
 
-        return {"total_results": len(results), "results": results}
-    except Exception as e:
-        logger.error(f"Trending error: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to fetch trending movies: {e}")
+@app.get("/latest")
+async def get_latest(limit: int = Query(20, description="Max results")):
+    """Get latest movies (powered by FTP + TMDB)."""
+    if not ftp_handler:
+        return {"results": []}
+        
+    ftp_movies = ftp_handler.browse_latest("/English", limit=limit)
+    enriched = await tmdb_enricher.enrich_movies(ftp_movies)
+    
+    return {"results": enriched}
 
 
 @app.get("/search")
@@ -294,42 +317,15 @@ async def search_movies(
     query: str = Query(..., description="Movie title to search", min_length=2, max_length=100)
 ):
     """
-    Search movies via TMDB. Returns metadata + deterministic source URLs.
-    No inline scraping — keeps response fast (~1s instead of ~10s).
+    Search movies (now powered by FTP + TMDB).
     """
-    results_count = 0
-    try:
-        logger.info(f"Search request: {query}")
-        movies = await tmdb_helper.search_movie(query)
-
-        results = []
-        for movie in movies:
-            results.append({
-                "title": movie['title'],
-                "sources": _build_search_sources(movie['title']),
-                "tmdb_poster": movie.get('poster'),
-                "rating": movie.get('rating'),
-                "plot": movie.get('overview', 'No plot available'),
-                "release_date": movie.get('release_date'),
-                "tmdb_id": movie.get('tmdb_id'),
-                "genre_ids": movie.get('genre_ids', []),
-                "original_language": movie.get('original_language'),
-            })
-
-        results_count = len(results)
-        return {"query": query, "results": results}
-    except Exception as e:
-        logger.error(f"Search error: {e}")
+    if not ftp_handler:
         return {"query": query, "results": []}
-    finally:
-        # Track search for admin analytics (fire-and-forget)
-        try:
-            await admin_db.insert(
-                "INSERT INTO search_logs (query, results_count) VALUES (?, ?)",
-                (query, results_count),
-            )
-        except Exception:
-            pass
+        
+    ftp_movies = ftp_handler.search(query, limit=20)
+    enriched = await tmdb_enricher.enrich_movies(ftp_movies)
+    
+    return {"query": query, "results": enriched}
 
 
 @app.get("/movie/{tmdb_id}", response_model=MovieDetails)

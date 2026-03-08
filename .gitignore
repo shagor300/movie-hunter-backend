@@ -47,3 +47,13 @@ app.*.map.json
 # App Signing sensitive files
 /android/key.properties
 **/upload-keystore.jks
+
+# Backend / Python related
+backend/venv/
+backend/__pycache__/
+*.db
+*.sqlite
+
+# Testing
+testsprite_tests/
+**/testsprite_tests/

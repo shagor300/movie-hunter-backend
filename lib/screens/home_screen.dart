@@ -184,12 +184,6 @@ class _HomeScreenState extends State<HomeScreen> {
       }
     }
 
-    // If not on first tab → go to first tab
-    if (_currentIndex != 0) {
-      setState(() => _currentIndex = 0);
-      return;
-    }
-
     final now = DateTime.now();
 
     if (_lastBackPressed == null ||

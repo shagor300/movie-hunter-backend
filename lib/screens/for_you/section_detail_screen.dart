@@ -82,7 +82,6 @@ class SectionDetailScreen extends StatelessWidget {
                   final movie = movies[index];
                   return MovieCard(
                     movie: movie,
-                    index: index,
                     onTap: () => Navigator.push(
                       context,
                       MaterialPageRoute(

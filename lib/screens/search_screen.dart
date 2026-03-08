@@ -525,7 +525,6 @@ class SearchScreenState extends State<SearchScreen> {
                     final movie = _searchResults[index];
                     return MovieCard(
                       movie: movie,
-                      index: index,
                       onTap: () {
                         Navigator.push(
                           context,

@@ -12,3 +12,4 @@ python-Levenshtein==0.26.0
 aiosqlite==0.20.0
 setuptools
 bcrypt
+aiohttp>=3.8.0

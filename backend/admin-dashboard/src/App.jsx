@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { HashRouter, BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import api from './api';
 import './index.css';
 
@@ -58,11 +58,11 @@ export default function App() {
     const { user, login, logout } = useAuth();
 
     return (
-        <HashRouter>
+        <BrowserRouter basename="/admin-panel">
             <Routes>
                 <Route path="/login" element={user ? <Navigate to="/" replace /> : <LoginPage onLogin={login} />} />
                 <Route path="/*" element={user ? <AuthenticatedApp user={user} logout={logout} /> : <Navigate to="/login" replace />} />
             </Routes>
-        </HashRouter>
+        </BrowserRouter>
     );
 }

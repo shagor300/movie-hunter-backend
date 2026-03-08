@@ -4,7 +4,8 @@ import re
 import logging
 import mimetypes
 from pathlib import Path as FilePath
-from fastapi import FastAPI, HTTPException, Query, Path
+from fastapi import FastAPI, HTTPException, Query, Path, Request
+from fastapi.responses import FileResponse, JSONResponse, RedirectResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field, HttpUrl
@@ -21,6 +22,7 @@ from config.sources import MovieSources
 from bs4 import BeautifulSoup
 from admin_db import admin_db
 from admin_api import router as admin_router, ensure_default_admin
+from tmdb_enricher import TMDBEnricher
 
 # Configure logging
 logging.basicConfig(
@@ -49,6 +51,10 @@ ftp_handler = FTPMovieHandler(
     host=MovieSources.FTP_HOST,
     timeout=MovieSources.FTP_TIMEOUT,
 ) if MovieSources.FTP_ENABLED else None
+
+# TMDB Enricher
+TMDB_API_KEY = "7efd8424c17ff5b3e8dc9cebf4a33f73"
+tmdb_enricher = TMDBEnricher(TMDB_API_KEY)
 
 
 _browser_ready = False
@@ -121,13 +127,40 @@ app.add_middleware(
 # Register admin panel router
 app.include_router(admin_router)
 
-# Serve admin dashboard (built React app)
+# Serve admin dashboard (built React app) with SPA fallback for BrowserRouter
 _admin_dist = FilePath(__file__).parent / "admin-dashboard" / "dist"
 if _admin_dist.is_dir():
-    app.mount("/admin-panel", StaticFiles(directory=str(_admin_dist), html=True), name="admin-panel")
-    logger.info(f"Admin dashboard mounted at /admin-panel from {_admin_dist}")
+    # Mount static assets (JS/CSS/images) at /admin-panel/assets
+    _assets_dir = _admin_dist / "assets"
+    if _assets_dir.is_dir():
+        app.mount("/admin-panel/assets", StaticFiles(directory=str(_assets_dir)), name="admin-assets")
+
+    # SPA catch-all: any /admin-panel/* that isn't a static file serves index.html
+    @app.get("/admin-panel/{full_path:path}")
+    async def admin_spa_fallback(request: Request, full_path: str = ""):
+        """Serve index.html for all admin panel routes (SPA fallback for BrowserRouter)."""
+        # Check if the requested path is an actual file first
+        file_path = _admin_dist / full_path
+        if full_path and file_path.is_file():
+            return FileResponse(str(file_path))
+        # Otherwise serve index.html for client-side routing
+        return FileResponse(str(_admin_dist / "index.html"))
+
+    @app.get("/admin-panel")
+    async def admin_root():
+        """Redirect /admin-panel to /admin-panel/ for consistency."""
+        return FileResponse(str(_admin_dist / "index.html"))
+
+    logger.info(f"Admin dashboard SPA mounted at /admin-panel from {_admin_dist}")
 else:
     logger.warning(f"Admin dashboard not built yet. Run 'npm run build' in admin-dashboard/")
+
+
+# Redirect /login → /admin-panel/login for compatibility with test bots
+@app.get("/login")
+async def login_redirect():
+    """Redirect bare /login to the admin panel login page."""
+    return RedirectResponse(url="/admin-panel/login", status_code=302)
 
 
 # --- Pydantic Models ---
@@ -207,11 +240,34 @@ async def root():
 
 @app.get("/health", response_model=None)
 async def health_check():
-    """Detailed health check."""
+    """Detailed health check — pings TMDB to verify external dependency."""
+    tmdb_ok = False
+    try:
+        # Quick connectivity test: fetch a known trending endpoint
+        test = await tmdb_helper.get_trending_movies()
+        tmdb_ok = isinstance(test, list)
+    except Exception:
+        tmdb_ok = False
+
+    if not tmdb_ok:
+        return JSONResponse(
+            status_code=503,
+            content={
+                "status": "unhealthy",
+                "message": "TMDB dependency is unreachable",
+                "tmdb_enabled": True,
+                "tmdb_reachable": False,
+                "scraper_sources": len(DOMAINS),
+                "browser_ready": _browser_ready,
+                "ftp_enabled": MovieSources.FTP_ENABLED,
+            },
+        )
+
     return {
         "status": "healthy",
         "message": "All systems operational",
         "tmdb_enabled": True,
+        "tmdb_reachable": True,
         "scraper_sources": len(DOMAINS),
         "browser_ready": _browser_ready,
         "ftp_enabled": MovieSources.FTP_ENABLED,
@@ -219,23 +275,41 @@ async def health_check():
 
 
 @app.get("/trending")
-async def get_trending():
-    """Get trending movies from TMDB."""
-    try:
-        logger.info("Fetching trending movies")
-        movies = await tmdb_helper.get_trending_movies()
+async def get_trending(limit: int = Query(20, description="Max results to return")):
+    """Get trending movies (now powered by FTP + TMDB)."""
+    if not ftp_handler:
+        return {"results": []}
+    
+    ftp_movies = ftp_handler.get_random_movies(limit=limit)
+    enriched = await tmdb_enricher.enrich_movies(ftp_movies)
+    
+    return {"results": enriched}
 
-        results = []
-        for movie in movies:
-            results.append({
-                **movie,
-                "sources": [{"site": name, "url": f"tmdb_{movie['tmdb_id']}"} for name in DOMAINS],
-            })
+@app.get("/featured")
+async def get_featured():
+    """Get a featured movie (powered by FTP + TMDB)."""
+    if not ftp_handler:
+        return {}
+        
+    ftp_movies = ftp_handler.get_random_movies(limit=5)
+    enriched = await tmdb_enricher.enrich_movies(ftp_movies)
+    
+    for movie in enriched:
+        if movie.get('backdrop_path'):
+            return movie
+            
+    return enriched[0] if enriched else {}
 
-        return {"total_results": len(results), "results": results}
-    except Exception as e:
-        logger.error(f"Trending error: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to fetch trending movies: {e}")
+@app.get("/latest")
+async def get_latest(limit: int = Query(20, description="Max results")):
+    """Get latest movies (powered by FTP + TMDB)."""
+    if not ftp_handler:
+        return {"results": []}
+        
+    ftp_movies = ftp_handler.browse_latest("/English", limit=limit)
+    enriched = await tmdb_enricher.enrich_movies(ftp_movies)
+    
+    return {"results": enriched}
 
 
 @app.get("/search")
@@ -243,42 +317,15 @@ async def search_movies(
     query: str = Query(..., description="Movie title to search", min_length=2, max_length=100)
 ):
     """
-    Search movies via TMDB. Returns metadata + deterministic source URLs.
-    No inline scraping — keeps response fast (~1s instead of ~10s).
+    Search movies (now powered by FTP + TMDB).
     """
-    results_count = 0
-    try:
-        logger.info(f"Search request: {query}")
-        movies = await tmdb_helper.search_movie(query)
-
-        results = []
-        for movie in movies:
-            results.append({
-                "title": movie['title'],
-                "sources": _build_search_sources(movie['title']),
-                "tmdb_poster": movie.get('poster'),
-                "rating": movie.get('rating'),
-                "plot": movie.get('overview', 'No plot available'),
-                "release_date": movie.get('release_date'),
-                "tmdb_id": movie.get('tmdb_id'),
-                "genre_ids": movie.get('genre_ids', []),
-                "original_language": movie.get('original_language'),
-            })
-
-        results_count = len(results)
-        return {"query": query, "results": results}
-    except Exception as e:
-        logger.error(f"Search error: {e}")
+    if not ftp_handler:
         return {"query": query, "results": []}
-    finally:
-        # Track search for admin analytics (fire-and-forget)
-        try:
-            await admin_db.insert(
-                "INSERT INTO search_logs (query, results_count) VALUES (?, ?)",
-                (query, results_count),
-            )
-        except Exception:
-            pass
+        
+    ftp_movies = ftp_handler.search(query, limit=20)
+    enriched = await tmdb_enricher.enrich_movies(ftp_movies)
+    
+    return {"query": query, "results": enriched}
 
 
 @app.get("/movie/{tmdb_id}", response_model=MovieDetails)
@@ -320,6 +367,13 @@ async def generate_download_links(
         if tmdb_id <= 0:
             logger.warning(f"Invalid TMDB ID received: {tmdb_id}")
             raise HTTPException(status_code=400, detail="Invalid TMDB ID")
+
+        if not _browser_ready:
+            logger.error("Playwright browser not initialized — cannot generate links")
+            raise HTTPException(
+                status_code=500,
+                detail="Link generation service unavailable: browser not initialized",
+            )
 
         embed_links = []
         links = []

@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import '../models/movie.dart';
 
 /// Centralized HTTP service for the FlixHub backend API.
 class ApiService {
@@ -163,20 +164,60 @@ class ApiService {
   }
 
   /// Fetch trending movies from the backend `/trending` endpoint.
-  Future<List<Map<String, dynamic>>> getTrending() async {
-    final url = Uri.parse('$baseUrl/trending');
+  Future<List<Movie>> getTrending({int limit = 20}) async {
+    final url = Uri.parse('$baseUrl/trending?limit=$limit');
 
     try {
       final response = await http.get(url).timeout(_timeout);
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        return List<Map<String, dynamic>>.from(data['results'] ?? []);
+        return (data['results'] as List).map((m) => Movie.fromJson(m)).toList();
       }
       debugPrint('Trending API error: ${response.statusCode}');
       return [];
     } catch (e) {
       debugPrint('Error fetching trending: $e');
+      return [];
+    }
+  }
+
+  /// Fetch featured movie from the backend `/featured` endpoint.
+  Future<Movie?> getFeatured() async {
+    final url = Uri.parse('$baseUrl/featured');
+
+    try {
+      final response = await http.get(url).timeout(_timeout);
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (data.isNotEmpty) {
+          return Movie.fromJson(data);
+        }
+      }
+      debugPrint('Featured API error: ${response.statusCode}');
+      return null;
+    } catch (e) {
+      debugPrint('Error fetching featured: $e');
+      return null;
+    }
+  }
+
+  /// Fetch latest movies from the backend `/latest` endpoint.
+  Future<List<Movie>> getLatest({int limit = 20}) async {
+    final url = Uri.parse('$baseUrl/latest?limit=$limit');
+
+    try {
+      final response = await http.get(url).timeout(_timeout);
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        return (data['results'] as List).map((m) => Movie.fromJson(m)).toList();
+      }
+      debugPrint('Latest API error: ${response.statusCode}');
+      return [];
+    } catch (e) {
+      debugPrint('Error fetching latest: $e');
       return [];
     }
   }

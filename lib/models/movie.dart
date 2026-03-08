@@ -27,6 +27,11 @@ class Movie {
   final List<int> genreIds;
   final String? originalLanguage;
   final String mediaType; // 'movie' or 'tv'
+  final String? ftpPath;
+  final String? ftpUrl;
+  final String? quality;
+  final String source;
+  final bool hasLinks;
 
   Movie({
     this.tmdbId,
@@ -44,6 +49,11 @@ class Movie {
     this.genreIds = const [],
     this.originalLanguage,
     this.mediaType = 'movie',
+    this.ftpPath,
+    this.ftpUrl,
+    this.quality,
+    this.source = 'tmdb',
+    this.hasLinks = false,
   });
 
   factory Movie.fromJson(Map<String, dynamic> json) {
@@ -95,6 +105,13 @@ class Movie {
           [],
       originalLanguage: json['original_language'],
       mediaType: json['media_type'] == 'tv' ? 'tv' : 'movie',
+      ftpPath: json['ftp_path'],
+      ftpUrl: json['ftp_url'],
+      quality: json['quality'],
+      source: json['source'] ?? 'tmdb',
+      hasLinks:
+          json['has_links'] ??
+          (json['source'] == 'hybrid' || json['source'] == 'ftp_only'),
     );
   }
 
@@ -103,8 +120,22 @@ class Movie {
   /// Returns the full poster URL, handling relative TMDB paths and empty values.
   String get fullPosterPath {
     if (tmdbPoster.isEmpty) return '';
-    if (tmdbPoster.startsWith('http')) return tmdbPoster;
-    // Relative TMDB path like "/abc123.jpg"
-    return 'https://image.tmdb.org/t/p/w500$tmdbPoster';
+
+    String url = tmdbPoster;
+    if (!url.startsWith('http')) {
+      // Relative TMDB path like "/abc123.jpg"
+      url = 'https://image.tmdb.org/t/p/w500$url';
+    }
+
+    // Add a cache buster parameter to ignore previously cached TMDB error images (watermarks)
+    if (url.contains('image.tmdb.org')) {
+      if (url.contains('?')) {
+        url += '&v=1';
+      } else {
+        url += '?v=1';
+      }
+    }
+
+    return url;
   }
 }

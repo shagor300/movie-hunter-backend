@@ -1,310 +1,129 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:shimmer/shimmer.dart';
-import 'package:get/get.dart';
 import '../models/movie.dart';
-import '../theme/app_colors.dart';
-import '../theme/app_text_styles.dart';
-import '../theme/app_dimensions.dart';
-import '../theme/theme_controller.dart';
 
-class MovieCard extends StatefulWidget {
+class MovieCard extends StatelessWidget {
   final Movie movie;
   final VoidCallback onTap;
-  final int index;
 
-  const MovieCard({
-    super.key,
-    required this.movie,
-    required this.onTap,
-    this.index = 0,
-  });
-
-  @override
-  State<MovieCard> createState() => _MovieCardState();
-}
-
-class _MovieCardState extends State<MovieCard>
-    with SingleTickerProviderStateMixin {
-  // ── Press scale animation ──
-  double _scale = 1.0;
-
-  // ── Smooth entrance animation ──
-  late final AnimationController _entranceController;
-  late final Animation<double> _fadeAnimation;
-  late final Animation<Offset> _slideAnimation;
-  bool _hasAnimated = false;
-
-  @override
-  void initState() {
-    super.initState();
-
-    _entranceController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 350),
-    );
-
-    _fadeAnimation = CurvedAnimation(
-      parent: _entranceController,
-      curve: Curves.easeOut,
-    );
-
-    _slideAnimation =
-        Tween<Offset>(begin: const Offset(0, 0.05), end: Offset.zero).animate(
-          CurvedAnimation(
-            parent: _entranceController,
-            curve: Curves.easeOutCubic,
-          ),
-        );
-  }
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    if (!_hasAnimated) {
-      _hasAnimated = true;
-      // Check if the page route transition is already done (returning from nav)
-      final route = ModalRoute.of(context);
-      if (route != null &&
-          route.animation != null &&
-          route.animation!.isCompleted) {
-        // Route already settled — we're returning from a push, skip animation
-        _entranceController.value = 1.0;
-      } else {
-        // Fresh page build — play entrance animation
-        _entranceController.forward();
-      }
-    }
-  }
-
-  @override
-  void dispose() {
-    _entranceController.dispose();
-    super.dispose();
-  }
-
-  void _onTapDown(TapDownDetails _) {
-    setState(() => _scale = 0.96);
-  }
-
-  void _onTapUp(TapUpDetails _) {
-    setState(() => _scale = 1.0);
-  }
-
-  void _onTapCancel() {
-    setState(() => _scale = 1.0);
-  }
+  const MovieCard({super.key, required this.movie, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
-    return FadeTransition(
-      opacity: _fadeAnimation,
-      child: SlideTransition(
-        position: _slideAnimation,
-        child: GestureDetector(
-          onTap: widget.onTap,
-          onTapDown: _onTapDown,
-          onTapUp: _onTapUp,
-          onTapCancel: _onTapCancel,
-          behavior: HitTestBehavior.opaque,
-          child: AnimatedScale(
-            scale: _scale,
-            duration: const Duration(milliseconds: 120),
-            curve: Curves.easeOutCubic,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Poster Section (Dynamic height to prevent overflow)
-                Expanded(
-                  child: Obx(() {
-                    final tc = Get.find<ThemeController>();
-                    final radius = tc.roundedPosters
-                        ? AppDimensions.radiusLg
-                        : 4.0;
-                    return Container(
-                      width: double.infinity,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(radius),
-                        border: Border.all(color: AppColors.glassBorder),
-                        color: AppColors.surface,
-                      ),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(radius),
-                        child: Stack(
-                          fit: StackFit.expand,
-                          children: [
-                            // Image with Hero
-                            Hero(
-                              tag:
-                                  'poster-${widget.movie.title}-${widget.index}', // added index to prevent duplicate tag errors
-                              child: widget.movie.fullPosterPath.isNotEmpty
-                                  ? CachedNetworkImage(
-                                      imageUrl: widget.movie.fullPosterPath,
-                                      httpHeaders: const {
-                                        'User-Agent':
-                                            'Mozilla/5.0 (Linux; Android 13; SM-G998B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Mobile Safari/537.36',
-                                      },
-                                      fit: BoxFit.cover,
-                                      memCacheWidth: 300,
-                                      placeholder: (context, url) =>
-                                          Shimmer.fromColors(
-                                            baseColor: AppColors.surface,
-                                            highlightColor:
-                                                AppColors.surfaceLight,
-                                            child: Container(
-                                              color: Colors.black,
-                                            ),
-                                          ),
-                                      errorWidget: (context, url, error) =>
-                                          const Center(
-                                            child: Icon(
-                                              Icons.broken_image_outlined,
-                                              color: AppColors.textMuted,
-                                              size: 40,
-                                            ),
-                                          ),
-                                    )
-                                  : const Center(
-                                      child: Icon(
-                                        Icons.movie_outlined,
-                                        color: AppColors.textMuted,
-                                        size: 40,
-                                      ),
-                                    ),
-                            ),
-
-                            // Bottom Gradient
-                            Positioned(
-                              bottom: 0,
-                              left: 0,
-                              right: 0,
-                              height: 60,
-                              child: DecoratedBox(
-                                decoration: BoxDecoration(
-                                  gradient: LinearGradient(
-                                    begin: Alignment.bottomCenter,
-                                    end: Alignment.topCenter,
-                                    colors: [
-                                      Colors.black.withValues(alpha: 0.8),
-                                      Colors.transparent,
-                                    ],
-                                  ),
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 140,
+        margin: EdgeInsets.only(right: 12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Poster
+            ClipRRect(
+              borderRadius: BorderRadius.circular(12),
+              child: Stack(
+                children: [
+                  // Poster image
+                  movie.fullPosterPath.isNotEmpty
+                      ? CachedNetworkImage(
+                          imageUrl: movie.fullPosterPath.replaceAll(
+                            'w500',
+                            'w342',
+                          ), // optimize image size
+                          height: 200,
+                          width: 140,
+                          fit: BoxFit.cover,
+                          httpHeaders: const {'User-Agent': 'Mozilla/5.0'},
+                          placeholder: (context, url) => Container(
+                            color: Colors.grey[800],
+                            child: Center(
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                  Colors.white54,
                                 ),
                               ),
                             ),
-
-                            // Top Right Quality Badge
-                            Positioned(
-                              top: 8,
-                              right: 8,
-                              child: _buildQualityBadge(),
+                          ),
+                          errorWidget: (context, url, error) => Container(
+                            color: Colors.grey[800],
+                            child: Icon(
+                              Icons.movie,
+                              size: 50,
+                              color: Colors.white54,
                             ),
+                          ),
+                        )
+                      : Container(
+                          height: 200,
+                          width: 140,
+                          color: Colors.grey[800],
+                          child: Center(
+                            child: Icon(
+                              Icons.movie,
+                              size: 50,
+                              color: Colors.white54,
+                            ),
+                          ),
+                        ),
 
-                            // Bottom Left Rating Badge
-                            Positioned(
-                              bottom: 8,
-                              left: 8,
-                              child: _buildRatingBadge(),
+                  // Rating badge (bottom-left) - ONLY badge allowed!
+                  if (movie.rating > 0)
+                    Positioned(
+                      bottom: 8,
+                      left: 8,
+                      child: Container(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 6,
+                          vertical: 3,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.black.withValues(alpha: 0.7),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.star, color: Colors.amber, size: 12),
+                            SizedBox(width: 2),
+                            Text(
+                              movie.rating.toStringAsFixed(1),
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
                           ],
                         ),
                       ),
-                    );
-                  }),
-                ),
-
-                const SizedBox(height: AppDimensions.spacingSm),
-
-                // Title
-                Text(
-                  widget.movie.title,
-                  style: AppTextStyles.titleMedium,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-
-                // Subtitle
-                const SizedBox(height: 2),
-                Text(
-                  widget.movie.year,
-                  style: AppTextStyles.bodySmall,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ],
+                    ),
+                ],
+              ),
             ),
-          ),
-        ),
-      ),
-    );
-  }
 
-  Widget _buildQualityBadge() {
-    final tc = Get.find<ThemeController>();
-    final isTv = widget.movie.mediaType == 'tv';
-    final label = isTv ? "SERIES" : "MOVIE";
+            SizedBox(height: 8),
 
-    return Obx(() {
-      final color = isTv ? Colors.amber : tc.accentColor;
-      return Container(
-        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
-        decoration: BoxDecoration(
-          color: color.withValues(alpha: 0.15),
-          borderRadius: BorderRadius.circular(6),
-          border: Border.all(color: color.withValues(alpha: 0.3), width: 0.5),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.3),
-              blurRadius: 4,
-              offset: const Offset(0, 2),
+            // Title
+            Text(
+              movie.title,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 13,
+                fontWeight: FontWeight.w500,
+              ),
             ),
+
+            // Year
+            if (movie.year.isNotEmpty)
+              Text(
+                movie.year,
+                style: TextStyle(color: Colors.white70, fontSize: 11),
+              ),
           ],
         ),
-        child: Text(
-          label,
-          style: AppTextStyles.labelSmall.copyWith(
-            fontSize: 9,
-            fontWeight: FontWeight.w800,
-            color: color,
-            letterSpacing: 0.5,
-          ),
-        ),
-      );
-    });
-  }
-
-  Widget _buildRatingBadge() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
-      decoration: BoxDecoration(
-        color: Colors.black.withValues(alpha: 0.5),
-        borderRadius: BorderRadius.circular(6),
-        border: Border.all(
-          color: Colors.white.withValues(alpha: 0.1),
-          width: 0.5,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.3),
-            blurRadius: 4,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const Icon(Icons.star, color: AppColors.starGold, size: 13),
-          const SizedBox(width: 3),
-          Text(
-            widget.movie.rating.toStringAsFixed(1),
-            style: AppTextStyles.labelSmall.copyWith(
-              color: Colors.white,
-              fontWeight: FontWeight.bold,
-              fontSize: 11,
-            ),
-          ),
-        ],
       ),
     );
   }

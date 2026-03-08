@@ -12,6 +12,7 @@ import '../models/download_item.dart';
 import '../services/storage_settings_service.dart';
 import '../services/api_service.dart';
 import '../services/notification_service.dart';
+import 'package:http/http.dart' as http;
 
 class DownloadController extends GetxController {
   final ApiService _apiService = ApiService();
@@ -107,13 +108,16 @@ class DownloadController extends GetxController {
 
     _updateItemStatusFromTask(item, status, progress);
 
+    // Refresh UI instantly for real-time progress
+    downloads.refresh();
+
     // Save to Hive periodically (every ~5% or on specific status updates)
+    // to avoid excessive disk I/O
     if (status == DownloadTaskStatus.complete ||
         status == DownloadTaskStatus.failed ||
         status == DownloadTaskStatus.canceled ||
         progress % 5 == 0) {
       item.save();
-      downloads.refresh();
     }
 
     if (status == DownloadTaskStatus.complete) {
@@ -133,9 +137,27 @@ class DownloadController extends GetxController {
       // Estimate downloaded bytes based on progress percentage and total bytes
       if (item.totalBytes > 0 && progress > 0) {
         item.downloadedBytes = (item.totalBytes * (progress / 100)).round();
+      } else if (progress > 0) {
+        // Fallback for existing downloads where totalBytes is 0
+        try {
+          final file = File(item.filePath);
+          if (file.existsSync()) {
+            item.downloadedBytes = file.lengthSync();
+            if (item.totalBytes == 0) {
+              item.totalBytes = (item.downloadedBytes / (progress / 100))
+                  .round();
+            }
+          }
+        } catch (_) {}
       }
     } else if (taskStatus == DownloadTaskStatus.complete) {
       item.status = 'completed';
+      try {
+        final file = File(item.filePath);
+        if (file.existsSync()) {
+          item.totalBytes = file.lengthSync();
+        }
+      } catch (_) {}
       item.downloadedBytes = item.totalBytes;
       item.completedAt = DateTime.now();
     } else if (taskStatus == DownloadTaskStatus.failed) {
@@ -393,8 +415,27 @@ class DownloadController extends GetxController {
       return;
     }
 
-    // 2. We don't have head access securely prior to download here without a dedicated request.
-    // We set totalBytes to 0 temporarily. It can be refined if needed.
+    // Try to fetch exact file size before starting
+    int resolvedTotalBytes = 0;
+    try {
+      final headResp = await http
+          .head(
+            Uri.parse(url),
+            headers: {
+              'User-Agent':
+                  'Mozilla/5.0 (Linux; Android 13; SM-G998B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Mobile Safari/537.36',
+            },
+          )
+          .timeout(const Duration(seconds: 4));
+
+      final cl = headResp.headers['content-length'];
+      if (cl != null) {
+        resolvedTotalBytes = int.tryParse(cl) ?? 0;
+      }
+    } catch (e) {
+      debugPrint('⚠️ Could not fetch Content-Length: $e');
+    }
+
     // Create download item
     final item = DownloadItem(
       id: taskId,
@@ -407,6 +448,8 @@ class DownloadController extends GetxController {
       createdAt: DateTime.now(),
       tmdbId: tmdbId ?? 0,
       posterUrl: posterUrl,
+      totalBytes: resolvedTotalBytes,
+      downloadedBytes: 0,
     );
 
     // 3. Save to Hive

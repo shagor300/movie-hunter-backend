@@ -522,6 +522,129 @@ class FTPMovieHandler:
         except (ValueError, IndexError):
             return 0
 
+    def get_random_movies(self, limit: int = 20) -> list:
+        """
+        Get random movies from FTP server
+        Returns list of movies with basic info (title, year, quality, ftp_path)
+        """
+        import random
+        
+        logger.info(f"[FTP] Getting {limit} random movies...")
+        
+        all_movies = []
+        categories = [
+            '/English',
+            '/Indian/Hindi Movies',
+            '/TV_Series',
+        ]
+        
+        try:
+            for category in categories:
+                movies = self._get_movies_from_directory(category, limit=100)
+                all_movies.extend(movies)
+                
+                if len(all_movies) >= limit * 2:
+                    break
+            
+            # Shuffle and select
+            random.shuffle(all_movies)
+            selected = all_movies[:limit]
+            
+            logger.info(f"[FTP] Selected {len(selected)} random movies")
+            return selected
+            
+        except Exception as e:
+            logger.error(f"[FTP] Random movies error: {e}")
+            return []
+
+
+    def _get_movies_from_directory(self, directory: str, limit: int = 100) -> list:
+        """
+        Get movies from a specific FTP directory
+        """
+        import re
+        
+        movies = []
+        
+        try:
+            # Fetch directory listing via HTTP
+            url = f"{self.base_url}{directory}/"
+            client = _get_client(timeout=self.timeout)
+            response = client.get(url)
+            
+            if response.status_code != 200:
+                logger.warning(f"[FTP] Failed to fetch {directory}: {response.status_code}")
+                return []
+            
+            # Parse HTML to extract folder links
+            folder_pattern = r'<a href="([^"]+)/">([^<]+)</a>'
+            matches = re.findall(folder_pattern, response.text)
+            
+            for href, folder_name in matches[:limit]:
+                # Skip parent directory
+                if folder_name in ['..', '.']:
+                    continue
+                
+                # Parse movie info
+                movie = {
+                    'title': self._clean_movie_name(folder_name),
+                    'year': self._extract_year(folder_name),
+                    'quality': self._extract_quality(folder_name),
+                    'ftp_path': f"{directory}/{folder_name}",
+                    'ftp_url': f"{self.base_url}{directory}/{folder_name}/",
+                    'source': 'ftp',
+                }
+                
+                movies.append(movie)
+            
+            logger.debug(f"[FTP] Found {len(movies)} movies in {directory}")
+            return movies
+            
+        except Exception as e:
+            logger.error(f"[FTP] Directory error {directory}: {e}")
+            return []
+
+
+    def _clean_movie_name(self, filename: str) -> str:
+        """Clean movie name for TMDB search"""
+        import re
+        
+        cleaned = unquote(filename)
+        
+        # Remove quality markers
+        cleaned = re.sub(r'\b(720p|1080p|2160p|4K|480p)\b', '', cleaned, flags=re.IGNORECASE)
+        
+        # Remove format markers
+        cleaned = re.sub(r'\b(WEBRip|BluRay|HDTS|HDRip|DVDRip|WEB-DL|BRRip)\b', '', cleaned, flags=re.IGNORECASE)
+        
+        # Remove codec markers
+        cleaned = re.sub(r'\b(x264|x265|H264|H265|HEVC|10bit)\b', '', cleaned, flags=re.IGNORECASE)
+        
+        # Remove audio markers
+        cleaned = re.sub(r'\b(AAC|DD5\.1|AC3|DTS|Atmos|ESub)\b', '', cleaned, flags=re.IGNORECASE)
+        
+        # Remove [DDN] tags
+        cleaned = re.sub(r'\[DDN\]|\(DDN\)', '', cleaned, flags=re.IGNORECASE)
+        
+        # Remove year (will be extracted separately)
+        cleaned = re.sub(r'\(?\d{4}\)?', '', cleaned)
+        
+        # Replace separators with spaces
+        cleaned = cleaned.replace('.', ' ').replace('_', ' ').replace('-', ' ')
+        
+        # Clean multiple spaces
+        cleaned = re.sub(r'\s+', ' ', cleaned).strip()
+        
+        return cleaned
+
+
+    def _extract_year(self, filename: str) -> int:
+        """Extract year from filename"""
+        import re
+        match = re.search(r'\b(19\d{2}|20\d{2})\b', filename)
+        return int(match.group(1)) if match else 0
+
+
 
 # ------------------------------------------------------------------
 # Standalone helpers

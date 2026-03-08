@@ -325,7 +325,16 @@ class _CollectionsScreenState extends State<CollectionsScreen> {
                       child: ClipRRect(
                         borderRadius: BorderRadius.circular(8),
                         child: CachedNetworkImage(
-                          imageUrl: movie['posterUrl'] ?? '',
+                          imageUrl:
+                              (movie['posterUrl'] != null &&
+                                  movie['posterUrl'].toString().contains(
+                                    'image.tmdb.org',
+                                  ) &&
+                                  !movie['posterUrl'].toString().contains(
+                                    'v=1',
+                                  ))
+                              ? '${movie['posterUrl']}${movie['posterUrl'].toString().contains('?') ? '&' : '?'}v=1'
+                              : movie['posterUrl'] ?? '',
                           httpHeaders: const {
                             'User-Agent':
                                 'Mozilla/5.0 (Linux; Android 13; SM-G998B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Mobile Safari/537.36',

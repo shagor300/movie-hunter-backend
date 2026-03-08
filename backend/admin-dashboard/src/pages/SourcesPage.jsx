@@ -3,10 +3,18 @@ import api from '../api';
 
 export default function SourcesPage() {
     const [sources, setSources] = useState([]);
+    const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+    const [newSourceName, setNewSourceName] = useState('');
+    const [newSourceUrl, setNewSourceUrl] = useState('');
+    const [addError, setAddError] = useState('');
 
     useEffect(() => {
-        api.get('/admin/sources').then(r => setSources(r.data.sources || [])).catch(() => { });
+        loadSources();
     }, []);
+
+    const loadSources = () => {
+        api.get('/admin/sources').then(r => setSources(r.data.sources || [])).catch(() => { });
+    };
 
     const toggleSource = async (name, enabled) => {
         try {
@@ -19,6 +27,32 @@ export default function SourcesPage() {
         try { await api.post(`/admin/sources/${encodeURIComponent(name)}/sync`); } catch { }
     };
 
+    const handleAddSource = async () => {
+        setAddError('');
+        if (!newSourceName || !newSourceUrl) {
+            setAddError('Source Name and Source URL are required');
+            return;
+        }
+
+        try {
+            // Check for valid URL
+            new URL(newSourceUrl);
+        } catch (_) {
+            setAddError('Invalid URL');
+            return;
+        }
+
+        try {
+            await api.post('/admin/sources', { source_name: newSourceName, source_url: newSourceUrl });
+            setIsAddModalOpen(false);
+            setNewSourceName('');
+            setNewSourceUrl('');
+            loadSources();
+        } catch (error) {
+            setAddError(error.response?.data?.detail || 'Failed to add source');
+        }
+    };
+
     const sourceIcons = { 'HDHub4u': 'language', 'SkyMoviesHD': 'cloud', 'BollyFlix': 'theaters', 'MoviesFlix': 'local_movies' };
 
     return (
@@ -29,6 +63,10 @@ export default function SourcesPage() {
                     <h2>Source Management</h2>
                     <p>Monitor and configure content scrapers</p>
                 </div>
+                <button className="btn btn-primary" onClick={() => setIsAddModalOpen(true)}>
+                    <span className="material-symbols-outlined">add</span>
+                    Add Source
+                </button>
             </div>
 
             <div className="grid-2">
@@ -92,10 +130,50 @@ export default function SourcesPage() {
             </div>
 
             {sources.length === 0 && (
-                <div className="glass-card" style={{ padding: 64, textAlign: 'center' }}>
+                <div className="glass-card empty-state" style={{ padding: 64, textAlign: 'center' }}>
                     <span className="material-symbols-outlined" style={{ fontSize: 48, color: 'var(--text-muted)', marginBottom: 16 }}>dns</span>
                     <h4 style={{ fontSize: 18, fontWeight: 700, marginBottom: 8 }}>No sources configured</h4>
-                    <p style={{ color: 'var(--text-secondary)' }}>Source data will appear here once configured.</p>
+                    <p style={{ color: 'var(--text-secondary)', marginBottom: 24 }}>Source data will appear here once configured.</p>
+                    <button className="btn btn-primary" onClick={() => setIsAddModalOpen(true)}>
+                        <span className="material-symbols-outlined">add</span>
+                        Add Source
+                    </button>
+                </div>
+            )}
+
+            {isAddModalOpen && (
+                <div className="modal-overlay">
+                    <div className="modal">
+                        <h3>Add New Source</h3>
+                        {addError && <div className="error-banner">{addError}</div>}
+                        <div className="form-group">
+                            <label>Source Name</label>
+                            <input
+                                type="text"
+                                className="input"
+                                value={newSourceName}
+                                onChange={e => setNewSourceName(e.target.value)}
+                                placeholder="e.g. MyScraper1"
+                            />
+                        </div>
+                        <div className="form-group">
+                            <label>Source URL</label>
+                            <input
+                                type="url"
+                                className="input"
+                                value={newSourceUrl}
+                                onChange={e => setNewSourceUrl(e.target.value)}
+                                placeholder="https://example.com"
+                            />
+                        </div>
+                        <div className="modal-actions" style={{ display: 'flex', gap: 12, marginTop: 24, justifyContent: 'flex-end' }}>
+                            <button className="btn btn-secondary" onClick={() => {
+                                setIsAddModalOpen(false);
+                                setAddError('');
+                            }}>Cancel</button>
+                            <button className="btn btn-primary" onClick={handleAddSource}>Add Source</button>
+                        </div>
+                    </div>
                 </div>
             )}
         </div>
